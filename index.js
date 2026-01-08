@@ -457,6 +457,10 @@ app.get('/api/debug/env', (req, res) => {
     k.toUpperCase().includes('API')
   );
   
+  // Get raw value directly
+  const rawClaude = process.env.CLAUDE_API_KEY;
+  const rawPerplexity = process.env.PERPLEXITY_API_KEY;
+  
   res.json({
     success: true,
     hasPerplexity: !!CONFIG.PERPLEXITY_API_KEY,
@@ -464,8 +468,14 @@ app.get('/api/debug/env', (req, res) => {
     modelPerplexity: CONFIG.PERPLEXITY_MODEL,
     modelClaude: CONFIG.CLAUDE_MODEL,
     envKeysFound: allEnvKeys,
-    claudeKeyPreview: CONFIG.CLAUDE_API_KEY ? CONFIG.CLAUDE_API_KEY.substring(0, 15) + '...' : null,
-    perplexityKeyPreview: CONFIG.PERPLEXITY_API_KEY ? CONFIG.PERPLEXITY_API_KEY.substring(0, 15) + '...' : null,
+    // Show more details
+    claudeKeyLength: rawClaude ? rawClaude.length : 0,
+    claudeKeyPreview: rawClaude ? rawClaude.substring(0, 20) + '...' : null,
+    claudeKeyEnd: rawClaude ? '...' + rawClaude.substring(rawClaude.length - 10) : null,
+    perplexityKeyPreview: rawPerplexity ? rawPerplexity.substring(0, 15) + '...' : null,
+    // Check for common issues
+    claudeHasQuotes: rawClaude ? (rawClaude.startsWith('"') || rawClaude.startsWith("'")) : false,
+    claudeHasSpaces: rawClaude ? (rawClaude.startsWith(' ') || rawClaude.endsWith(' ')) : false,
   });
 });
 
