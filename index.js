@@ -450,12 +450,22 @@ app.get('/api/config', (req, res) => {
 
 // Debug env presence (does not return secrets)
 app.get('/api/debug/env', (req, res) => {
+  // Find all env vars that contain CLAUDE or API
+  const allEnvKeys = Object.keys(process.env).filter(k => 
+    k.toUpperCase().includes('CLAUDE') || 
+    k.toUpperCase().includes('ANTHROPIC') ||
+    k.toUpperCase().includes('API')
+  );
+  
   res.json({
     success: true,
     hasPerplexity: !!CONFIG.PERPLEXITY_API_KEY,
     hasClaude: !!CONFIG.CLAUDE_API_KEY,
     modelPerplexity: CONFIG.PERPLEXITY_MODEL,
     modelClaude: CONFIG.CLAUDE_MODEL,
+    envKeysFound: allEnvKeys,
+    claudeKeyPreview: CONFIG.CLAUDE_API_KEY ? CONFIG.CLAUDE_API_KEY.substring(0, 15) + '...' : null,
+    perplexityKeyPreview: CONFIG.PERPLEXITY_API_KEY ? CONFIG.PERPLEXITY_API_KEY.substring(0, 15) + '...' : null,
   });
 });
 
