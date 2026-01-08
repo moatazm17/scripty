@@ -18,6 +18,14 @@ const CONFIG = {
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
 };
 
+// Log missing envs early for easier debugging (no values are printed)
+const missingEnv = [];
+if (!CONFIG.PERPLEXITY_API_KEY) missingEnv.push('PERPLEXITY_API_KEY');
+if (!CONFIG.CLAUDE_API_KEY) missingEnv.push('CLAUDE_API_KEY');
+if (missingEnv.length) {
+  console.error('⚠️ Missing env vars:', missingEnv.join(', '));
+}
+
 // ============================================
 // 📐 SCRIPT STRUCTURE
 // ============================================
@@ -437,6 +445,17 @@ app.get('/api/config', (req, res) => {
     languages: Object.keys(LANGUAGES).map(key => ({ id: key, ...LANGUAGES[key] })),
     durations: ['15', '30', '60'],
     structure: SCRIPT_STRUCTURE,
+  });
+});
+
+// Debug env presence (does not return secrets)
+app.get('/api/debug/env', (req, res) => {
+  res.json({
+    success: true,
+    hasPerplexity: !!CONFIG.PERPLEXITY_API_KEY,
+    hasClaude: !!CONFIG.CLAUDE_API_KEY,
+    modelPerplexity: CONFIG.PERPLEXITY_MODEL,
+    modelClaude: CONFIG.CLAUDE_MODEL,
   });
 });
 
