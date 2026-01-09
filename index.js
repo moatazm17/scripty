@@ -1176,23 +1176,63 @@ app.post('/api/generate', async (req, res) => {
   }
   
   try {
-    console.log('🔍 Phase 1: Researching...');
-    const researchData = await researchTopic(topic, language);
+    let researchData, architectData, finalHook, draftScript, humanizedScript, factCheckResult;
     
-    console.log('🏗️ Phase 2: Architecting Story...');
-    const architectData = await architectStory(researchData, topic, style, language);
+    try {
+      console.log('🔍 Phase 1: Researching (Perplexity)...');
+      researchData = await researchTopic(topic, language);
+      console.log('✅ Phase 1 Complete');
+    } catch (e) {
+      console.error('❌ PERPLEXITY ERROR:', e.response?.status, e.response?.data || e.message);
+      throw new Error(`Perplexity API failed: ${e.response?.status || e.message}`);
+    }
     
-    console.log('🎣 Phase 3: Creating Powerful Hook...');
-    const finalHook = selectedHook || await generateArchitectHook(topic, architectData, style, language);
+    try {
+      console.log('🏗️ Phase 2: Architecting Story (Claude)...');
+      architectData = await architectStory(researchData, topic, style, language);
+      console.log('✅ Phase 2 Complete');
+    } catch (e) {
+      console.error('❌ CLAUDE ARCHITECT ERROR:', e.response?.status, e.response?.data || e.message);
+      throw new Error(`Claude Architect failed: ${e.response?.status || e.message}`);
+    }
     
-    console.log('📝 Phase 4: Writing Script Content...');
-    const draftScript = await writerPhase(topic, architectData, finalHook, style, language, duration);
+    try {
+      console.log('🎣 Phase 3: Creating Hook (Claude)...');
+      finalHook = selectedHook || await generateArchitectHook(topic, architectData, style, language);
+      console.log('✅ Phase 3 Complete');
+    } catch (e) {
+      console.error('❌ CLAUDE HOOK ERROR:', e.response?.status, e.response?.data || e.message);
+      throw new Error(`Claude Hook failed: ${e.response?.status || e.message}`);
+    }
     
-    console.log('✨ Phase 5: Humanizing with Gemini Thinking...');
-    const humanizedScript = await geminiPolish(draftScript, architectData.chosenFacts, style, language);
+    try {
+      console.log('📝 Phase 4: Writing Script (Claude)...');
+      draftScript = await writerPhase(topic, architectData, finalHook, style, language, duration);
+      console.log('✅ Phase 4 Complete');
+    } catch (e) {
+      console.error('❌ CLAUDE WRITER ERROR:', e.response?.status, e.response?.data || e.message);
+      throw new Error(`Claude Writer failed: ${e.response?.status || e.message}`);
+    }
     
-    console.log('✅ Phase 6: Final Fact Check...');
-    const factCheckResult = await factCheck(humanizedScript, architectData.chosenFacts);
+    try {
+      console.log('✨ Phase 5: Humanizing (Gemini)...');
+      humanizedScript = await geminiPolish(draftScript, architectData.chosenFacts, style, language);
+      console.log('✅ Phase 5 Complete');
+    } catch (e) {
+      console.error('❌ GEMINI ERROR:', e.response?.status, e.response?.data || e.message);
+      // Fallback to draft if Gemini fails
+      console.log('⚠️ Gemini failed, using draft script');
+      humanizedScript = draftScript;
+    }
+    
+    try {
+      console.log('✅ Phase 6: Fact Check (Perplexity)...');
+      factCheckResult = await factCheck(humanizedScript, architectData.chosenFacts);
+      console.log('✅ Phase 6 Complete');
+    } catch (e) {
+      console.error('❌ FACT CHECK ERROR:', e.response?.status, e.response?.data || e.message);
+      factCheckResult = '⚠️ Fact check skipped';
+    }
     
     res.json({
       success: true,
@@ -1206,7 +1246,7 @@ app.post('/api/generate', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('❌ Pipeline Error:', error.response?.data || error.message);
+    console.error('❌ Pipeline Error:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
