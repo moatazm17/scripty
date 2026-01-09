@@ -138,6 +138,260 @@ const LANGUAGES = {
 };
 
 // ============================================
+// 🎯 NICHE PROFILES (Expert Brains)
+// ============================================
+
+const NICHES = {
+  general: {
+    id: 'general',
+    name: 'General',
+    nameAr: 'عام',
+    icon: '✨',
+    persona: {
+      ar: 'حكواتي محترف بيحول أي خبر لقصة مشوقة',
+      en: 'Professional storyteller who turns any news into an engaging story',
+    },
+    focus: {
+      ar: 'الفضول العام، القصة المثيرة، المعلومات الجديدة',
+      en: 'General curiosity, engaging stories, new information',
+    },
+    keywords: {
+      ar: [],
+      en: [],
+    },
+    forbidden: {
+      ar: [],
+      en: [],
+    },
+    hookStyle: {
+      ar: 'ابدأ بأقوى معلومة أو مفارقة في البحث',
+      en: 'Start with the strongest fact or paradox from research',
+    },
+    depthRule: {
+      ar: 'اشرح تأثير كل معلومة على حياة المشاهد',
+      en: 'Explain the impact of every fact on the viewer\'s life',
+    },
+  },
+
+  content_creation: {
+    id: 'content_creation',
+    name: 'Content Creation',
+    nameAr: 'صناعة المحتوى',
+    icon: '🎥',
+    persona: {
+      ar: 'صانع محتوى Viral فاهم الخوارزميات وسيكولوجية المشاهد',
+      en: 'Viral content creator who understands algorithms and viewer psychology',
+    },
+    focus: {
+      ar: 'الريتنشن، الهوكات البصرية، بناء المجتمع، أسرار النجاح',
+      en: 'Retention, visual hooks, community building, success secrets',
+    },
+    keywords: {
+      ar: ['خوارزميات', 'تفاعل', 'ريتش', 'مونتاج', 'تريند', 'نيتش', 'ريتنشن', 'فيرال', 'كريتور'],
+      en: ['algorithm', 'engagement', 'reach', 'editing', 'trend', 'niche', 'retention', 'viral', 'creator'],
+    },
+    forbidden: {
+      ar: ['أهلاً بكم في قناتي', 'لا تنسوا اللايك والاشتراك', 'مرحباً متابعينا'],
+      en: ['Welcome to my channel', 'Don\'t forget to like and subscribe', 'Hello followers'],
+    },
+    hookStyle: {
+      ar: 'ابدأ بكشف سر أو خطأ شائع يقع فيه صناع المحتوى',
+      en: 'Start by revealing a secret or common mistake creators make',
+    },
+    depthRule: {
+      ar: 'كل نصيحة لازم يكون معاها مثال عملي أو رقم (زي: زودت التفاعل 300%)',
+      en: 'Every tip must have a practical example or number (e.g., increased engagement by 300%)',
+    },
+  },
+
+  real_estate: {
+    id: 'real_estate',
+    name: 'Real Estate',
+    nameAr: 'العقارات',
+    icon: '🏠',
+    persona: {
+      ar: 'استشاري عقاري خبير ومستثمر ذكي بيفهم السوق',
+      en: 'Expert real estate consultant and smart investor who understands the market',
+    },
+    focus: {
+      ar: 'العائد على الاستثمار، الموقع الاستراتيجي، الرفاهية، الأمان المالي',
+      en: 'ROI, strategic location, luxury, financial security',
+    },
+    keywords: {
+      ar: ['تسهيلات سداد', 'لوكيشن', 'عائد استثماري', 'وحدات محدودة', 'كومباوند', 'تشطيب', 'استلام فوري', 'مقدم'],
+      en: ['payment plans', 'location', 'ROI', 'limited units', 'compound', 'finishing', 'immediate delivery', 'down payment'],
+    },
+    forbidden: {
+      ar: ['فرصة العمر', 'ما تفوتش الفرصة', 'أسعار خيالية'],
+      en: ['opportunity of a lifetime', 'don\'t miss out', 'unbelievable prices'],
+    },
+    hookStyle: {
+      ar: 'حول السعر لقسط شهري أو قارنه بقيمة الإيجار الضائعة',
+      en: 'Convert price to monthly payment or compare to wasted rent value',
+    },
+    depthRule: {
+      ar: 'كل سعر يتحول لـ "قسط" أو "توفير". كل مساحة تتقارن بحاجة معروفة',
+      en: 'Every price converts to "installment" or "savings". Every area compared to something known',
+    },
+  },
+
+  tech: {
+    id: 'tech',
+    name: 'Tech & AI',
+    nameAr: 'التكنولوجيا',
+    icon: '📱',
+    persona: {
+      ar: 'تقني مهووس بالأداء وبيجرب كل جديد',
+      en: 'Performance-obsessed techie who tests everything new',
+    },
+    focus: {
+      ar: 'المواصفات الحقيقية، الأداء العملي، القيمة مقابل السعر',
+      en: 'Real specs, practical performance, value for money',
+    },
+    keywords: {
+      ar: ['معالج', 'بنشمارك', 'فريمات', 'هرتز', 'سلاسة', 'تجربة المستخدم', 'بطارية', 'شحن سريع'],
+      en: ['processor', 'benchmark', 'frames', 'hertz', 'smooth', 'user experience', 'battery', 'fast charging'],
+    },
+    forbidden: {
+      ar: ['أفضل جهاز في العالم', 'لا يوجد له منافس', 'خارق'],
+      en: ['best device ever', 'no competition', 'superhuman'],
+    },
+    hookStyle: {
+      ar: 'ابدأ برقم أداء صادم أو مقارنة مع المنافس الأشهر',
+      en: 'Start with a shocking performance number or comparison with the most famous competitor',
+    },
+    depthRule: {
+      ar: 'ممنوع تقول "سريع" بدون رقم. قول "بيفتح اللعبة في 3 ثواني"',
+      en: 'Never say "fast" without a number. Say "opens the game in 3 seconds"',
+    },
+  },
+
+  business: {
+    id: 'business',
+    name: 'Business & Finance',
+    nameAr: 'البيزنس والمال',
+    icon: '💰',
+    persona: {
+      ar: 'محلل اقتصادي ذكي بيكشف خبايا السوق وفرص الاستثمار',
+      en: 'Smart economic analyst who reveals market secrets and investment opportunities',
+    },
+    focus: {
+      ar: 'الأرقام الكبيرة، قصص النجاح، خبايا السوق، الفرص',
+      en: 'Big numbers, success stories, market secrets, opportunities',
+    },
+    keywords: {
+      ar: ['إيرادات', 'استحواذ', 'حصة سوقية', 'منافسة', 'أسهم', 'ريادة أعمال', 'تمويل', 'نمو'],
+      en: ['revenue', 'acquisition', 'market share', 'competition', 'stocks', 'entrepreneurship', 'funding', 'growth'],
+    },
+    forbidden: {
+      ar: ['هتبقى مليونير', 'ثراء سريع', 'بدون مجهود'],
+      en: ['become a millionaire', 'get rich quick', 'no effort'],
+    },
+    hookStyle: {
+      ar: 'ابدأ برقم صادم (إيرادات، خسارة، استحواذ) أو سر لم يُكشف',
+      en: 'Start with a shocking number (revenue, loss, acquisition) or an unrevealed secret',
+    },
+    depthRule: {
+      ar: 'اربط كل خبر بتأثيره على جيب المشاهد أو مستقبل السوق',
+      en: 'Connect every news to its impact on the viewer\'s pocket or market future',
+    },
+  },
+
+  food: {
+    id: 'food',
+    name: 'Food & Dining',
+    nameAr: 'المطاعم والأكل',
+    icon: '🍔',
+    persona: {
+      ar: 'فودي بيستمتع بكل قطمة وخبير في اكتشاف الأماكن المخفية',
+      en: 'Foodie who enjoys every bite and expert at discovering hidden gems',
+    },
+    focus: {
+      ar: 'التجربة الحسية، السعر مقابل الجودة، الأماكن الجديدة',
+      en: 'Sensory experience, price vs quality, new places',
+    },
+    keywords: {
+      ar: ['جوسي', 'كريسبي', 'خلطة سرية', 'هيدن جيم', 'تجربة', 'طعم', 'قوام', 'ريحة'],
+      en: ['juicy', 'crispy', 'secret recipe', 'hidden gem', 'experience', 'taste', 'texture', 'aroma'],
+    },
+    forbidden: {
+      ar: ['لذيذ', 'حلو', 'جميل', 'روعة'],
+      en: ['delicious', 'nice', 'beautiful', 'amazing'],
+    },
+    hookStyle: {
+      ar: 'ابدأ بوصف حسي يخلي المشاهد يجوع أو بمفاجأة عن المكان',
+      en: 'Start with a sensory description that makes the viewer hungry or a surprise about the place',
+    },
+    depthRule: {
+      ar: 'استبدل "لذيذ" بوصف الشعور (مثلاً: بتدوب في البق، الجبنة بتشد معاك)',
+      en: 'Replace "delicious" with feeling description (e.g., melts in your mouth, cheese pulls)',
+    },
+  },
+
+  self_improvement: {
+    id: 'self_improvement',
+    name: 'Self-Improvement',
+    nameAr: 'تطوير الذات',
+    icon: '🧠',
+    persona: {
+      ar: 'مينتور بيحفز بعقلانية ويدي خطوات عملية',
+      en: 'Mentor who motivates rationally and gives practical steps',
+    },
+    focus: {
+      ar: 'خطوات عملية، تغيير العادات، السيكولوجية البسيطة',
+      en: 'Practical steps, habit change, simple psychology',
+    },
+    keywords: {
+      ar: ['انضباط', 'دوبامين', 'تركيز', 'عادات', 'عقلية', 'إنتاجية', 'طاقة', 'روتين'],
+      en: ['discipline', 'dopamine', 'focus', 'habits', 'mindset', 'productivity', 'energy', 'routine'],
+    },
+    forbidden: {
+      ar: ['تستطيع فعل المستحيل', 'أنت الأفضل', 'لا شيء يوقفك', 'آمن بنفسك'],
+      en: ['you can do the impossible', 'you are the best', 'nothing can stop you', 'believe in yourself'],
+    },
+    hookStyle: {
+      ar: 'ابدأ بتحدي معتقد شائع أو عادة سيئة يفعلها أغلب الناس',
+      en: 'Start by challenging a common belief or bad habit most people do',
+    },
+    depthRule: {
+      ar: 'كل نصيحة لازم تنتهي بـ "نصر صغير" (Small Win) يقدر يعمله النهاردة',
+      en: 'Every tip must end with a "Small Win" they can do today',
+    },
+  },
+
+  fashion: {
+    id: 'fashion',
+    name: 'Fashion & Beauty',
+    nameAr: 'الفاشون والجمال',
+    icon: '👗',
+    persona: {
+      ar: 'ستايلست محترف بيعرف أحدث التريندات وأسرار الأناقة',
+      en: 'Professional stylist who knows the latest trends and elegance secrets',
+    },
+    focus: {
+      ar: 'التريندات، تنسيق الملابس، الثقة بالنفس، الأناقة العملية',
+      en: 'Trends, outfit coordination, confidence, practical elegance',
+    },
+    keywords: {
+      ar: ['تريند', 'ستايل', 'لوك', 'ماتريال', 'قصة', 'ألوان', 'موسم', 'كلاسيك'],
+      en: ['trend', 'style', 'look', 'material', 'cut', 'colors', 'season', 'classic'],
+    },
+    forbidden: {
+      ar: ['شكلك هيبقى حلو', 'هتبقى أجمل واحدة', 'موضة بنت الموضة'],
+      en: ['you will look pretty', 'you\'ll be the prettiest', 'super fashionable'],
+    },
+    hookStyle: {
+      ar: 'ابدأ بخطأ ستايل شائع أو تريند جديد محدش بيتكلم عنه',
+      en: 'Start with a common style mistake or a new trend no one is talking about',
+    },
+    depthRule: {
+      ar: 'كل نصيحة لازم تكون قابلة للتطبيق (مثلاً: البنطلون ده مع أي تيشيرت أبيض)',
+      en: 'Every tip must be actionable (e.g., this pant with any white t-shirt)',
+    },
+  },
+};
+
+// ============================================
 // 📝 PROMPTS (Bilingual)
 // ============================================
 
@@ -276,12 +530,46 @@ I need specific and recent information about:
 // 🏗️ CLAUDE - Architect Story (Angle & Facts)
 // ============================================
 
-async function architectStory(researchData, topic, style, language) {
+async function architectStory(researchData, topic, style, language, niche = 'general') {
   const isAr = isArabicLang(language);
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
+  const nicheProfile = NICHES[niche] || NICHES.general;
+
+  // Build niche-specific injection
+  const nicheInjection = isAr ? `
+🎭 شخصيتك في هذا المجال:
+${nicheProfile.persona.ar}
+
+🎯 التركيز الأساسي:
+${nicheProfile.focus.ar}
+
+📝 كلمات مفتاحية يجب استخدامها:
+${nicheProfile.keywords.ar.length > 0 ? nicheProfile.keywords.ar.join('، ') : 'لا يوجد كلمات محددة'}
+
+🚫 كلمات ممنوعة في هذا المجال:
+${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
+
+💡 قاعدة العمق الخاصة:
+${nicheProfile.depthRule.ar}` : `
+🎭 Your Persona in this Niche:
+${nicheProfile.persona.en}
+
+🎯 Core Focus:
+${nicheProfile.focus.en}
+
+📝 Keywords to Use:
+${nicheProfile.keywords.en.length > 0 ? nicheProfile.keywords.en.join(', ') : 'None specific'}
+
+🚫 Forbidden Words in this Niche:
+${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
+
+💡 Special Depth Rule:
+${nicheProfile.depthRule.en}`;
 
   const prompt = isAr ? 
-`أنت "مهندس محتوى" محترف. وظيفتك هي تحليل البحث واكتشاف "عنصر الدهشة الأكبر" (The Core Surprise) الذي سيبنى عليه السكربت.
+`أنت "مهندس محتوى" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك هي تحليل البحث واكتشاف "عنصر الدهشة الأكبر" (The Core Surprise) الذي سيبنى عليه السكربت.
+
+${nicheInjection}
 
 الموضوع: ${topic}
 الأسلوب: ${styleTemplate.name}
@@ -290,15 +578,16 @@ async function architectStory(researchData, topic, style, language) {
 ${researchData}
 
 🎯 مهمتك (بالتفكير العميق):
-1. **اكتشف عنصر الدهشة (The Core Surprise):** ما هي الحقيقة أو المفارقة الأكثر إثارة للاهتمام في هذا البحث؟ (قد تكون رقماً صادماً، أو حلاً لمشكلة مؤلمة، أو معلومة تخالف المعتقد الشائع، أو صدفة غريبة).
-2. **حدد الزاوية (The Angle):** كيف سنحكي هذه القصة؟ (مثلاً: زاوية "المكسب الشخصي للمشاهد"، زاوية "الغموض والسر"، زاوية "التحدي المستحيل").
-3. **فلترة الحقائق:** استخرج فقط الحقائق (أرقام، أسماء أماكن، أحداث) التي تخدم هذه الزاوية وتجعل القصة ملموسة.
+1. **اكتشف عنصر الدهشة (The Core Surprise):** ما هي الحقيقة أو المفارقة الأكثر إثارة للاهتمام في هذا البحث بناءً على تخصصك في "${nicheProfile.nameAr}"؟
+2. **حدد الزاوية (The Angle):** كيف سنحكي هذه القصة بأسلوب خبير في "${nicheProfile.nameAr}"؟
+3. **فلترة الحقائق:** استخرج فقط الحقائق التي تخدم هذه الزاوية وتجعل القصة ملموسة.
 4. **بناء منطق القصة:** حدد تسلسل الأفكار من الجذب الأولي للوصول للنتيجة النهائية.
 
 ⚠️ قواعد صارمة:
 - ممنوع أي مقدمات عامة.
 - ركز على "لماذا هذا الخبر يغير حياة الناس أو يثير فضولهم الآن؟".
 - استخرج أي أسماء شوارع أو مناطق محددة لزيادة الواقعية.
+- استخدم الكلمات المفتاحية الخاصة بمجال "${nicheProfile.nameAr}".
 
 المطلوب رد بصيغة JSON فقط:
 {
@@ -308,7 +597,9 @@ ${researchData}
   "localContext": "أسماء أماكن أو شوارع أو تفاصيل محلية لزيادة الواقعية",
   "storyLogic": "كيف سنبني القصة من البداية للنهاية"
 }` : 
-`You are a professional "Content Architect". Your job is to analyze research and discover "The Core Surprise" that the script will be built upon.
+`You are a professional "Content Architect" specialized in "${nicheProfile.name}". Your job is to analyze research and discover "The Core Surprise" that the script will be built upon.
+
+${nicheInjection}
 
 Topic: ${topic}
 Style: ${styleTemplate.name}
@@ -317,15 +608,16 @@ Raw Research:
 ${researchData}
 
 🎯 Your Task (Deep Thinking):
-1. **Discover The Core Surprise:** What is the most interesting fact or paradox in this research? (Could be a shocking number, a solution to a painful problem, info that contradicts common belief, or a strange coincidence).
-2. **Define The Angle:** How will we tell this story? (e.g., "Personal Gain for viewer", "Mystery & Secret", "Impossible Challenge").
-3. **Filter Facts:** Extract only facts (numbers, locations, events) that serve this angle and make the story tangible.
+1. **Discover The Core Surprise:** What is the most interesting fact or paradox in this research based on your expertise in "${nicheProfile.name}"?
+2. **Define The Angle:** How will we tell this story as an expert in "${nicheProfile.name}"?
+3. **Filter Facts:** Extract only facts that serve this angle and make the story tangible.
 4. **Story Logic:** Define the sequence of ideas from the initial hook to the final result.
 
 ⚠️ Strict Rules:
 - No general introductions.
 - Focus on "Why does this matter or trigger curiosity now?".
 - Extract specific street names or local areas to increase realism.
+- Use keywords specific to "${nicheProfile.name}".
 
 Required: Return ONLY a JSON object:
 {
@@ -419,12 +711,16 @@ ${researchData}
 // 🎣 CLAUDE - Hook Architect (Based on Angle)
 // ============================================
 
-async function generateArchitectHook(topic, architectData, style, language) {
+async function generateArchitectHook(topic, architectData, style, language, niche = 'general') {
   const isAr = isArabicLang(language);
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
+  const nicheProfile = NICHES[niche] || NICHES.general;
   
   const prompt = isAr ? 
-`أنت "مهندس هوكات" محترف. وظيفتك كتابة أقوى هوك (جملة افتتاحية) يخلق "ثغرة فضول" (Curiosity Gap) لا يمكن تجاهلها.
+`أنت "مهندس هوكات" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك كتابة أقوى هوك (جملة افتتاحية) يخلق "ثغرة فضول" (Curiosity Gap) لا يمكن تجاهلها.
+
+🎭 شخصيتك: ${nicheProfile.persona.ar}
+💡 أسلوب الهوك الخاص بهذا المجال: ${nicheProfile.hookStyle.ar}
 
 الموضوع: ${topic}
 عنصر الدهشة (The Core Surprise): ${architectData.coreSurprise}
@@ -432,19 +728,23 @@ async function generateArchitectHook(topic, architectData, style, language) {
 التفاصيل المحلية: ${architectData.localContext}
 
 🎯 أنواع الهوكات المتاحة (اختار الأنسب للموضوع):
-1. **هوك "الفائدة/الألم":** ابدأ مباشرة بالنتيجة اللي تهم حياة الناس (مثلاً: "33 دقيقة بدل ساعتين").
-2. **هوك "المفارقة/التناقض":** معلومة تخالف المنطق (مثلاً: "المكان ده زحمة جداً بس السرعة فيه خيالية").
+1. **هوك "الفائدة/الألم":** ابدأ مباشرة بالنتيجة اللي تهم حياة الناس.
+2. **هوك "المفارقة/التناقض":** معلومة تخالف المنطق.
 3. **هوك "السؤال المعلق":** سؤال يخلي المشاهد لازم يعرف الإجابة.
 4. **هوك "الرقم الصادم":** إذا كان الرقم هو بطل الحكاية.
 
 ⚠️ قواعد صارمة:
 - ابدأ فوراً بـ "عنصر الجذب" (The Hook Factor).
 - ممنوع: "تخيل معايا"، "بص كده"، "خبر عاجل"، "يا جماعة".
+- ممنوع في هذا المجال: ${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
 - الطول: أقل من 15 كلمة.
 - اجعل الهوك يبدو بشرياً جداً وليس آلياً.
 
 المطلوب: اكتب الهوك النهائي مباشرة:` :
-`You are a professional "Hook Architect". Your job is to write the strongest possible opening line (Hook) that creates an irresistible "Curiosity Gap".
+`You are a professional "Hook Architect" specialized in "${nicheProfile.name}". Your job is to write the strongest possible opening line (Hook) that creates an irresistible "Curiosity Gap".
+
+🎭 Your Persona: ${nicheProfile.persona.en}
+💡 Hook Style for this Niche: ${nicheProfile.hookStyle.en}
 
 Topic: ${topic}
 The Core Surprise: ${architectData.coreSurprise}
@@ -452,14 +752,15 @@ Angle: ${architectData.angle}
 Local Context: ${architectData.localContext}
 
 🎯 Hook Types (Choose the best fit):
-1. **Benefit/Pain Hook:** Start with the direct result affecting people's lives (e.g., "33 mins instead of 2 hours").
-2. **Paradox/Contradiction Hook:** Info that defies logic (e.g., "It's super crowded yet lightning fast").
+1. **Benefit/Pain Hook:** Start with the direct result affecting people's lives.
+2. **Paradox/Contradiction Hook:** Info that defies logic.
 3. **Unanswered Question Hook:** Triggers a need for an answer.
 4. **Shocking Number Hook:** Use if the number is the main hero.
 
 ⚠️ Strict Rules:
 - Start IMMEDIATELY with the Hook Factor.
 - No clichés: "Imagine with me", "Look at this", "Breaking news".
+- Forbidden in this niche: ${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
 - Length: Less than 15 words.
 - Make it sound human and authentic.
 
@@ -584,9 +885,10 @@ Hook 3:`,
 // 📝 CLAUDE - Writer Phase (Story-Driven)
 // ============================================
 
-async function writerPhase(topic, architectData, hook, style, language, duration) {
+async function writerPhase(topic, architectData, hook, style, language, duration, niche = 'general') {
   const isAr = isArabicLang(language);
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
+  const nicheProfile = NICHES[niche] || NICHES.general;
   
   const durationConfig = {
     '15': { words: 45, maxTokens: 400 },
@@ -596,7 +898,11 @@ async function writerPhase(topic, architectData, hook, style, language, duration
   const config = durationConfig[duration] || durationConfig['60'];
 
   const prompt = isAr ? 
-`أنت "كاتب محتوى بشرى" محترف. وظيفتك كتابة سكربت Short يكمل قصة الهوك بأسلوب "الحكاية الذكية".
+`أنت "كاتب محتوى بشرى" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك كتابة سكربت Short يكمل قصة الهوك بأسلوب "الحكاية الذكية".
+
+🎭 شخصيتك: ${nicheProfile.persona.ar}
+🎯 التركيز: ${nicheProfile.focus.ar}
+💡 قاعدة العمق: ${nicheProfile.depthRule.ar}
 
 الـ HOOK: ${hook}
 الزاوية: ${architectData.angle}
@@ -605,18 +911,26 @@ async function writerPhase(topic, architectData, hook, style, language, duration
 الحقائق المختارة: ${architectData.chosenFacts}
 التفاصيل المحلية: ${architectData.localContext}
 
+📝 كلمات مفتاحية يُفضل استخدامها:
+${nicheProfile.keywords.ar.length > 0 ? nicheProfile.keywords.ar.join('، ') : 'لا يوجد'}
+
 🎯 تعليمات صارمة (منطق بشري):
 1. **ابدأ بالهوك** فوراً بدون أي ترحيب أو مقدمات.
 2. **اربط بالواقع:** استخدم التفاصيل المحلية (${architectData.localContext}) عشان تحسس الناس إنك بتتكلم عنهم.
-3. **أنسنة الأرقام:** أي رقم ضخم لازم توصفه بمشاعر أو تقارنه بحاجة ملموسة (مثلاً: بدل "600 مليون"، قول "رقم يدوّخ" أو "نص ميزانية مدينة").
+3. **أنسنة الأرقام:** أي رقم ضخم لازم توصفه بمشاعر أو تقارنه بحاجة ملموسة.
 4. **ممنوع الكليشيهات:** ممنوع تماماً: "تخيل معايا"، "بص كده"، "يا جماعة"، "هل كنت تعلم"، "ركز معايا".
-5. **الـ So What:** ركز على تأثير كل معلومة على المشاهد (المكسب الشخصي، توفير الوقت، الرفاهية).
-6. **التدفق:** اجعل الكلام يتدفق كأنك تحكي قصة لصديق في جلسة خاصة، بأسلوب ذكي وبسيط.
+5. **ممنوع في هذا المجال:** ${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
+6. **الـ So What:** ركز على تأثير كل معلومة على المشاهد (المكسب الشخصي، توفير الوقت، الرفاهية).
+7. **التدفق:** اجعل الكلام يتدفق كأنك تحكي قصة لصديق في جلسة خاصة، بأسلوب ذكي وبسيط.
 
 الطول المطلوب: ~${config.words} كلمة.
 
 السكربت:` : 
-`You are a professional "Human Content Writer". Your job is to write a Short script that continues the hook's story in a "Smart Narrative" style.
+`You are a professional "Human Content Writer" specialized in "${nicheProfile.name}". Your job is to write a Short script that continues the hook's story in a "Smart Narrative" style.
+
+🎭 Your Persona: ${nicheProfile.persona.en}
+🎯 Focus: ${nicheProfile.focus.en}
+💡 Depth Rule: ${nicheProfile.depthRule.en}
 
 HOOK: ${hook}
 Angle: ${architectData.angle}
@@ -625,13 +939,17 @@ Story Logic: ${architectData.storyLogic}
 Chosen Facts: ${architectData.chosenFacts}
 Local Context: ${architectData.localContext}
 
+📝 Keywords to use:
+${nicheProfile.keywords.en.length > 0 ? nicheProfile.keywords.en.join(', ') : 'None specific'}
+
 🎯 Strict Instructions (Human Logic):
 1. **Start with the Hook** immediately with no greetings or intros.
 2. **Connect to Reality:** Use local details (${architectData.localContext}) to make it feel authentic.
-3. **Humanize Numbers:** Describe big numbers with emotions or tangible comparisons (e.g., "A dizzying number" instead of just "600M").
+3. **Humanize Numbers:** Describe big numbers with emotions or tangible comparisons.
 4. **Ban Clichés:** Strictly NO "Imagine with me", "Look at this", "Ya jama'a", "Did you know".
-5. **The So What:** Focus on the impact on the viewer (Time saved, comfort, personal gain).
-6. **Flow:** Make it flow like you're telling a story to a friend in a private chat.
+5. **Forbidden in this niche:** ${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
+6. **The So What:** Focus on the impact on the viewer (Time saved, comfort, personal gain).
+7. **Flow:** Make it flow like you're telling a story to a friend in a private chat.
 
 Length: ~${config.words} words.
 
@@ -1167,6 +1485,12 @@ app.get('/api/config', (req, res) => {
     success: true,
     styles: Object.keys(STYLES).map(key => ({ id: key, ...STYLES[key] })),
     languages: Object.keys(LANGUAGES).map(key => ({ id: key, ...LANGUAGES[key] })),
+    niches: Object.keys(NICHES).map(key => ({ 
+      id: key, 
+      name: NICHES[key].name,
+      nameAr: NICHES[key].nameAr,
+      icon: NICHES[key].icon,
+    })),
     durations: ['15', '30', '60'],
     structure: SCRIPT_STRUCTURE,
   });
@@ -1207,14 +1531,20 @@ app.get('/api/debug/env', (req, res) => {
 
 // Generate Full Script
 app.post('/api/generate', async (req, res) => {
-  const { topic, language = 'egyptian', duration = '60', style = 'mrbeast', selectedHook } = req.body;
+  const { topic, language = 'egyptian', duration = '60', style = 'mrbeast', niche = 'general', selectedHook } = req.body;
   
   if (!topic) {
     return res.status(400).json({ success: false, error: 'Topic is required' });
   }
   
+  // Validate niche
+  const validNiche = NICHES[niche] ? niche : 'general';
+  const nicheProfile = NICHES[validNiche];
+  
   try {
     let researchData, architectData, finalHook, draftScript, humanizedScript, factCheckResult;
+    
+    console.log(`🎯 Using Niche: ${nicheProfile.name} (${nicheProfile.nameAr})`);
     
     try {
       console.log('🔍 Phase 1: Researching (Perplexity)...');
@@ -1227,7 +1557,7 @@ app.post('/api/generate', async (req, res) => {
     
     try {
       console.log('🏗️ Phase 2: Architecting Story (Claude)...');
-      architectData = await architectStory(researchData, topic, style, language);
+      architectData = await architectStory(researchData, topic, style, language, validNiche);
       console.log('✅ Phase 2 Complete');
     } catch (e) {
       console.error('❌ CLAUDE ARCHITECT ERROR:', e.response?.status, e.response?.data || e.message);
@@ -1236,7 +1566,7 @@ app.post('/api/generate', async (req, res) => {
     
     try {
       console.log('🎣 Phase 3: Creating Hook (Claude)...');
-      finalHook = selectedHook || await generateArchitectHook(topic, architectData, style, language);
+      finalHook = selectedHook || await generateArchitectHook(topic, architectData, style, language, validNiche);
       console.log('✅ Phase 3 Complete');
     } catch (e) {
       console.error('❌ CLAUDE HOOK ERROR:', e.response?.status, e.response?.data || e.message);
@@ -1245,7 +1575,7 @@ app.post('/api/generate', async (req, res) => {
     
     try {
       console.log('📝 Phase 4: Writing Script (Claude)...');
-      draftScript = await writerPhase(topic, architectData, finalHook, style, language, duration);
+      draftScript = await writerPhase(topic, architectData, finalHook, style, language, duration, validNiche);
       console.log('✅ Phase 4 Complete');
     } catch (e) {
       console.error('❌ CLAUDE WRITER ERROR:', e.response?.status, e.response?.data || e.message);
@@ -1276,6 +1606,8 @@ app.post('/api/generate', async (req, res) => {
       success: true,
       hook: finalHook,
       script: humanizedScript,
+      niche: validNiche,
+      nicheName: nicheProfile.name,
       angle: architectData.angle,
       coreSurprise: architectData.coreSurprise,
       localContext: architectData.localContext,
