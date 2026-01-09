@@ -52,6 +52,7 @@ const RULES = {
     'خاطب المشاهد مباشرة بشكل طبيعي',
     'اربط المعلومات ببعض بشكل منطقي',
     'خلي الكلام يتدفق بدون توقف مفاجئ',
+    'استخدم أسماء أماكن أو شوارع أو أشخاص لو موجودة في البحث عشان تحسس المشاهد إنك عارفه',
   ],
   depth: [
     'لكل رقم، اشرح "يعني إيه للمشاهد" - So What?',
@@ -62,13 +63,14 @@ const RULES = {
     'خلي كل رقم له وزن - اشرح ليه مهم',
   ],
   forbidden: [
-    'ممنوع تماماً: "بس استنى"، "ركز معايا"، "تخيل كده"، "شوف بقى"',
-    'ممنوع: رائع، مذهل، لا يصدق، صدمة، عجيب',
-    'ممنوع تكرار نفس البداية لأي جملتين',
+    'ممنوع تماماً: "تخيل معايا"، "بص كده"، "يا جماعة"، "هل كنت تعلم"، "ركز معايا"، "شوف بقى"',
+    'ممنوع: "يعد هذا"، "مما لا شك فيه"، "في الختام"، "باختصار"، "نستنتج أن"',
+    'ممنوع: رائع، مذهل، لا يصدق، صدمة، عجيب، مدهش (إلا لو في سياق بشري حقيقي)',
+    'ممنوع تكرار نفس البداية لأي جملتين متتاليتين',
     'ممنوع أرقام غير موجودة في الـ Datasheet',
     'ممنوع الكلام المبالغ فيه أو الدرامي الزائد',
     'ممنوع تسرد الأرقام بدون شرح تأثيرها',
-    'ممنوع "خبر عاجل" - دي hook ضعيف',
+    'ممنوع "خبر عاجل" أو "لو قلتلك" - دي hooks ضعيفة ومستهلكة',
   ],
 };
 
@@ -279,7 +281,7 @@ async function architectStory(researchData, topic, style, language) {
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
 
   const prompt = isAr ? 
-`أنت "مهندس محتوى" محترف. وظيفتك هي تحليل البحث واختيار "زاوية" قوية للقصة وفلترة الحقائق.
+`أنت "مهندس محتوى" محترف. وظيفتك هي تحليل البحث واكتشاف "عنصر الدهشة الأكبر" (The Core Surprise) الذي سيبنى عليه السكربت.
 
 الموضوع: ${topic}
 الأسلوب: ${styleTemplate.name}
@@ -287,22 +289,26 @@ async function architectStory(researchData, topic, style, language) {
 البحث الخام:
 ${researchData}
 
-🎯 مهمتك:
-1. **حدد الزاوية (The Angle):** اختار زاوية واحدة مثيرة للسكربت (مثال: زاوية اقتصادية، زاوية تحدي، زاوية مستقبلية).
-2. **فلترة الحقائق:** استخرج فقط الحقائق التي تخدم هذه الزاوية وتتعلق بـ "${topic}" مباشرة.
-3. **تحديد النبرة:** حدد كيف سنحكي هذه القصة.
+🎯 مهمتك (بالتفكير العميق):
+1. **اكتشف عنصر الدهشة (The Core Surprise):** ما هي الحقيقة أو المفارقة الأكثر إثارة للاهتمام في هذا البحث؟ (قد تكون رقماً صادماً، أو حلاً لمشكلة مؤلمة، أو معلومة تخالف المعتقد الشائع، أو صدفة غريبة).
+2. **حدد الزاوية (The Angle):** كيف سنحكي هذه القصة؟ (مثلاً: زاوية "المكسب الشخصي للمشاهد"، زاوية "الغموض والسر"، زاوية "التحدي المستحيل").
+3. **فلترة الحقائق:** استخرج فقط الحقائق (أرقام، أسماء أماكن، أحداث) التي تخدم هذه الزاوية وتجعل القصة ملموسة.
+4. **بناء منطق القصة:** حدد تسلسل الأفكار من الجذب الأولي للوصول للنتيجة النهائية.
 
 ⚠️ قواعد صارمة:
-- ممنوع أي معلومات عامة لا تتعلق بـ "${topic}" مباشرة.
-- ركز على "لماذا هذا الخبر مهم الآن؟" (The So What).
+- ممنوع أي مقدمات عامة.
+- ركز على "لماذا هذا الخبر يغير حياة الناس أو يثير فضولهم الآن؟".
+- استخرج أي أسماء شوارع أو مناطق محددة لزيادة الواقعية.
 
 المطلوب رد بصيغة JSON فقط:
 {
+  "coreSurprise": "وصف عنصر الدهشة الأساسي",
   "angle": "وصف الزاوية المختارة",
   "chosenFacts": "[F1] حقيقة 1, [F2] حقيقة 2...",
+  "localContext": "أسماء أماكن أو شوارع أو تفاصيل محلية لزيادة الواقعية",
   "storyLogic": "كيف سنبني القصة من البداية للنهاية"
 }` : 
-`You are a professional "Content Architect". Your job is to analyze research, choose a strong "Angle", and filter facts.
+`You are a professional "Content Architect". Your job is to analyze research and discover "The Core Surprise" that the script will be built upon.
 
 Topic: ${topic}
 Style: ${styleTemplate.name}
@@ -310,19 +316,23 @@ Style: ${styleTemplate.name}
 Raw Research:
 ${researchData}
 
-🎯 Your Task:
-1. **Define The Angle:** Choose one exciting angle for the script (e.g., Economic, Challenge, Futuristic).
-2. **Filter Facts:** Extract only facts that serve this angle and relate directly to "${topic}".
-3. **Define Tone:** How will we tell this story?
+🎯 Your Task (Deep Thinking):
+1. **Discover The Core Surprise:** What is the most interesting fact or paradox in this research? (Could be a shocking number, a solution to a painful problem, info that contradicts common belief, or a strange coincidence).
+2. **Define The Angle:** How will we tell this story? (e.g., "Personal Gain for viewer", "Mystery & Secret", "Impossible Challenge").
+3. **Filter Facts:** Extract only facts (numbers, locations, events) that serve this angle and make the story tangible.
+4. **Story Logic:** Define the sequence of ideas from the initial hook to the final result.
 
 ⚠️ Strict Rules:
-- No general information unrelated to "${topic}".
-- Focus on "Why does this matter now?" (The So What).
+- No general introductions.
+- Focus on "Why does this matter or trigger curiosity now?".
+- Extract specific street names or local areas to increase realism.
 
 Required: Return ONLY a JSON object:
 {
+  "coreSurprise": "Description of the core surprise",
   "angle": "Description of the chosen angle",
   "chosenFacts": "[F1] fact 1, [F2] fact 2...",
+  "localContext": "Specific names, locations, or local details for realism",
   "storyLogic": "How we will build the story from start to finish"
 }`;
 
@@ -414,26 +424,46 @@ async function generateArchitectHook(topic, architectData, style, language) {
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   
   const prompt = isAr ? 
-`أنت "مهندس هوكات" محترف. وظيفتك كتابة هوك لا يقاوم بناءً على الزاوية المختارة.
+`أنت "مهندس هوكات" محترف. وظيفتك كتابة أقوى هوك (جملة افتتاحية) يخلق "ثغرة فضول" (Curiosity Gap) لا يمكن تجاهلها.
 
 الموضوع: ${topic}
+عنصر الدهشة (The Core Surprise): ${architectData.coreSurprise}
 الزاوية: ${architectData.angle}
-الحقائق: ${architectData.chosenFacts}
+التفاصيل المحلية: ${architectData.localContext}
 
-🧠 تذكر الـ Formula:
-[رقم ضخم/صدمة] + [سؤال فضول] + [وعد بكشف] + [قصة ناقصة]
+🎯 أنواع الهوكات المتاحة (اختار الأنسب للموضوع):
+1. **هوك "الفائدة/الألم":** ابدأ مباشرة بالنتيجة اللي تهم حياة الناس (مثلاً: "33 دقيقة بدل ساعتين").
+2. **هوك "المفارقة/التناقض":** معلومة تخالف المنطق (مثلاً: "المكان ده زحمة جداً بس السرعة فيه خيالية").
+3. **هوك "السؤال المعلق":** سؤال يخلي المشاهد لازم يعرف الإجابة.
+4. **هوك "الرقم الصادم":** إذا كان الرقم هو بطل الحكاية.
 
-المطلوب اكتب أقوى هوك ممكن يخدم الزاوية دي (أقل من 15 كلمة):` :
-`You are a professional "Hook Architect". Your job is to write an irresistible hook based on the chosen angle.
+⚠️ قواعد صارمة:
+- ابدأ فوراً بـ "عنصر الجذب" (The Hook Factor).
+- ممنوع: "تخيل معايا"، "بص كده"، "خبر عاجل"، "يا جماعة".
+- الطول: أقل من 15 كلمة.
+- اجعل الهوك يبدو بشرياً جداً وليس آلياً.
+
+المطلوب: اكتب الهوك النهائي مباشرة:` :
+`You are a professional "Hook Architect". Your job is to write the strongest possible opening line (Hook) that creates an irresistible "Curiosity Gap".
 
 Topic: ${topic}
+The Core Surprise: ${architectData.coreSurprise}
 Angle: ${architectData.angle}
-Facts: ${architectData.chosenFacts}
+Local Context: ${architectData.localContext}
 
-🧠 Remember the Formula:
-[Big Number/Shock] + [Curiosity Question] + [Promise] + [Incomplete Story]
+🎯 Hook Types (Choose the best fit):
+1. **Benefit/Pain Hook:** Start with the direct result affecting people's lives (e.g., "33 mins instead of 2 hours").
+2. **Paradox/Contradiction Hook:** Info that defies logic (e.g., "It's super crowded yet lightning fast").
+3. **Unanswered Question Hook:** Triggers a need for an answer.
+4. **Shocking Number Hook:** Use if the number is the main hero.
 
-Required: Write the strongest possible hook for this angle (less than 15 words):`;
+⚠️ Strict Rules:
+- Start IMMEDIATELY with the Hook Factor.
+- No clichés: "Imagine with me", "Look at this", "Breaking news".
+- Length: Less than 15 words.
+- Make it sound human and authentic.
+
+Required: Write the final hook directly:`;
 
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
@@ -566,36 +596,42 @@ async function writerPhase(topic, architectData, hook, style, language, duration
   const config = durationConfig[duration] || durationConfig['60'];
 
   const prompt = isAr ? 
-`أنت "كاتب محتوى" محترف. وظيفتك كتابة سكربت Short يكمل قصة الهوك.
+`أنت "كاتب محتوى بشرى" محترف. وظيفتك كتابة سكربت Short يكمل قصة الهوك بأسلوب "الحكاية الذكية".
 
 الـ HOOK: ${hook}
 الزاوية: ${architectData.angle}
+الدهشة الأساسية: ${architectData.coreSurprise}
 منطق القصة: ${architectData.storyLogic}
 الحقائق المختارة: ${architectData.chosenFacts}
+التفاصيل المحلية: ${architectData.localContext}
 
-🎯 تعليمات صارمة:
-1. **ابدأ بالهوك** بالحرف كما هو.
-2. **كمل القصة:** لا تسرق أرقام، بل احكي "ليه ده مهم" (So What).
-3. **التدفق:** اجعل السكربت متدفقاً بشكل طبيعي كأنك تحكي قصة لصديق.
-4. **العمق:** اشرح تأثير كل حقيقة (المكسب، التوفير، الوظائف، المستقبل).
-5. **الالتزام:** استخدم فقط الحقائق في "architectData".
+🎯 تعليمات صارمة (منطق بشري):
+1. **ابدأ بالهوك** فوراً بدون أي ترحيب أو مقدمات.
+2. **اربط بالواقع:** استخدم التفاصيل المحلية (${architectData.localContext}) عشان تحسس الناس إنك بتتكلم عنهم.
+3. **أنسنة الأرقام:** أي رقم ضخم لازم توصفه بمشاعر أو تقارنه بحاجة ملموسة (مثلاً: بدل "600 مليون"، قول "رقم يدوّخ" أو "نص ميزانية مدينة").
+4. **ممنوع الكليشيهات:** ممنوع تماماً: "تخيل معايا"، "بص كده"، "يا جماعة"، "هل كنت تعلم"، "ركز معايا".
+5. **الـ So What:** ركز على تأثير كل معلومة على المشاهد (المكسب الشخصي، توفير الوقت، الرفاهية).
+6. **التدفق:** اجعل الكلام يتدفق كأنك تحكي قصة لصديق في جلسة خاصة، بأسلوب ذكي وبسيط.
 
 الطول المطلوب: ~${config.words} كلمة.
 
 السكربت:` : 
-`You are a professional "Content Writer". Your job is to write a Short script that fulfills the hook's promise.
+`You are a professional "Human Content Writer". Your job is to write a Short script that continues the hook's story in a "Smart Narrative" style.
 
 HOOK: ${hook}
 Angle: ${architectData.angle}
+Core Surprise: ${architectData.coreSurprise}
 Story Logic: ${architectData.storyLogic}
 Chosen Facts: ${architectData.chosenFacts}
+Local Context: ${architectData.localContext}
 
-🎯 Strict Instructions:
-1. **Start with the Hook** exactly as it is.
-2. **Tell the Story:** Don't just list numbers, tell "Why it matters" (So What).
-3. **Flow:** Make the script flow naturally as if talking to a friend.
-4. **Depth:** Explain the impact of every fact (Profit, Savings, Jobs, Future).
-5. **Enforcement:** Use ONLY the facts provided.
+🎯 Strict Instructions (Human Logic):
+1. **Start with the Hook** immediately with no greetings or intros.
+2. **Connect to Reality:** Use local details (${architectData.localContext}) to make it feel authentic.
+3. **Humanize Numbers:** Describe big numbers with emotions or tangible comparisons (e.g., "A dizzying number" instead of just "600M").
+4. **Ban Clichés:** Strictly NO "Imagine with me", "Look at this", "Ya jama'a", "Did you know".
+5. **The So What:** Focus on the impact on the viewer (Time saved, comfort, personal gain).
+6. **Flow:** Make it flow like you're telling a story to a friend in a private chat.
 
 Length: ~${config.words} words.
 
@@ -753,7 +789,7 @@ async function geminiPolish(script, datasheet, style, language) {
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const isAr = isArabicLang(language);
   
-  const prompt = isAr ? `أنت "محرر محتوى بشري" خبير. وظيفتك هي تحويل السكربت من "كتابة ذكاء اصطناعي" إلى "كتابة بشرية حقيقية".
+  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك هي مراجعة السكربت وجعله يبدو وكأنه كُتب بواسطة شخص خبير وليس ذكاء اصطناعي.
 
 📝 السكربت الحالي:
 ${script}
@@ -761,15 +797,16 @@ ${script}
 📊 الحقائق المرجعية:
 ${datasheet}
 
-🎯 المطلوب (أهم مرحلة):
-1. **De-AI-fy:** شيل أي جمل كليشيه (مثال: "يعد هذا.."، "مما لا شك فيه"، "في الختام").
-2. **Visual Cues:** أضف تعليمات بين قوسين للمونتاج [زووم]، [B-roll مصنع]، [نص: 480 ميجاواط].
-3. **Pacing:** أضف [وقفة ثانية] في الأماكن المناسبة للتشويق.
-4. **Simplification:** بسط المصطلحات التقنية جداً لمصطلحات يفهمها أي حد.
-5. **Comparison:** تأكد إن كل رقم ضخم له مقارنة بشرية (زي: "بحجم 500 ملعب كورة").
+🎯 المطلوب منك (بمنطق بشري):
+1. **De-AI-fy:** احذف أي جملة تشير إلى أنك ذكاء اصطناعي، أو أي مقدمة تصف ما قمت به (مثال: ممنوع تقول "بصفتي محرر.." أو "إليك السكربت المحسن").
+2. **الرد المباشر:** رد بالسكربت النهائي "فقط" من أول كلمة لآخر كلمة.
+3. **ضبط الإيقاع:** تأكد أن الجمل قصيرة، قوية، ومترابطة.
+4. **شيل الزيادات:** احذف أي تعليمات للمونتاج أو ملاحظات بين قوسين (لا نريد [زووم] أو [B-roll]).
+5. **تبسيط اللغة:** اجعل اللهجة طبيعية جداً، كأنها "حكاية" تُروى، وتأكد من حذف الكليشيهات (تخيل، يا جماعة، إلخ).
+6. **أنسنة الأرقام:** تأكد أن كل رقم ضخم له "وقع" أو "تفسير" ملموس.
 
-المطلوب رد بصيغة السكربت النهائي مباشرة مع تعليمات المونتاج.` : 
-`You are an expert "Human Content Editor". Your job is to transform the script from "AI writing" to "Real Human writing".
+المطلوب: السكربت الصافي فقط بدون أي كلام إضافي.` : 
+`You are a genius "Human Content Editor". Your job is to review the script and make it look like it was written by an expert human, not AI.
 
 📝 Current Script:
 ${script}
@@ -777,14 +814,15 @@ ${script}
 📊 Reference Facts:
 ${datasheet}
 
-🎯 Requirements:
-1. **De-AI-fy:** Remove any cliché AI sentences (e.g., "In conclusion", "This is considered").
-2. **Visual Cues:** Add editing instructions in brackets [Zoom in], [B-roll Factory], [Text: 480 MW].
-3. **Pacing:** Add [Pause 1s] in appropriate places for suspense.
-4. **Simplification:** Simplify technical terms for general audience.
-5. **Comparison:** Ensure every big number has a human comparison.
+🎯 Your Task (Human Logic):
+1. **De-AI-fy:** Remove any sentence indicating you are AI or any intro describing what you did (e.g., No "As an editor.." or "Here is the improved script").
+2. **Direct Response:** Reply with the final script ONLY, from the first word to the last.
+3. **Rhythm:** Ensure sentences are short, strong, and connected.
+4. **Clean up:** Remove any editing instructions or notes in brackets (No [Zoom], [B-roll]).
+5. **Simplify:** Make the tone very natural, like a story being told, and ensure all clichés are gone (Imagine, guys, etc.).
+6. **Humanize Numbers:** Ensure every big number has a tangible "impact" or "explanation".
 
-Required: Return the final script directly with editing instructions.`;
+Required: The raw script only with no additional text.`;
 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
@@ -1239,6 +1277,8 @@ app.post('/api/generate', async (req, res) => {
       hook: finalHook,
       script: humanizedScript,
       angle: architectData.angle,
+      coreSurprise: architectData.coreSurprise,
+      localContext: architectData.localContext,
       datasheet: architectData.chosenFacts,
       factCheck: factCheckResult,
       wordCount: humanizedScript.split(/\s+/).length,
