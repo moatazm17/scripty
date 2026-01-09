@@ -17,7 +17,7 @@ const CONFIG = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
-  GEMINI_MODEL: 'gemini-2.0-flash-thinking-exp-01-21',
+  GEMINI_MODEL: 'gemini-2.5-flash',  // Has thinking mode built-in
 };
 
 // Log missing envs early for easier debugging (no values are printed)
