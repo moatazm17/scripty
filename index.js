@@ -216,7 +216,32 @@ function getPrompt(key, lang, replacements = {}) {
 // ============================================
 
 async function researchTopic(topic, language) {
-  const langPrompt = LANGUAGES[language]?.prompt || LANGUAGES.egyptian.prompt;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
+  const isAr = isArabicLang(language);
+  
+  const systemPrompt = isAr
+    ? `أنت مساعد بحث. ابحث عن أحدث المعلومات الدقيقة. ${langConfig.prompt}`
+    : `You are a research assistant. Find the latest and most accurate information. ${langConfig.prompt}`;
+  
+  const userPrompt = isAr
+    ? `ابحث بدقة شديدة عن: ${topic}
+
+اريد معلومات محددة وحديثة عن:
+- ${topic} بالظبط (مش مواضيع عامة)
+- أرقام وإحصائيات دقيقة
+- تواريخ وأحداث مهمة
+- مصادر موثوقة
+
+⚠️ مهم: ركز على الموضوع المحدد بالظبط، مش موضوع عام!`
+    : `Research specifically about: ${topic}
+
+I need specific and recent information about:
+- ${topic} exactly (not general topics)
+- Specific numbers and statistics
+- Important dates and events
+- Reliable sources
+
+⚠️ Important: Focus on the specific topic exactly, not general topics!`;
   
   const response = await axios.post(
     'https://api.perplexity.ai/chat/completions',
@@ -225,20 +250,14 @@ async function researchTopic(topic, language) {
       messages: [
         {
           role: 'system',
-          content: `You are a research assistant. Find the latest and most accurate information. ${langPrompt}`,
+          content: systemPrompt,
         },
         {
           role: 'user',
-          content: `ابحث عن أحدث المعلومات والحقائق عن: ${topic}
-          
-اريد:
-- أرقام وإحصائيات محددة
-- تواريخ مهمة
-- حقائق مثيرة للاهتمام
-- مصادر موثوقة`,
+          content: userPrompt,
         },
       ],
-      max_tokens: 2000,
+      max_tokens: 2500,
     },
     {
       headers: {
@@ -260,11 +279,13 @@ async function extractDatasheet(researchData, topic) {
     'https://api.anthropic.com/v1/messages',
     {
       model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [
         {
           role: 'user',
           content: `من البحث التالي، استخرج الحقائق والأرقام المتعلقة بـ "${topic}" فقط.
+
+⚠️ مهم جداً: الموضوع المحدد هو "${topic}" - مش موضوع عام!
 
 البحث:
 ${researchData}
@@ -274,9 +295,16 @@ ${researchData}
 [F2] الحقيقة الثانية
 ... وهكذا
 
-قواعد:
-- استخرج فقط الحقائق المتعلقة مباشرة بـ "${topic}"
-- تجاهل أي معلومات عن مواضيع أخرى`,
+قواعد صارمة:
+- استخرج فقط الحقائق المتعلقة **مباشرة** بـ "${topic}"
+- لو البحث عن شخص معين (مثل: أبو هشيمة)، ركز على هذا الشخص بالظبط
+- لو البحث عن مشروع محدد، ركز على المشروع ده بالظبط
+- تجاهل تماماً أي معلومات عامة أو مواضيع أخرى
+- لو المعلومات المتاحة قليلة، اكتب اللي متاح بس - ما تضيفش معلومات عامة
+
+مثال:
+❌ غلط: لو الموضوع "أبو هشيمة مصنع BESS"، ما تستخرجش حقائق عن الطاقة الشمسية في مصر عموماً
+✅ صح: استخرج حقائق عن أبو هشيمة والمصنع بالظبط`,
         },
       ],
     },
@@ -400,16 +428,16 @@ async function generateScriptWithoutHook(topic, datasheet, style, language, dura
   const isAr = isArabicLang(language);
   
   const durationConfig = {
-    '15': { words: 55 },   // Less words (saving space for hook)
-    '30': { words: 110 },
-    '60': { words: 240 },
+    '15': { words: 45, maxTokens: 400 },
+    '30': { words: 90, maxTokens: 800 },
+    '60': { words: 180, maxTokens: 1500 },  // ~3 words per second
   };
   
   const config = durationConfig[duration] || durationConfig['60'];
   
   const intro = isAr
-    ? `أنت كاتب سكربتات محترف. اكتب محتوى السكربت (${duration} ثانية) عن "${topic}".\n\n⚠️ مهم: اكتب المحتوى بدون Hook - الـ Hook هيتضاف لاحقاً في البداية.`
-    : `You're a professional script writer. Write the script content (${duration} seconds) about "${topic}".\n\n⚠️ Important: Write content WITHOUT a hook - the hook will be added later at the beginning.`;
+    ? `أنت كاتب سكربتات محترف. اكتب محتوى سكربت قصير (${duration} ثانية) عن "${topic}".\n\n⚠️ مهم جداً:\n- الموضوع المحدد: "${topic}" (مش موضوع عام!)\n- بدون Hook في البداية - الـ Hook هيتضاف لاحقاً\n- الطول: ~${config.words} كلمة MAXIMUM (ملتزم بالعدد ده!)`
+    : `You're a professional script writer. Write a short script content (${duration} seconds) about "${topic}".\n\n⚠️ CRITICAL:\n- Specific topic: "${topic}" (not general topic!)\n- NO Hook at the beginning - hook will be added later\n- Length: ~${config.words} words MAXIMUM (stick to this number!)`;
   
   const structure = isAr ? 
 `📐 الهيكل (بدون Hook):
@@ -492,13 +520,13 @@ ${depthExample}
 ${finalInstructions}
 ═══════════════════════════════════════
 
-${isAr ? `المحتوى (~${config.words} كلمة):` : `The content (~${config.words} words):`}`;
+${isAr ? `المحتوى (~${config.words} كلمة - MAXIMUM):` : `The content (~${config.words} words - MAXIMUM):`}`;
 
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {
       model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 3000,
+      max_tokens: config.maxTokens,  // Strict limit
       messages: [{ role: 'user', content: prompt }],
     },
     {
