@@ -14,14 +14,17 @@ app.use(express.json());
 const CONFIG = {
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
   CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
+  GEMINI_MODEL: 'gemini-2.0-flash-thinking-exp-01-21',
 };
 
 // Log missing envs early for easier debugging (no values are printed)
 const missingEnv = [];
 if (!CONFIG.PERPLEXITY_API_KEY) missingEnv.push('PERPLEXITY_API_KEY');
 if (!CONFIG.CLAUDE_API_KEY) missingEnv.push('CLAUDE_API_KEY');
+if (!CONFIG.GEMINI_API_KEY) missingEnv.push('GEMINI_API_KEY');
 if (missingEnv.length) {
   console.error('⚠️ Missing env vars:', missingEnv.join(', '));
 }
@@ -389,60 +392,60 @@ Hook 3:`,
 // 📝 CLAUDE - Generate Script
 // ============================================
 
-async function generateScript(topic, datasheet, hook, style, language, duration) {
+// NOTE: This function now generates script WITHOUT a hook
+// Hook will be added later after seeing the full content
+async function generateScriptWithoutHook(topic, datasheet, style, language, duration) {
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
   const isAr = isArabicLang(language);
   
   const durationConfig = {
-    '15': { words: 60 },   // More words for depth
-    '30': { words: 120 },  // More words for depth
-    '60': { words: 250 },  // More words for depth
+    '15': { words: 55 },   // Less words (saving space for hook)
+    '30': { words: 110 },
+    '60': { words: 240 },
   };
   
   const config = durationConfig[duration] || durationConfig['60'];
   
   const intro = isAr
-    ? `أنت كاتب سكربتات محترف. اكتب سكربت عميق ومتعمق (${duration} ثانية) عن "${topic}".`
-    : `You're a professional script writer. Write a deep, detailed script (${duration} seconds) about "${topic}".`;
+    ? `أنت كاتب سكربتات محترف. اكتب محتوى السكربت (${duration} ثانية) عن "${topic}".\n\n⚠️ مهم: اكتب المحتوى بدون Hook - الـ Hook هيتضاف لاحقاً في البداية.`
+    : `You're a professional script writer. Write the script content (${duration} seconds) about "${topic}".\n\n⚠️ Important: Write content WITHOUT a hook - the hook will be added later at the beginning.`;
   
   const structure = isAr ? 
-`📐 هيكل السكربت (${duration} ثانية):
-1. 🎣 HOOK (3s): ابدأ بالـ hook اللي فوق بالظبط
-2. 📍 CONTEXT (12s): اشرح الموضوع والسياق - ليه مهم؟
-3. 📚 DEEP DIVE (35-40s): التفاصيل المهمة
-4. ✅ CTA (10s): ختام قوي + اطلب التفاعل` :
-`📐 Script Structure (${duration} seconds):
-1. 🎣 HOOK (3s): Start with the hook above exactly
-2. 📍 CONTEXT (12s): Explain the topic and context - why it matters?
-3. 📚 DEEP DIVE (35-40s): Important details
-4. ✅ CTA (10s): Strong ending + ask for engagement`;
+`📐 الهيكل (بدون Hook):
+1. 📍 CONTEXT (10-12s): ابدأ مباشرة بشرح الموضوع - إيه الحكاية؟
+2. 📚 DEEP DIVE (38-42s): ادخل في التفاصيل:
+   • كل رقم اشرح تأثيره (مثال: 480 ميجاواط = كهرباء 500 ألف بيت)
+   • قارن بحاجات معروفة
+   • وضّح السياق الأكبر
+3. ✅ CTA (8-10s): ختام قوي + اطلب التفاعل` :
+`📐 Structure (without Hook):
+1. 📍 CONTEXT (10-12s): Start directly explaining the topic - what's the story?
+2. 📚 DEEP DIVE (38-42s): Get into details:
+   • Explain impact for each number (e.g., 480 MW = electricity for 500K homes)
+   • Compare to known things
+   • Clarify the bigger context
+3. ✅ CTA (8-10s): Strong ending + ask for engagement`;
 
   const depthExample = isAr ?
 `❌ سطحي: "المركز مساحته 30 مليون قدم"
-✅ عميق: "المركز مساحته 30 مليون قدم - يعني بحجم 500 ملعب كورة!"
-
-❌ سطحي: "هيضيف 10 مليار للاقتصاد"
-✅ عميق: "هيضيف 10 مليار - يعني 30 ألف وظيفة جديدة!"` :
-`❌ Shallow: "The center is 30 million square feet"
-✅ Deep: "The center is 30 million sq ft - the size of 500 football fields!"
-
-❌ Shallow: "Will add $10 billion to economy"
-✅ Deep: "Will add $10 billion - meaning 30,000 new jobs!"`;
+✅ عميق: "المركز مساحته 30 مليون قدم - بحجم 500 ملعب كورة!"` :
+`❌ Shallow: "The center is 30 million sq ft"
+✅ Deep: "The center is 30 million sq ft - the size of 500 football fields!"`;
 
   const finalInstructions = isAr ?
 `⚡ تعليمات مهمة:
-1. ابدأ بالـ HOOK اللي فوق - أول جملة بالحرف
-2. احكي قصة كاملة - مش سرد أرقام
-3. كل رقم اشرح تأثيره - يعني إيه؟
-4. اربط بحياة المشاهد - خليه يحس إنها تهمه
-5. خلي السكربت متدفق ومترابط` :
+1. ابدأ مباشرة بالسياق - بدون hook
+2. احكي قصة كاملة ومترابطة
+3. كل رقم اشرح تأثيره بوضوح
+4. اربط بحياة المشاهد
+5. خلي التدفق سلس من أول لآخر` :
 `⚡ Critical Instructions:
-1. Start with the HOOK above - first sentence exactly
-2. Tell a complete story - not listing numbers
-3. For every number, explain impact - so what?
-4. Connect to viewer's life - make them feel it matters
-5. Keep the script flowing and connected`;
+1. Start directly with context - no hook
+2. Tell a complete, connected story
+3. Explain impact for every number clearly
+4. Connect to viewer's life
+5. Keep flow smooth from start to finish`;
 
   const prompt = `${intro}
 
@@ -450,13 +453,6 @@ async function generateScript(topic, datasheet, hook, style, language, duration)
 📊 ${isAr ? 'الحقائق المتاحة' : 'Available Facts'}:
 ═══════════════════════════════════════
 ${datasheet}
-
-═══════════════════════════════════════
-🎣 ${isAr ? 'الـ HOOK (إلزامي)' : 'THE HOOK (MANDATORY)'}:
-═══════════════════════════════════════
-${hook}
-
-${isAr ? '⚠️ مهم: السكربت لازم يبدأ بالـ HOOK ده بالظبط!' : '⚠️ CRITICAL: Script MUST start with this HOOK exactly!'}
 
 ═══════════════════════════════════════
 🎭 ${isAr ? 'الأسلوب' : 'Style'}: ${styleTemplate.name}
@@ -496,8 +492,232 @@ ${depthExample}
 ${finalInstructions}
 ═══════════════════════════════════════
 
-${isAr ? `السكربت (~${config.words} كلمة):` : `The script (~${config.words} words):`}
-${isAr ? '[ابدأ هنا بالـ HOOK]' : '[Start here with the HOOK]'}`;
+${isAr ? `المحتوى (~${config.words} كلمة):` : `The content (~${config.words} words):`}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  return response.data.content[0].text;
+}
+
+// ============================================
+// ✨ GEMINI - Polish & Critique
+// ============================================
+
+async function geminiPolish(script, datasheet, style, language) {
+  const styleTemplate = STYLES[style] || STYLES.mrbeast;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
+  const isAr = isArabicLang(language);
+  
+  const prompt = isAr ? `أنت محرر محتوى محترف. راجع السكربت ده وحسّنه:
+
+📝 السكربت الحالي:
+${script}
+
+📊 الحقائق المتاحة (للمرجعية):
+${datasheet}
+
+🎯 مهمتك:
+1. **راجع الجودة:** قيّم السكربت من 1-10
+2. **صحّح الأخطاء:** إملاء، نحو، أرقام
+3. **بسّط اللهجة:** كلمات معقدة → أبسط
+4. **وضّح الشروحات:** كل رقم له تأثير واضح
+5. **حسّن التدفق:** انتقالات سلسة
+6. **احتفظ بالعمق:** نفس الطول والتفاصيل
+
+الأسلوب: ${styleTemplate.name}
+${langConfig.prompt}
+
+فكّر بصوت عالٍ، ثم اكتب السكربت المحسّن.` : 
+`You're a professional content editor. Review and improve this script:
+
+📝 Current Script:
+${script}
+
+📊 Available Facts (for reference):
+${datasheet}
+
+🎯 Your Task:
+1. **Review quality:** Rate the script 1-10
+2. **Fix errors:** Spelling, grammar, numbers
+3. **Simplify language:** Complex words → simpler
+4. **Clarify explanations:** Every number has clear impact
+5. **Improve flow:** Smooth transitions
+6. **Keep depth:** Same length and details
+
+Style: ${styleTemplate.name}
+${langConfig.prompt}
+
+Think out loud, then write the improved script.`;
+
+  const response = await axios.post(
+    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    {
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 3000,
+      },
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  const result = response.data.candidates[0].content.parts[0].text;
+  return result;
+}
+
+// ============================================
+// 🎣 CLAUDE - Generate Final Hook (After seeing script)
+// ============================================
+
+async function generateFinalHook(script, datasheet, style, language) {
+  const styleTemplate = STYLES[style] || STYLES.mrbeast;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
+  const isAr = isArabicLang(language);
+  
+  const intro = isAr
+    ? `أنت خبير hooks. اقرأ السكربت الكامل ده واكتب أقوى hook ممكن له:`
+    : `You're a hooks expert. Read this complete script and write the strongest possible hook for it:`;
+  
+  const principles = isAr ?
+`🧠 مبادئ الـ Hook القوي:
+• رقم ضخم + سؤال فضول + وعد + قصة ناقصة
+• استخدم أقوى رقم/فكرة من السكربت
+• أثر الفضول - المشاهد لازم يكمل
+• أقل من 15 كلمة` :
+`🧠 Powerful Hook Principles:
+• Big number + curiosity question + promise + incomplete story
+• Use the strongest number/idea from the script
+• Create curiosity - viewer must continue
+• Less than 15 words`;
+
+  const examples = isAr ?
+`📝 أمثلة (للإلهام فقط):
+• "17 مليار دولار... إزاي الصين لقت الفرصة دي؟"
+• "480 ميجاواط - نص مليون بيت... ليه دلوقتي؟"
+• "من 37 لـ 25 عالمياً في سنتين... إيه السر؟"` :
+`📝 Examples (inspiration only):
+• "17 billion dollars... How did China spot this opportunity?"
+• "480 megawatts - half a million homes... Why now?"
+• "From 37th to 25th globally in 2 years... What's the secret?"`;
+
+  const prompt = `${intro}
+
+═══════════════════════════════════════
+📝 ${isAr ? 'السكربت الكامل' : 'Complete Script'}:
+═══════════════════════════════════════
+${script}
+
+═══════════════════════════════════════
+📊 ${isAr ? 'الحقائق المتاحة' : 'Available Facts'}:
+═══════════════════════════════════════
+${datasheet}
+
+═══════════════════════════════════════
+🎭 ${isAr ? 'الأسلوب' : 'Style'}: ${styleTemplate.name}
+═══════════════════════════════════════
+${styleTemplate.tone}
+
+═══════════════════════════════════════
+${principles}
+═══════════════════════════════════════
+
+═══════════════════════════════════════
+${examples}
+═══════════════════════════════════════
+
+${langConfig.prompt}
+
+⚠️ ${isAr ? 'ممنوع' : 'Forbidden'}: ${isAr ? '"خبر عاجل"، "لو قلتلك"، "محدش هيصدق"' : '"Breaking news", "You won\'t believe", clichés'}
+
+═══════════════════════════════════════
+
+${isAr ? 'اكتب الـ Hook المثالي للسكربت ده (استخدم المبادئ، مش الأمثلة):' : 'Write the perfect hook for this script (use principles, not examples):'}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 200,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  return response.data.content[0].text.trim();
+}
+
+// ============================================
+// 🔗 CLAUDE - Integrate Hook into Script
+// ============================================
+
+async function integrateHook(script, hook, style, language) {
+  const styleTemplate = STYLES[style] || STYLES.mrbeast;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
+  const isAr = isArabicLang(language);
+  
+  const prompt = isAr ?
+`أضف الـ Hook ده في بداية السكربت واربطه بشكل سلس:
+
+🎣 الـ Hook:
+${hook}
+
+📝 السكربت:
+${script}
+
+المطلوب:
+1. ضع الـ Hook في أول سطر
+2. اربطه بشكل طبيعي مع باقي المحتوى
+3. تأكد إن الانتقال من الـ Hook للـ Context سلس
+4. حافظ على كل المحتوى الموجود
+
+الأسلوب: ${styleTemplate.name}
+${langConfig.prompt}
+
+السكربت الكامل:` :
+`Add this Hook at the beginning of the script and connect it smoothly:
+
+🎣 The Hook:
+${hook}
+
+📝 The Script:
+${script}
+
+Required:
+1. Place the Hook as the first line
+2. Connect it naturally with the rest of the content
+3. Ensure smooth transition from Hook to Context
+4. Keep all existing content
+
+Style: ${styleTemplate.name}
+${langConfig.prompt}
+
+The complete script:`;
 
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
@@ -708,8 +928,10 @@ app.get('/api/debug/env', (req, res) => {
     success: true,
     hasPerplexity: !!CONFIG.PERPLEXITY_API_KEY,
     hasClaude: !!CONFIG.CLAUDE_API_KEY,
+    hasGemini: !!CONFIG.GEMINI_API_KEY,
     modelPerplexity: CONFIG.PERPLEXITY_MODEL,
     modelClaude: CONFIG.CLAUDE_MODEL,
+    modelGemini: CONFIG.GEMINI_MODEL,
     envKeysFound: allEnvKeys,
     // Show more details
     claudeKeyLength: rawClaude ? rawClaude.length : 0,
@@ -731,41 +953,39 @@ app.post('/api/generate', async (req, res) => {
   }
   
   try {
-    console.log('Step 1: Researching...');
+    console.log('🔍 Step 1: Researching...');
     const researchData = await researchTopic(topic, language);
     
-    console.log('Step 2: Extracting datasheet...');
+    console.log('📊 Step 2: Extracting datasheet...');
     const datasheet = await extractDatasheet(researchData, topic);
     
-    let hook = selectedHook;
-    let hooks = [];
-    if (!hook) {
-      console.log('Step 3: Generating hooks...');
-      hooks = await generateHooks(topic, datasheet, style, language);
-      hook = hooks[0];
-    }
+    console.log('📝 Step 3: Writing script (without hook)...');
+    const scriptWithoutHook = await generateScriptWithoutHook(topic, datasheet, style, language, duration);
     
-    console.log('Step 4: Generating script...');
-    const script = await generateScript(topic, datasheet, hook, style, language, duration);
+    console.log('✨ Step 4: Polishing with Gemini Thinking...');
+    const polishedScript = await geminiPolish(scriptWithoutHook, datasheet, style, language);
     
-    console.log('Step 5: Fact checking...');
-    const factCheckResult = await factCheck(script, datasheet);
+    console.log('🎣 Step 5: Generating final hook...');
+    const finalHook = selectedHook || await generateFinalHook(polishedScript, datasheet, style, language);
     
-    // Always polish the script for better quality
-    console.log('Step 6: Polishing & refining...');
-    const finalScript = await polishScript(script, factCheckResult, style, language, hook);
+    console.log('🔗 Step 6: Integrating hook...');
+    const scriptWithHook = await integrateHook(polishedScript, finalHook, style, language);
+    
+    console.log('✅ Step 7: Final fact check...');
+    const factCheckResult = await factCheck(scriptWithHook, datasheet);
     
     res.json({
       success: true,
-      hooks: hooks.length > 0 ? hooks : [hook],
-      script: finalScript,
+      hook: finalHook,
+      script: scriptWithHook,
       datasheet,
       factCheck: factCheckResult,
-      wordCount: finalScript.split(/\s+/).length,
+      wordCount: scriptWithHook.split(/\s+/).length,
+      pipeline: 'Claude → Gemini Polish → Hook → Integration',
     });
     
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error('❌ Error:', error.response?.data || error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
