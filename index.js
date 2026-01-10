@@ -114,17 +114,17 @@ const STYLES = {
 const LANGUAGES = {
   egyptian: {
     name: 'Egyptian Arabic',
-    prompt: 'اكتب باللهجة المصرية العامية. استخدم: "يعني"، "كده"، "خالص"، "أوي".',
+    prompt: 'اكتب باللهجة المصرية العامية "الصايعة" والذكية. استخدم: "يعني"، "كده"، "خالص"، "أوي". ممنوع الفصحى نهائياً.',
     isArabic: true,
   },
   gulf: {
     name: 'Gulf Arabic',
-    prompt: 'اكتب باللهجة الخليجية. استخدم: "وايد"، "زين"، "حيل".',
+    prompt: 'اكتب باللهجة الخليجية (سعودي، إماراتي). استخدم: "وايد"، "زين"، "حيل"، "طال عمرك". ممنوع الفصحى.',
     isArabic: true,
   },
   levantine: {
     name: 'Levantine Arabic',
-    prompt: 'اكتب باللهجة الشامية. استخدم: "كتير"، "هيك"، "منيح".',
+    prompt: 'اكتب باللهجة الشامية (سوري، لبناني). استخدم: "كتير"، "هيك"، "منيح"، "شو في". ممنوع الفصحى.',
     isArabic: true,
   },
   english: {
@@ -717,9 +717,13 @@ async function generateArchitectHook(topic, architectData, style, language, nich
   const isAr = isArabicLang(language);
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const nicheProfile = NICHES[niche] || NICHES.general;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
   
   const prompt = isAr ? 
 `أنت "مهندس هوكات" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك كتابة أقوى هوك (جملة افتتاحية) يخلق "ثغرة فضول" (Curiosity Gap) لا يمكن تجاهلها.
+
+⚠️ تعليمات اللهجة:
+${langConfig.prompt}
 
 🎭 شخصيتك: ${nicheProfile.persona.ar}
 💡 أسلوب الهوك الخاص بهذا المجال: ${nicheProfile.hookStyle.ar}
@@ -736,6 +740,7 @@ async function generateArchitectHook(topic, architectData, style, language, nich
 4. **هوك "الرقم الصادم":** إذا كان الرقم هو بطل الحكاية.
 
 ⚠️ قواعد صارمة:
+- استخدم اللهجة المحددة أعلاه تماماً (ممنوع الفصحى).
 - ابدأ فوراً بـ "عنصر الجذب" (The Hook Factor).
 - ممنوع: "تخيل معايا"، "بص كده"، "خبر عاجل"، "يا جماعة".
 - ممنوع في هذا المجال: ${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
@@ -744,6 +749,9 @@ async function generateArchitectHook(topic, architectData, style, language, nich
 
 المطلوب: اكتب الهوك النهائي مباشرة:` :
 `You are a professional "Hook Architect" specialized in "${nicheProfile.name}". Your job is to write the strongest possible opening line (Hook) that creates an irresistible "Curiosity Gap".
+
+⚠️ Language Instructions:
+${langConfig.prompt}
 
 🎭 Your Persona: ${nicheProfile.persona.en}
 💡 Hook Style for this Niche: ${nicheProfile.hookStyle.en}
@@ -760,6 +768,7 @@ Local Context: ${architectData.localContext}
 4. **Shocking Number Hook:** Use if the number is the main hero.
 
 ⚠️ Strict Rules:
+- Use the specified dialect/language.
 - Start IMMEDIATELY with the Hook Factor.
 - No clichés: "Imagine with me", "Look at this", "Breaking news".
 - Forbidden in this niche: ${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
@@ -891,6 +900,7 @@ async function writerPhase(topic, architectData, hook, style, language, duration
   const isAr = isArabicLang(language);
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const nicheProfile = NICHES[niche] || NICHES.general;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
   
   const durationConfig = {
     '15': { words: 60, maxTokens: 500 },
@@ -901,6 +911,9 @@ async function writerPhase(topic, architectData, hook, style, language, duration
 
   const prompt = isAr ? 
 `أنت "كاتب محتوى بشرى" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك كتابة سكربت Short يكمل قصة الهوك بأسلوب "الحكاية الذكية".
+
+⚠️ تعليمات اللهجة (التزم بها بنسبة 100%):
+${langConfig.prompt}
 
 🎭 شخصيتك: ${nicheProfile.persona.ar}
 🎯 التركيز: ${nicheProfile.focus.ar}
@@ -917,18 +930,22 @@ async function writerPhase(topic, architectData, hook, style, language, duration
 ${nicheProfile.keywords.ar.length > 0 ? nicheProfile.keywords.ar.join('، ') : 'لا يوجد'}
 
 🎯 تعليمات صارمة (منطق بشري):
-1. **ابدأ بالهوك** فوراً بدون أي ترحيب أو مقدمات.
-2. **اربط بالواقع:** استخدم التفاصيل المحلية (${architectData.localContext}) عشان تحسس الناس إنك بتتكلم عنهم.
-3. **أنسنة الأرقام:** أي رقم ضخم لازم توصفه بمشاعر أو تقارنه بحاجة ملموسة.
-4. **ممنوع الكليشيهات:** ممنوع تماماً: "تخيل معايا"، "بص كده"، "يا جماعة"، "هل كنت تعلم"، "ركز معايا".
-5. **ممنوع في هذا المجال:** ${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
-6. **الـ So What:** ركز على تأثير كل معلومة على المشاهد (المكسب الشخصي، توفير الوقت، الرفاهية).
-7. **التدفق:** اجعل الكلام يتدفق كأنك تحكي قصة لصديق في جلسة خاصة، بأسلوب ذكي وبسيط.
+1. **استخدم اللهجة المحددة:** ممنوع استخدام الفصحى نهائياً.
+2. **ابدأ بالهوك** فوراً بدون أي ترحيب أو مقدمات.
+3. **اربط بالواقع:** استخدم التفاصيل المحلية (${architectData.localContext}) عشان تحسس الناس إنك بتتكلم عنهم.
+4. **أنسنة الأرقام:** أي رقم ضخم لازم توصفه بمشاعر أو تقارنه بحاجة ملموسة.
+5. **ممنوع الكليشيهات:** ممنوع تماماً: "تخيل معايا"، "بص كده"، "يا جماعة"، "هل كنت تعلم"، "ركز معايا".
+6. **ممنوع في هذا المجال:** ${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
+7. **الـ So What:** ركز على تأثير كل معلومة على المشاهد (المكسب الشخصي، توفير الوقت، الرفاهية).
+8. **التدفق:** اجعل الكلام يتدفق كأنك تحكي قصة لصديق في جلسة خاصة، بأسلوب ذكي وبسيط.
 
 الطول المطلوب: ~${config.words} كلمة.
 
 السكربت:` : 
 `You are a professional "Human Content Writer" specialized in "${nicheProfile.name}". Your job is to write a Short script that continues the hook's story in a "Smart Narrative" style.
+
+⚠️ Language Instructions:
+${langConfig.prompt}
 
 🎭 Your Persona: ${nicheProfile.persona.en}
 🎯 Focus: ${nicheProfile.focus.en}
@@ -945,13 +962,14 @@ Local Context: ${architectData.localContext}
 ${nicheProfile.keywords.en.length > 0 ? nicheProfile.keywords.en.join(', ') : 'None specific'}
 
 🎯 Strict Instructions (Human Logic):
-1. **Start with the Hook** immediately with no greetings or intros.
-2. **Connect to Reality:** Use local details (${architectData.localContext}) to make it feel authentic.
-3. **Humanize Numbers:** Describe big numbers with emotions or tangible comparisons.
-4. **Ban Clichés:** Strictly NO "Imagine with me", "Look at this", "Ya jama'a", "Did you know".
-5. **Forbidden in this niche:** ${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
-6. **The So What:** Focus on the impact on the viewer (Time saved, comfort, personal gain).
-7. **Flow:** Make it flow like you're telling a story to a friend in a private chat.
+1. **Use the specified language/dialect.** No formal language.
+2. **Start with the Hook** immediately with no greetings or intros.
+3. **Connect to Reality:** Use local details (${architectData.localContext}) to make it feel authentic.
+4. **Humanize Numbers:** Describe big numbers with emotions or tangible comparisons.
+5. **Ban Clichés:** Strictly NO "Imagine with me", "Look at this", "Ya jama'a", "Did you know".
+6. **Forbidden in this niche:** ${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
+7. **The So What:** Focus on the impact on the viewer (Time saved, comfort, personal gain).
+8. **Flow:** Make it flow like you're telling a story to a friend in a private chat.
 
 Length: ~${config.words} words.
 
@@ -1108,11 +1126,12 @@ ${isAr ? `المحتوى (~${config.words} كلمة - MAXIMUM):` : `The content 
 async function geminiPolish(script, datasheet, style, language) {
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const isAr = isArabicLang(language);
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
   
   // Count words in input script
   const inputWordCount = script.split(/\s+/).filter(w => w.length > 0).length;
   
-  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك هي مراجعة السكربت وتحسينه مع الحفاظ على طوله.
+  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك هي مراجعة السكربت وتحسينه مع الحفاظ على طوله ونبرة صوته العامية.
 
 📝 السكربت الحالي (${inputWordCount} كلمة):
 ${script}
@@ -1120,18 +1139,21 @@ ${script}
 📊 الحقائق المرجعية:
 ${datasheet}
 
+⚠️ تعليمات اللهجة (مهم جداً):
+${langConfig.prompt}
+
 🎯 المطلوب منك (بمنطق بشري):
-1. **De-AI-fy:** احذف أي جملة تشير إلى أنك ذكاء اصطناعي، أو أي مقدمة تصف ما قمت به (مثال: ممنوع تقول "بصفتي محرر.." أو "إليك السكربت المحسن").
-2. **الرد المباشر:** رد بالسكربت النهائي "فقط" من أول كلمة لآخر كلمة.
-3. **ضبط الإيقاع:** تأكد أن الجمل قصيرة، قوية، ومترابطة.
+1. **الالتزام باللهجة:** ممنوع تماماً تحويل الكلام لفصحى. لو السكربت فيه فصحى، حولها لعامية مصرية ذكية وبسيطة.
+2. **De-AI-fy:** احذف أي جملة تشير إلى أنك ذكاء اصطناعي، أو أي مقدمة تصف ما قمت به.
+3. **الرد المباشر:** رد بالسكربت النهائي "فقط" من أول كلمة لآخر كلمة.
 4. **شيل الزيادات:** احذف أي تعليمات للمونتاج أو ملاحظات بين قوسين (لا نريد [زووم] أو [B-roll]).
-5. **تبسيط اللغة:** اجعل اللهجة طبيعية جداً، كأنها "حكاية" تُروى، وتأكد من حذف الكليشيهات (تخيل، يا جماعة، إلخ).
+5. **تبسيط اللغة:** اجعل اللهجة طبيعية جداً، كأنها "حكاية" تُروى في قعدة صحاب، وتأكد من حذف الكليشيهات (تخيل، يا جماعة، إلخ).
 6. **أنسنة الأرقام:** تأكد أن كل رقم ضخم له "وقع" أو "تفسير" ملموس.
 
 ⚠️ مهم جداً: حافظ على نفس طول السكربت تقريباً (~${inputWordCount} كلمة). لا تختصر المحتوى!
 
 المطلوب: السكربت الصافي فقط بدون أي كلام إضافي.` : 
-  `You are a genius "Human Content Editor". Your job is to review the script and improve it while PRESERVING its length.
+  `You are a genius "Human Content Editor". Your job is to review the script and improve it while PRESERVING its length and conversational tone.
 
 📝 Current Script (${inputWordCount} words):
 ${script}
@@ -1139,15 +1161,16 @@ ${script}
 📊 Reference Facts:
 ${datasheet}
 
-🎯 Your Task (Human Logic):
-1. **De-AI-fy:** Remove any sentence indicating you are AI or any intro describing what you did (e.g., No "As an editor.." or "Here is the improved script").
-2. **Direct Response:** Reply with the final script ONLY, from the first word to the last.
-3. **Rhythm:** Ensure sentences are short, strong, and connected.
-4. **Clean up:** Remove any editing instructions or notes in brackets (No [Zoom], [B-roll]).
-5. **Simplify:** Make the tone very natural, like a story being told, and ensure all clichés are gone (Imagine, guys, etc.).
-6. **Humanize Numbers:** Ensure every big number has a tangible "impact" or "explanation".
+⚠️ Language Instructions:
+${langConfig.prompt}
 
-⚠️ CRITICAL: Maintain approximately the same script length (~${inputWordCount} words). Do NOT shorten the content!
+🎯 Your Task (Human Logic):
+1. **Preserve Dialect:** Strictly NO formal language. If there is formal language, convert it to smart conversational tone.
+2. **De-AI-fy:** Remove any sentence indicating you are AI or any intro describing what you did.
+3. **Direct Response:** Reply with the final script ONLY, from the first word to the last.
+4. **Clean up:** Remove any editing instructions or notes in brackets (No [Zoom], [B-roll]).
+5. **Simplify:** Make the tone very natural, like a story being told, and ensure all clichés are gone.
+6. **Humanize Numbers:** Ensure every big number has a tangible "impact" or "explanation".
 
 Required: The raw script only with no additional text.`;
 
@@ -1333,9 +1356,13 @@ The complete script:`;
 async function generate3AlternativeHooks(topic, architectData, style, language, niche = 'general') {
   const isAr = isArabicLang(language);
   const nicheProfile = NICHES[niche] || NICHES.general;
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
   
   const prompt = isAr ? 
 `أنت خبير في كتابة Hooks. اكتب 3 أنواع مختلفة من الـ Hooks لنفس الموضوع.
+
+⚠️ تعليمات اللهجة:
+${langConfig.prompt}
 
 الموضوع: ${topic}
 عنصر الدهشة: ${architectData.coreSurprise}
@@ -1349,6 +1376,7 @@ async function generate3AlternativeHooks(topic, architectData, style, language, 
 3. **Hook سر (Secret):** جملة توحي بأنك هتكشف معلومة مخفية أو سر
 
 ⚠️ قواعد صارمة:
+- استخدم اللهجة المحددة أعلاه تماماً (ممنوع الفصحى).
 - كل hook أقل من 15 كلمة
 - ممنوع: "تخيل معايا"، "بص كده"، "خبر عاجل"، "لو قلتلك"
 - اجعلها بشرية وطبيعية
@@ -1356,6 +1384,9 @@ async function generate3AlternativeHooks(topic, architectData, style, language, 
 المطلوب: رد بـ JSON فقط:
 {"shock": "الهوك الصادم", "question": "هوك السؤال", "secret": "هوك السر"}` :
 `You are a hooks expert. Write 3 different types of hooks for the same topic.
+
+⚠️ Language Instructions:
+${langConfig.prompt}
 
 Topic: ${topic}
 Core Surprise: ${architectData.coreSurprise}
@@ -1807,6 +1838,7 @@ app.post('/api/generate', async (req, res) => {
       success: true,
       hook: finalHook,
       alternativeHooks: alternativeHooks,
+      body: humanizedScript.startsWith(finalHook) ? humanizedScript.substring(finalHook.length).trim() : humanizedScript,
       script: humanizedScript,
       visualPrompts: visualPrompts,
       niche: validNiche,
