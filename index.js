@@ -15,9 +15,11 @@ const CONFIG = {
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
   CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
   GEMINI_MODEL: 'gemini-2.5-flash',  // Has thinking mode built-in
+  DALLE_MODEL: 'dall-e-3',
 };
 
 // Log missing envs early for easier debugging (no values are printed)
@@ -1318,6 +1320,178 @@ The complete script:`;
 }
 
 // ============================================
+// 🎣 CLAUDE - Generate 3 Alternative Hooks
+// ============================================
+
+async function generate3AlternativeHooks(topic, architectData, style, language, niche = 'general') {
+  const isAr = isArabicLang(language);
+  const nicheProfile = NICHES[niche] || NICHES.general;
+  
+  const prompt = isAr ? 
+`أنت خبير في كتابة Hooks. اكتب 3 أنواع مختلفة من الـ Hooks لنفس الموضوع.
+
+الموضوع: ${topic}
+عنصر الدهشة: ${architectData.coreSurprise}
+الزاوية: ${architectData.angle}
+المجال: ${nicheProfile.nameAr}
+
+المطلوب 3 أنواع مختلفة تماماً:
+
+1. **Hook صادم (Shock):** ابدأ برقم مرعب أو حقيقة غريبة
+2. **Hook سؤال (Question):** سؤال يلمس مشكلة عند المشاهد ويثير فضوله
+3. **Hook سر (Secret):** جملة توحي بأنك هتكشف معلومة مخفية أو سر
+
+⚠️ قواعد صارمة:
+- كل hook أقل من 15 كلمة
+- ممنوع: "تخيل معايا"، "بص كده"، "خبر عاجل"، "لو قلتلك"
+- اجعلها بشرية وطبيعية
+
+المطلوب: رد بـ JSON فقط:
+{"shock": "الهوك الصادم", "question": "هوك السؤال", "secret": "هوك السر"}` :
+`You are a hooks expert. Write 3 different types of hooks for the same topic.
+
+Topic: ${topic}
+Core Surprise: ${architectData.coreSurprise}
+Angle: ${architectData.angle}
+Niche: ${nicheProfile.name}
+
+Required - 3 completely different types:
+
+1. **Shock Hook:** Start with a scary number or strange fact
+2. **Question Hook:** A question that touches a viewer's problem and triggers curiosity
+3. **Secret Hook:** A sentence implying you'll reveal hidden info or a secret
+
+⚠️ Strict Rules:
+- Each hook less than 15 words
+- No clichés: "Imagine with me", "Look at this", "Breaking news"
+- Make them human and natural
+
+Required: Reply with JSON only:
+{"shock": "The shock hook", "question": "The question hook", "secret": "The secret hook"}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  try {
+    const text = response.data.content[0].text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch (e) {
+    console.error('Hook parsing error:', e);
+  }
+  
+  // Fallback
+  return {
+    shock: response.data.content[0].text.substring(0, 100),
+    question: '',
+    secret: '',
+  };
+}
+
+// ============================================
+// 🖼️ CLAUDE - Generate 3 Visual Prompts
+// ============================================
+
+async function generate3VisualPrompts(script, topic, language) {
+  const isAr = isArabicLang(language);
+  
+  const prompt = isAr ?
+`أنت مخرج بصري محترف. اقرأ السكربت ده واكتب 3 أوصاف للصور (Visual Prompts) لاستخدامها في المونتاج.
+
+السكربت:
+${script}
+
+المطلوب 3 صور لـ 3 أجزاء مختلفة:
+1. **صورة البداية (Hook):** صورة تجذب الانتباه وتمثل بداية الفيديو
+2. **صورة المنتصف (Content):** صورة تمثل المحتوى الأساسي أو الفكرة الرئيسية
+3. **صورة النهاية (CTA):** صورة تمثل النتيجة أو الخلاصة
+
+⚠️ قواعد صارمة للصور:
+- ممنوع أي نصوص أو حروف أو أرقام في الصورة
+- ممنوع لافتات أو علامات مكتوب عليها
+- ركز على المشاعر والأجواء البصرية
+- اجعل الوصف سينمائي واحترافي (Cinematic, 4K, photorealistic)
+- الوصف بالإنجليزي عشان DALL-E يفهمه أفضل
+
+المطلوب: رد بـ JSON فقط:
+{
+  "hook": {"prompt": "English visual description for hook scene", "caption": "وصف عربي قصير"},
+  "content": {"prompt": "English visual description for content scene", "caption": "وصف عربي قصير"},
+  "cta": {"prompt": "English visual description for ending scene", "caption": "وصف عربي قصير"}
+}` :
+`You are a professional visual director. Read this script and write 3 image descriptions (Visual Prompts) for video editing.
+
+Script:
+${script}
+
+Required - 3 images for 3 different parts:
+1. **Hook Image:** An attention-grabbing image representing the video start
+2. **Content Image:** An image representing the main content or idea
+3. **CTA Image:** An image representing the result or conclusion
+
+⚠️ Strict Rules for Images:
+- Absolutely NO text, letters, or numbers in the image
+- NO signs or labels with writing
+- Focus on emotions and visual atmosphere
+- Make descriptions cinematic and professional (Cinematic, 4K, photorealistic)
+
+Required: Reply with JSON only:
+{
+  "hook": {"prompt": "Visual description for hook scene", "caption": "Short caption"},
+  "content": {"prompt": "Visual description for content scene", "caption": "Short caption"},
+  "cta": {"prompt": "Visual description for ending scene", "caption": "Short caption"}
+}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 800,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  try {
+    const text = response.data.content[0].text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch (e) {
+    console.error('Visual prompts parsing error:', e);
+  }
+  
+  // Fallback
+  return {
+    hook: { prompt: 'Cinematic wide shot, dramatic lighting, no text', caption: 'مشهد افتتاحي' },
+    content: { prompt: 'Professional documentary style shot, no text', caption: 'المحتوى الرئيسي' },
+    cta: { prompt: 'Inspiring conclusion scene, golden hour, no text', caption: 'الخلاصة' },
+  };
+}
+
+// ============================================
 // ✅ PERPLEXITY - Fact Check
 // ============================================
 
@@ -1602,10 +1776,32 @@ app.post('/api/generate', async (req, res) => {
       factCheckResult = '⚠️ Fact check skipped';
     }
     
+    // Generate alternative hooks and visual prompts in parallel
+    let alternativeHooks = { shock: '', question: '', secret: '' };
+    let visualPrompts = null;
+    
+    try {
+      console.log('🎣 Phase 7: Generating Alternative Hooks...');
+      console.log('🖼️ Phase 8: Generating Visual Prompts...');
+      
+      const [hooksResult, visualsResult] = await Promise.all([
+        generate3AlternativeHooks(topic, architectData, style, language, validNiche),
+        generate3VisualPrompts(humanizedScript, topic, language),
+      ]);
+      
+      alternativeHooks = hooksResult;
+      visualPrompts = visualsResult;
+      console.log('✅ Phase 7 & 8 Complete');
+    } catch (e) {
+      console.error('❌ Hooks/Visuals Error:', e.message);
+    }
+    
     res.json({
       success: true,
       hook: finalHook,
+      alternativeHooks: alternativeHooks,
       script: humanizedScript,
+      visualPrompts: visualPrompts,
       niche: validNiche,
       nicheName: nicheProfile.name,
       angle: architectData.angle,
@@ -1614,7 +1810,7 @@ app.post('/api/generate', async (req, res) => {
       datasheet: architectData.chosenFacts,
       factCheck: factCheckResult,
       wordCount: humanizedScript.split(/\s+/).length,
-      pipeline: 'Architect → Hook → Writer → Humanize → FactCheck',
+      pipeline: 'Architect → Hook → Writer → Humanize → FactCheck → AltHooks → Visuals',
     });
     
   } catch (error) {
@@ -1639,6 +1835,147 @@ app.post('/api/hooks', async (req, res) => {
     res.json({ success: true, hooks, datasheet });
   } catch (error) {
     console.error('Error:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================
+// 💡 TRENDING IDEAS - Get viral ideas for a niche
+// ============================================
+
+app.post('/api/trending-ideas', async (req, res) => {
+  const { niche = 'general', language = 'egyptian', count = 5 } = req.body;
+  
+  const nicheProfile = NICHES[niche] || NICHES.general;
+  const isAr = isArabicLang(language);
+  
+  try {
+    console.log(`💡 Fetching trending ideas for niche: ${nicheProfile.name}`);
+    
+    const query = isAr ? 
+      `ابحث عن أهم ${count} مواضيع ساخنة أو أخبار حصرية في مجال "${nicheProfile.nameAr}" تصلح لعمل فيديو قصير (Short/Reels).
+      
+      المطلوب لكل موضوع:
+      - عنوان جذاب (أقل من 15 كلمة)
+      - سبب أهميته الآن (جملة واحدة)
+      
+      ركز على:
+      - أخبار اليوم أو الأسبوع الحالي
+      - مواضيع مثيرة للجدل أو الفضول
+      - أرقام صادمة أو إحصائيات جديدة
+      
+      Format: JSON array
+      [{"title": "العنوان", "reason": "سبب الأهمية"}]` :
+      `Find the top ${count} trending or exclusive topics in "${nicheProfile.name}" suitable for short videos (Short/Reels).
+      
+      For each topic provide:
+      - Catchy title (less than 15 words)
+      - Why it matters now (one sentence)
+      
+      Focus on:
+      - Today's or this week's news
+      - Controversial or curiosity-triggering topics
+      - Shocking numbers or new statistics
+      
+      Format: JSON array
+      [{"title": "Title", "reason": "Why it matters"}]`;
+    
+    const response = await axios.post(
+      'https://api.perplexity.ai/chat/completions',
+      {
+        model: CONFIG.PERPLEXITY_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: isAr ? 
+              'أنت باحث محتوى متخصص. قدم مواضيع ساخنة وحصرية فقط. رد بـ JSON فقط.' :
+              'You are a content researcher. Provide only trending and exclusive topics. Reply with JSON only.',
+          },
+          { role: 'user', content: query },
+        ],
+        max_tokens: 1500,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${CONFIG.PERPLEXITY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const content = response.data.choices[0].message.content;
+    
+    // Parse JSON from response
+    let ideas = [];
+    try {
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        ideas = JSON.parse(jsonMatch[0]);
+      }
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      // Fallback: create ideas from text
+      ideas = [{ title: content.substring(0, 100), reason: 'Trending now' }];
+    }
+    
+    res.json({
+      success: true,
+      niche: niche,
+      nicheName: isAr ? nicheProfile.nameAr : nicheProfile.name,
+      nicheIcon: nicheProfile.icon,
+      ideas: ideas.slice(0, count),
+    });
+    
+  } catch (error) {
+    console.error('❌ Trending Ideas Error:', error.response?.data || error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================
+// 🖼️ GENERATE IMAGE - DALL-E 3
+// ============================================
+
+app.post('/api/generate-image', async (req, res) => {
+  const { prompt, size = '1024x1024', quality = 'standard' } = req.body;
+  
+  if (!prompt) {
+    return res.status(400).json({ success: false, error: 'Prompt is required' });
+  }
+  
+  try {
+    console.log('🖼️ Generating image with DALL-E 3...');
+    
+    // Add "no text" rule to every prompt
+    const safePrompt = `${prompt}. CRITICAL: Absolutely NO text, NO words, NO letters, NO numbers, NO signs, NO labels in the image. Pure visual only.`;
+    
+    const response = await axios.post(
+      'https://api.openai.com/v1/images/generations',
+      {
+        model: CONFIG.DALLE_MODEL,
+        prompt: safePrompt,
+        n: 1,
+        size: size,
+        quality: quality,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${CONFIG.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const imageData = response.data.data[0];
+    
+    res.json({
+      success: true,
+      imageUrl: imageData.url,
+      revisedPrompt: imageData.revised_prompt,
+    });
+    
+  } catch (error) {
+    console.error('❌ DALL-E Error:', error.response?.data || error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
