@@ -893,9 +893,9 @@ async function writerPhase(topic, architectData, hook, style, language, duration
   const nicheProfile = NICHES[niche] || NICHES.general;
   
   const durationConfig = {
-    '15': { words: 45, maxTokens: 400 },
-    '30': { words: 90, maxTokens: 800 },
-    '60': { words: 180, maxTokens: 1500 },
+    '15': { words: 60, maxTokens: 500 },
+    '30': { words: 120, maxTokens: 1000 },
+    '60': { words: 250, maxTokens: 2000 },
   };
   const config = durationConfig[duration] || durationConfig['60'];
 
@@ -1109,9 +1109,12 @@ async function geminiPolish(script, datasheet, style, language) {
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const isAr = isArabicLang(language);
   
-  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك هي مراجعة السكربت وجعله يبدو وكأنه كُتب بواسطة شخص خبير وليس ذكاء اصطناعي.
+  // Count words in input script
+  const inputWordCount = script.split(/\s+/).filter(w => w.length > 0).length;
+  
+  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك هي مراجعة السكربت وتحسينه مع الحفاظ على طوله.
 
-📝 السكربت الحالي:
+📝 السكربت الحالي (${inputWordCount} كلمة):
 ${script}
 
 📊 الحقائق المرجعية:
@@ -1125,10 +1128,12 @@ ${datasheet}
 5. **تبسيط اللغة:** اجعل اللهجة طبيعية جداً، كأنها "حكاية" تُروى، وتأكد من حذف الكليشيهات (تخيل، يا جماعة، إلخ).
 6. **أنسنة الأرقام:** تأكد أن كل رقم ضخم له "وقع" أو "تفسير" ملموس.
 
-المطلوب: السكربت الصافي فقط بدون أي كلام إضافي.` : 
-`You are a genius "Human Content Editor". Your job is to review the script and make it look like it was written by an expert human, not AI.
+⚠️ مهم جداً: حافظ على نفس طول السكربت تقريباً (~${inputWordCount} كلمة). لا تختصر المحتوى!
 
-📝 Current Script:
+المطلوب: السكربت الصافي فقط بدون أي كلام إضافي.` : 
+  `You are a genius "Human Content Editor". Your job is to review the script and improve it while PRESERVING its length.
+
+📝 Current Script (${inputWordCount} words):
 ${script}
 
 📊 Reference Facts:
@@ -1141,6 +1146,8 @@ ${datasheet}
 4. **Clean up:** Remove any editing instructions or notes in brackets (No [Zoom], [B-roll]).
 5. **Simplify:** Make the tone very natural, like a story being told, and ensure all clichés are gone (Imagine, guys, etc.).
 6. **Humanize Numbers:** Ensure every big number has a tangible "impact" or "explanation".
+
+⚠️ CRITICAL: Maintain approximately the same script length (~${inputWordCount} words). Do NOT shorten the content!
 
 Required: The raw script only with no additional text.`;
 
