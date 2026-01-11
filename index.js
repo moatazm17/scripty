@@ -797,6 +797,238 @@ Required: Write the final hook directly:`;
 }
 
 // ============================================
+// 🧠 HOOK MASTER BRAIN - Generate 3 Diverse Hooks
+// Based on creator rules from MrBeast, Hormozi, Ali Abdaal
+// ============================================
+
+async function hookMasterBrain(topic, researchData, niche = 'general', language = 'egyptian') {
+  const isAr = isArabicLang(language);
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
+  const nicheProfile = NICHES[niche] || NICHES.general;
+  
+  const prompt = isAr ?
+`أنت "Hook Master" - عقل متخصص في كتابة الهوكات الفيروسية.
+
+📚 قواعد من صناع المحتوى المشاهير:
+- **MrBeast:** أقوى رقم + إلحاح فوري
+- **Alex Hormozi:** الفائدة أولاً، ثم الفضول
+- **Ali Abdaal:** "اتعلمت حاجة غيرت كل شي"
+- **Gary Vee:** المباشرة والصراحة بدون لف
+
+📖 الموضوع: ${topic}
+📊 المعلومات: ${researchData}
+🎯 المجال: ${nicheProfile.nameAr}
+
+⚠️ تعليمات اللهجة:
+${langConfig.prompt}
+
+🧠 علم نفس الهوكات:
+1. **Curiosity Gap:** افتح "ثغرة فضول" لازم تتسد
+2. **Pattern Interrupt:** قول حاجة غير متوقعة
+3. **Specificity:** الأرقام المحددة أقوى من العامة
+4. **Relevance:** اربط بحياة المشاهد
+
+🎣 المطلوب: 3 هوكات مختلفة تماماً:
+
+**Hook A - صادم (Shock):**
+→ مفارقة أو رقم صادم يكسر التوقعات
+→ مثال: "البلد اللي كانت بتحرم الألعاب دفعت 38 مليار تشتريها!"
+
+**Hook B - سؤال (Question):**
+→ سؤال يفتح loop لازم يتقفل
+→ مثال: "عارف ليه السعودية ما اشترتش EA كلها؟"
+
+**Hook C - فائدة (Benefit):**
+→ ابدأ بالنتيجة اللي تهم المشاهد
+→ مثال: "لو بتحب Gaming، الخبر ده هيغير رأيك في السعودية"
+
+📏 القواعد:
+- كل hook أقل من 15 كلمة
+- ممنوع فصحى - عامية ذكية فقط
+- ممنوع: "تخيل"، "يا جماعة"، "خبر عاجل"
+- كل hook مختلف تماماً عن التاني
+
+أجب بـ JSON فقط:
+{
+  "shock": "الهوك الصادم هنا",
+  "question": "هوك السؤال هنا", 
+  "benefit": "هوك الفائدة هنا"
+}` :
+`You are the "Hook Master" - a specialized brain for viral hooks.
+
+📚 Rules from Famous Creators:
+- **MrBeast:** Strongest number + immediate urgency
+- **Alex Hormozi:** Benefit first, then curiosity
+- **Ali Abdaal:** "I learned something that changed everything"
+- **Gary Vee:** Direct and honest, no fluff
+
+📖 Topic: ${topic}
+📊 Research: ${researchData}
+🎯 Niche: ${nicheProfile.name}
+
+⚠️ Language Instructions:
+${langConfig.prompt}
+
+🧠 Hook Psychology:
+1. **Curiosity Gap:** Open a loop that MUST be closed
+2. **Pattern Interrupt:** Say something unexpected
+3. **Specificity:** Specific numbers are stronger than vague
+4. **Relevance:** Connect to viewer's life
+
+🎣 Required: 3 completely different hooks:
+
+**Hook A - Shock:**
+→ Paradox or shocking number that breaks expectations
+→ Example: "The country that banned games paid $38B to own them!"
+
+**Hook B - Question:**
+→ Opens a loop that must be closed
+→ Example: "You know why Saudi didn't buy ALL of EA?"
+
+**Hook C - Benefit:**
+→ Start with the result that matters to viewer
+→ Example: "If you love Gaming, this news will change your view"
+
+📏 Rules:
+- Each hook under 15 words
+- No formal language - smart conversational only
+- No clichés: "Imagine", "Breaking news"
+- Each hook completely different from others
+
+Reply with JSON only:
+{
+  "shock": "Shock hook here",
+  "question": "Question hook here",
+  "benefit": "Benefit hook here"
+}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  const text = response.data.content[0].text;
+  
+  // Extract JSON from response
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch (e) {
+    console.error('Hook Master JSON parse error:', e.message);
+  }
+  
+  // Fallback
+  return {
+    shock: text.split('\n')[0] || 'Hook generation failed',
+    question: '',
+    benefit: ''
+  };
+}
+
+// ============================================
+// 📐 OUTLINE ARCHITECT - Build Script Structure
+// Creates a clear outline based on selected hook
+// ============================================
+
+async function outlineArchitect(topic, selectedHook, researchData, niche = 'general', language = 'egyptian') {
+  const isAr = isArabicLang(language);
+  const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
+  const nicheProfile = NICHES[niche] || NICHES.general;
+  
+  const prompt = isAr ?
+`أنت "مهندس محتوى" متخصص في بناء هيكل السكربتات الاحترافية.
+
+📖 الموضوع: ${topic}
+🎣 الهوك المختار: ${selectedHook}
+📊 المعلومات: ${researchData}
+🎯 المجال: ${nicheProfile.nameAr}
+
+⚠️ تعليمات اللهجة:
+${langConfig.prompt}
+
+📐 المطلوب: بناء هيكل (Outline) للسكربت يضمن تدفق طبيعي من الهوك للنهاية.
+
+أجب بـ JSON:
+{
+  "hookConnection": "كيف السكربت يكمل من الهوك بسلاسة",
+  "angle": "الزاوية الفريدة للموضوع",
+  "emotionalArc": "الرحلة العاطفية (مثال: دهشة → فضول → إعجاب)",
+  "keyFacts": ["الحقيقة 1", "الحقيقة 2", "الحقيقة 3", "الحقيقة 4"],
+  "ctaStrategy": "استراتيجية الـ CTA (سؤال تفاعلي، طلب إجراء، إلخ)"
+}` :
+`You are a "Content Architect" specialized in building professional script structures.
+
+📖 Topic: ${topic}
+🎣 Selected Hook: ${selectedHook}
+📊 Research: ${researchData}
+🎯 Niche: ${nicheProfile.name}
+
+⚠️ Language:
+${langConfig.prompt}
+
+📐 Required: Build an Outline ensuring natural flow from hook to end.
+
+Reply with JSON:
+{
+  "hookConnection": "How the script continues from the hook smoothly",
+  "angle": "The unique angle for this topic",
+  "emotionalArc": "The emotional journey (e.g. shock → curiosity → admiration)",
+  "keyFacts": ["Fact 1", "Fact 2", "Fact 3", "Fact 4"],
+  "ctaStrategy": "CTA strategy (interactive question, action request, etc.)"
+}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 600,
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  const text = response.data.content[0].text;
+  
+  // Extract JSON from response
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+  } catch (e) {
+    console.error('Outline Architect JSON parse error:', e.message);
+  }
+  
+  // Fallback
+  return {
+    hookConnection: 'Continue naturally from the hook',
+    angle: topic,
+    emotionalArc: 'curiosity → understanding → satisfaction',
+    keyFacts: [],
+    ctaStrategy: 'Ask engaging question'
+  };
+}
+
+// ============================================
 // 🎣 CLAUDE - Generate Hooks (Legacy - kept for compatibility)
 // ============================================
 
@@ -896,21 +1128,40 @@ Hook 3:`,
 // 📝 CLAUDE - Writer Phase (Story-Driven)
 // ============================================
 
-async function writerPhase(topic, architectData, hook, style, language, duration, niche = 'general') {
+async function writerPhase(topic, architectData, hook, style, language, duration, niche = 'general', outline = null) {
   const isAr = isArabicLang(language);
   const styleTemplate = STYLES[style] || STYLES.mrbeast;
   const nicheProfile = NICHES[niche] || NICHES.general;
   const langConfig = LANGUAGES[language] || LANGUAGES.egyptian;
   
   const durationConfig = {
-    '15': { words: 60, maxTokens: 500 },
-    '30': { words: 120, maxTokens: 1000 },
-    '60': { words: 250, maxTokens: 2000 },
+    '15': { words: 80, maxTokens: 600 },
+    '30': { words: 150, maxTokens: 1200 },
+    '60': { words: 300, maxTokens: 2500 }, // ~5 words/second for natural pacing
   };
   const config = durationConfig[duration] || durationConfig['60'];
 
+  // Build outline section if available
+  const outlineSection = outline ? (isAr ?
+`📐 الخطة المحددة (اتبعها):
+- التدفق من الهوك: ${outline.hookConnection || ''}
+- الزاوية: ${outline.angle || ''}
+- الرحلة العاطفية: ${outline.emotionalArc || ''}
+- الحقائق بالترتيب: ${Array.isArray(outline.keyFacts) ? outline.keyFacts.join(' → ') : ''}
+- الـ CTA: ${outline.ctaStrategy || ''}
+` :
+`📐 Outline to Follow:
+- Hook Connection: ${outline.hookConnection || ''}
+- Angle: ${outline.angle || ''}
+- Emotional Arc: ${outline.emotionalArc || ''}
+- Facts in Order: ${Array.isArray(outline.keyFacts) ? outline.keyFacts.join(' → ') : ''}
+- CTA: ${outline.ctaStrategy || ''}
+`) : '';
+
   const prompt = isAr ? 
 `أنت "كاتب محتوى بشرى" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك كتابة سكربت Short يكمل قصة الهوك بأسلوب "الحكاية الذكية".
+
+${outlineSection}
 
 ⚠️ تعليمات اللهجة (التزم بها بنسبة 100%):
 ${langConfig.prompt}
@@ -944,6 +1195,7 @@ ${nicheProfile.keywords.ar.length > 0 ? nicheProfile.keywords.ar.join('، ') : '
 السكربت:` : 
 `You are a professional "Human Content Writer" specialized in "${nicheProfile.name}". Your job is to write a Short script that continues the hook's story in a "Smart Narrative" style.
 
+${outlineSection}
 ⚠️ Language Instructions:
 ${langConfig.prompt}
 
@@ -1131,48 +1383,53 @@ async function geminiPolish(script, datasheet, style, language) {
   // Count words in input script
   const inputWordCount = script.split(/\s+/).filter(w => w.length > 0).length;
   
-  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك هي مراجعة السكربت وتحسينه مع الحفاظ على طوله ونبرة صوته العامية.
+  // Calculate minimum output words (at least 90% of input)
+  const minOutputWords = Math.floor(inputWordCount * 0.9);
+  
+  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك مراجعة السكربت وتحسين الصياغة فقط.
 
-📝 السكربت الحالي (${inputWordCount} كلمة):
+📝 السكربت (${inputWordCount} كلمة):
 ${script}
 
-📊 الحقائق المرجعية:
+📊 الحقائق:
 ${datasheet}
 
-⚠️ تعليمات اللهجة (مهم جداً):
+⚠️ تعليمات اللهجة:
 ${langConfig.prompt}
 
-🎯 المطلوب منك (بمنطق بشري):
-1. **الالتزام باللهجة:** ممنوع تماماً تحويل الكلام لفصحى. لو السكربت فيه فصحى، حولها لعامية مصرية ذكية وبسيطة.
-2. **De-AI-fy:** احذف أي جملة تشير إلى أنك ذكاء اصطناعي، أو أي مقدمة تصف ما قمت به.
-3. **الرد المباشر:** رد بالسكربت النهائي "فقط" من أول كلمة لآخر كلمة.
-4. **شيل الزيادات:** احذف أي تعليمات للمونتاج أو ملاحظات بين قوسين (لا نريد [زووم] أو [B-roll]).
-5. **تبسيط اللغة:** اجعل اللهجة طبيعية جداً، كأنها "حكاية" تُروى في قعدة صحاب، وتأكد من حذف الكليشيهات (تخيل، يا جماعة، إلخ).
-6. **أنسنة الأرقام:** تأكد أن كل رقم ضخم له "وقع" أو "تفسير" ملموس.
+🚨 قواعد صارمة (ممنوع كسرها):
+1. **الطول ثابت:** السكربت لازم يكون ${minOutputWords}+ كلمة على الأقل. ممنوع تختصر أي شيء!
+2. **اللهجة ثابتة:** كل كلمة تبقى عامية. لو في فصحى، حولها لعامية ذكية.
+3. **ممنوع تقول "قمت" أو "بصفتي":** رد بالسكربت فوراً من أول كلمة.
+4. **ممنوع أقواس:** شيل أي [زووم] أو [B-roll] أو تعليمات مونتاج.
+5. **شيل الكليشيهات:** "تخيل معايا"، "يا جماعة"، "استنوا"، "بص كده" ممنوعين.
+6. **أنسنة الأرقام:** كل رقم له تأثير ملموس.
 
-⚠️ مهم جداً: حافظ على نفس طول السكربت تقريباً (~${inputWordCount} كلمة). لا تختصر المحتوى!
+⚠️ تحذير: لو السكربت أقل من ${minOutputWords} كلمة، الإجابة مرفوضة!
 
-المطلوب: السكربت الصافي فقط بدون أي كلام إضافي.` : 
-  `You are a genius "Human Content Editor". Your job is to review the script and improve it while PRESERVING its length and conversational tone.
+المطلوب: السكربت فقط (${minOutputWords}+ كلمة).` : 
+  `You are a genius "Human Content Editor". Your job is to review and improve phrasing ONLY.
 
-📝 Current Script (${inputWordCount} words):
+📝 Script (${inputWordCount} words):
 ${script}
 
-📊 Reference Facts:
+📊 Facts:
 ${datasheet}
 
-⚠️ Language Instructions:
+⚠️ Language:
 ${langConfig.prompt}
 
-🎯 Your Task (Human Logic):
-1. **Preserve Dialect:** Strictly NO formal language. If there is formal language, convert it to smart conversational tone.
-2. **De-AI-fy:** Remove any sentence indicating you are AI or any intro describing what you did.
-3. **Direct Response:** Reply with the final script ONLY, from the first word to the last.
-4. **Clean up:** Remove any editing instructions or notes in brackets (No [Zoom], [B-roll]).
-5. **Simplify:** Make the tone very natural, like a story being told, and ensure all clichés are gone.
-6. **Humanize Numbers:** Ensure every big number has a tangible "impact" or "explanation".
+🚨 STRICT Rules (Cannot Break):
+1. **Length FIXED:** Output MUST be ${minOutputWords}+ words. DO NOT shorten anything!
+2. **Dialect FIXED:** Every word stays conversational. No formal language.
+3. **NO "I did" or "As an AI":** Reply with script immediately from the first word.
+4. **NO brackets:** Remove any [Zoom], [B-roll] or editing instructions.
+5. **Remove clichés:** "Imagine with me", "Ya jama'a", "Wait" are banned.
+6. **Humanize numbers:** Every number has tangible impact.
 
-Required: The raw script only with no additional text.`;
+⚠️ WARNING: If output is less than ${minOutputWords} words, answer is REJECTED!
+
+Required: Script only (${minOutputWords}+ words).`;
 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
@@ -1741,9 +1998,64 @@ app.get('/api/debug/env', (req, res) => {
   });
 });
 
-// Generate Full Script
+// ============================================
+// 🎣 PHASE 1: Generate Hooks (User selects before script)
+// ============================================
+
+app.post('/api/generate-hooks', async (req, res) => {
+  const { topic, language = 'egyptian', niche = 'general' } = req.body;
+  
+  if (!topic) {
+    return res.status(400).json({ success: false, error: 'Topic is required' });
+  }
+  
+  const validNiche = NICHES[niche] ? niche : 'general';
+  const nicheProfile = NICHES[validNiche];
+  
+  try {
+    console.log(`🎣 Hook Master: Starting for "${topic}"`);
+    console.log(`🎯 Niche: ${nicheProfile.name}`);
+    
+    // Step 1: Quick research
+    let researchData = '';
+    try {
+      console.log('🔍 Quick Research (Perplexity)...');
+      researchData = await researchTopic(topic, language);
+      console.log('✅ Research complete');
+    } catch (e) {
+      console.error('⚠️ Research failed, continuing without:', e.message);
+      researchData = `Topic: ${topic}`;
+    }
+    
+    // Step 2: Generate 3 hooks with Hook Master Brain
+    console.log('🧠 Generating 3 hooks with Hook Master...');
+    const hooks = await hookMasterBrain(topic, researchData, validNiche, language);
+    console.log('✅ Hooks generated:', hooks);
+    
+    res.json({
+      success: true,
+      hooks: {
+        shock: hooks.shock || '',
+        question: hooks.question || '',
+        benefit: hooks.benefit || '',
+      },
+      research: researchData, // Pass research to avoid re-fetching
+      niche: validNiche,
+      nicheName: nicheProfile.name,
+    });
+    
+  } catch (error) {
+    console.error('❌ Hook Generation Error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================
+// 📝 PHASE 2: Generate Full Script (with selected hook)
+// ============================================
+
 app.post('/api/generate', async (req, res) => {
-  const { topic, language = 'egyptian', duration = '60', style = 'mrbeast', niche = 'general', selectedHook } = req.body;
+  const { topic, language = 'egyptian', duration = '60', style = 'mrbeast', niche = 'general', selectedHook, research } = req.body;
   
   if (!topic) {
     return res.status(400).json({ success: false, error: 'Topic is required' });
@@ -1757,14 +2069,21 @@ app.post('/api/generate', async (req, res) => {
     let researchData, architectData, finalHook, draftScript, humanizedScript, factCheckResult;
     
     console.log(`🎯 Using Niche: ${nicheProfile.name} (${nicheProfile.nameAr})`);
+    console.log(`🎣 Selected Hook: ${selectedHook ? 'Yes' : 'No'}`);
     
-    try {
-      console.log('🔍 Phase 1: Researching (Perplexity)...');
-      researchData = await researchTopic(topic, language);
-      console.log('✅ Phase 1 Complete');
-    } catch (e) {
-      console.error('❌ PERPLEXITY ERROR:', e.response?.status, e.response?.data || e.message);
-      throw new Error(`Perplexity API failed: ${e.response?.status || e.message}`);
+    // Use pre-fetched research if available (from /api/generate-hooks)
+    if (research && typeof research === 'string' && research.length > 50) {
+      console.log('📚 Using pre-fetched research data');
+      researchData = research;
+    } else {
+      try {
+        console.log('🔍 Phase 1: Researching (Perplexity)...');
+        researchData = await researchTopic(topic, language);
+        console.log('✅ Phase 1 Complete');
+      } catch (e) {
+        console.error('❌ PERPLEXITY ERROR:', e.response?.status, e.response?.data || e.message);
+        throw new Error(`Perplexity API failed: ${e.response?.status || e.message}`);
+      }
     }
     
     try {
@@ -1785,9 +2104,22 @@ app.post('/api/generate', async (req, res) => {
       throw new Error(`Claude Hook failed: ${e.response?.status || e.message}`);
     }
     
+    // Generate outline if selectedHook was provided (new flow)
+    let outline = null;
+    if (selectedHook) {
+      try {
+        console.log('📐 Phase 3.5: Building Outline (Claude)...');
+        outline = await outlineArchitect(topic, finalHook, researchData, validNiche, language);
+        console.log('✅ Outline Complete:', outline.angle || 'OK');
+      } catch (e) {
+        console.log('⚠️ Outline generation skipped:', e.message);
+        outline = null; // Continue without outline
+      }
+    }
+    
     try {
       console.log('📝 Phase 4: Writing Script (Claude)...');
-      draftScript = await writerPhase(topic, architectData, finalHook, style, language, duration, validNiche);
+      draftScript = await writerPhase(topic, architectData, finalHook, style, language, duration, validNiche, outline);
       console.log('✅ Phase 4 Complete');
     } catch (e) {
       console.error('❌ CLAUDE WRITER ERROR:', e.response?.status, e.response?.data || e.message);
