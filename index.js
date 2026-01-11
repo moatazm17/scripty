@@ -889,22 +889,40 @@ Reply with JSON only in this exact format:
   );
   
   const text = response.data.content[0].text;
+  console.log('🎣 Raw Hook Master response:', text.substring(0, 300));
   
-  // Extract JSON from response
+  // Extract JSON from response - be more aggressive about finding it
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    // Try to find JSON object in the response
+    const jsonMatch = text.match(/\{[^{}]*"shock"[^{}]*"question"[^{}]*"benefit"[^{}]*\}/s) ||
+                      text.match(/\{[\s\S]*?\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      // Validate the parsed object has the expected fields
+      if (parsed.shock || parsed.question || parsed.benefit) {
+        console.log('✅ Parsed hooks:', {
+          shock: (parsed.shock || '').substring(0, 50) + '...',
+          question: (parsed.question || '').substring(0, 50) + '...',
+          benefit: (parsed.benefit || '').substring(0, 50) + '...',
+        });
+        return {
+          shock: parsed.shock || '',
+          question: parsed.question || '',
+          benefit: parsed.benefit || '',
+        };
+      }
     }
   } catch (e) {
-    console.error('Hook Master JSON parse error:', e.message);
+    console.error('Hook Master JSON parse error:', e.message, 'Raw text:', text.substring(0, 200));
   }
   
-  // Fallback
+  // Smart fallback: Try to extract hooks from plain text
+  console.log('⚠️ Using fallback hook extraction');
+  const lines = text.split('\n').filter(l => l.trim().length > 10);
   return {
-    shock: text.split('\n')[0] || 'Hook generation failed',
-    question: '',
-    benefit: ''
+    shock: lines[0] || `هل تعرف الحقيقة الصادمة عن ${topic}؟`,
+    question: lines[1] || `ليه ${topic} مهم؟`,
+    benefit: lines[2] || `إزاي ${topic} هيغير حياتك؟`
   };
 }
 
