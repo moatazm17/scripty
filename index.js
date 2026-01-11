@@ -807,99 +807,79 @@ async function hookMasterBrain(topic, researchData, niche = 'general', language 
   const nicheProfile = NICHES[niche] || NICHES.general;
   
   const prompt = isAr ?
-`أنت "Hook Master" - عقل متخصص في كتابة الهوكات الفيروسية.
+`أنت "Hook Master" - أذكى عقل في العالم لكتابة الهوكات التي تكسر الـ Algorithm.
 
-📚 قواعد من صناع المحتوى المشاهير:
-- **MrBeast:** أقوى رقم + إلحاح فوري
-- **Alex Hormozi:** الفائدة أولاً، ثم الفضول
-- **Ali Abdaal:** "اتعلمت حاجة غيرت كل شي"
-- **Gary Vee:** المباشرة والصراحة بدون لف
+🎯 مهمتك: كتابة 3 هوكات (بدايات) تجعل المشاهد يتوقف عن التمرير (Scroll Stopping) فوراً.
+
+📚 أنماط الهوكات العالمية (Few-Shot Patterns):
+1. **نمط MrBeast (الرقم الصادم + التحدي):** "صرفنا 3 مليون دولار في ساعة واحدة بس!"
+2. **نمط Hormozi (الفائدة الضخمة + السهولة):** "إزاي تعمل أول 1000 دولار من بيتك بـ 0 جنيه استثمار."
+3. **نمط Curiosity Gap (المفارقة):** "الشركة اللي كلنا بنحبها.. طلعت هي أكبر عدو للبيئة."
+4. **نمط The Negative Hook (التحذير):** "بطّل تعمل X لو مش عايز تخسر فلوسك."
 
 📖 الموضوع: ${topic}
-📊 المعلومات: ${researchData}
+📊 أهم المعلومات المستخرجة: ${researchData}
 🎯 المجال: ${nicheProfile.nameAr}
 
-⚠️ تعليمات اللهجة:
+⚠️ تعليمات اللهجة (ممنوع الفصحى):
 ${langConfig.prompt}
 
-🧠 علم نفس الهوكات:
-1. **Curiosity Gap:** افتح "ثغرة فضول" لازم تتسد
-2. **Pattern Interrupt:** قول حاجة غير متوقعة
-3. **Specificity:** الأرقام المحددة أقوى من العامة
-4. **Relevance:** اربط بحياة المشاهد
+🧠 سيكولوجية الهوك (السر في الكواليتي):
+- **Curiosity Gap:** لازم المشاهد يحس إنه "ناقصه معلومة" لو كمل هيعرفها.
+- **Show, Don't Tell:** بدل ما تقول "حاجة كبيرة"، قول "حاجة بحجم ملعب كورة".
+- **Informed Ignorance:** اجعل المشاهد يشعر أن ما يعرفه عن الموضوع "خاطئ" أو "ناقص".
 
 🎣 المطلوب: 3 هوكات مختلفة تماماً:
 
-**Hook A - صادم (Shock):**
-→ مفارقة أو رقم صادم يكسر التوقعات
-→ مثال: "البلد اللي كانت بتحرم الألعاب دفعت 38 مليار تشتريها!"
+**Hook A - صادم (Shock/Paradox):** يركز على رقم أو حقيقة تكسر المنطق.
+**Hook B - سؤال/غموض (Curiosity Loop):** يفتح سؤال لا يمكن تجاهله.
+**Hook C - فائدة مباشرة (Outcome-Driven):** يركز على المكسب الشخصي للمشاهد فوراً.
 
-**Hook B - سؤال (Question):**
-→ سؤال يفتح loop لازم يتقفل
-→ مثال: "عارف ليه السعودية ما اشترتش EA كلها؟"
-
-**Hook C - فائدة (Benefit):**
-→ ابدأ بالنتيجة اللي تهم المشاهد
-→ مثال: "لو بتحب Gaming، الخبر ده هيغير رأيك في السعودية"
-
-📏 القواعد:
-- كل hook أقل من 15 كلمة
-- ممنوع فصحى - عامية ذكية فقط
-- ممنوع: "تخيل"، "يا جماعة"، "خبر عاجل"
-- كل hook مختلف تماماً عن التاني
-
-أجب بـ JSON فقط:
+أجب بـ JSON فقط (مع ذكر السبب السيكولوجي لكل هوك لضمان الجودة):
 {
-  "shock": "الهوك الصادم هنا",
-  "question": "هوك السؤال هنا", 
-  "benefit": "هوك الفائدة هنا"
+  "shock": "نص الهوك الصادم هنا",
+  "shockReason": "ليه الهوك ده هيخلي الناس تقف؟",
+  "question": "نص هوك السؤال هنا", 
+  "questionReason": "إيه الفضول اللي بيفتحه؟",
+  "benefit": "نص هوك الفائدة هنا",
+  "benefitReason": "إيه المكسب اللي بيوعد بيه؟"
 }` :
-`You are the "Hook Master" - a specialized brain for viral hooks.
+`You are the "Hook Master" - the world's sharpest brain for creating Algorithm-breaking hooks.
 
-📚 Rules from Famous Creators:
-- **MrBeast:** Strongest number + immediate urgency
-- **Alex Hormozi:** Benefit first, then curiosity
-- **Ali Abdaal:** "I learned something that changed everything"
-- **Gary Vee:** Direct and honest, no fluff
+🎯 Your Mission: Write 3 "Scroll-Stopping" hooks that force viewers to watch.
+
+📚 Global Hook Patterns (Few-Shot):
+1. **MrBeast Style (Shocking Number + Challenge):** "We spent $3 Million in exactly 1 hour!"
+2. **Hormozi Style (Massive Benefit + Low Effort):** "How to make your first $1,000 from home with $0 investment."
+3. **Curiosity Gap (The Paradox):** "The company we all love.. is actually the environment's biggest enemy."
+4. **The Negative Hook (Warning):** "Stop doing X if you don't want to lose your money."
 
 📖 Topic: ${topic}
-📊 Research: ${researchData}
+📊 Key Research: ${researchData}
 🎯 Niche: ${nicheProfile.name}
 
 ⚠️ Language Instructions:
 ${langConfig.prompt}
 
-🧠 Hook Psychology:
-1. **Curiosity Gap:** Open a loop that MUST be closed
-2. **Pattern Interrupt:** Say something unexpected
-3. **Specificity:** Specific numbers are stronger than vague
-4. **Relevance:** Connect to viewer's life
+🧠 Hook Psychology (The Quality Secret):
+- **Curiosity Gap:** Make the viewer feel "missing information" that only the video can fill.
+- **Show, Don't Tell:** Instead of "something big", say "something the size of a football stadium".
+- **Informed Ignorance:** Make the viewer feel that what they know about the topic is "wrong" or "incomplete".
 
 🎣 Required: 3 completely different hooks:
 
-**Hook A - Shock:**
-→ Paradox or shocking number that breaks expectations
-→ Example: "The country that banned games paid $38B to own them!"
+**Hook A - Shock/Paradox:** Focuses on a logic-breaking number or fact.
+**Hook B - Curiosity Loop:** Opens an unignorable question.
+**Hook C - Outcome-Driven:** Focuses on immediate personal gain for the viewer.
 
-**Hook B - Question:**
-→ Opens a loop that must be closed
-→ Example: "You know why Saudi didn't buy ALL of EA?"
-
-**Hook C - Benefit:**
-→ Start with the result that matters to viewer
-→ Example: "If you love Gaming, this news will change your view"
-
-📏 Rules:
-- Each hook under 15 words
-- No formal language - smart conversational only
-- No clichés: "Imagine", "Breaking news"
-- Each hook completely different from others
-
-Reply with JSON only:
+Reply with JSON only (include psychological reasoning for quality assurance):
 {
-  "shock": "Shock hook here",
-  "question": "Question hook here",
-  "benefit": "Benefit hook here"
+  "shock": "Shock hook text here",
+  "shockReason": "Why will people stop scrolling?",
+  "question": "Question hook text here", 
+  "questionReason": "What curiosity loop does it open?",
+  "benefit": "Benefit hook text here",
+  "benefitReason": "What promise/gain does it offer?"
 }`;
 
   const response = await axios.post(
@@ -949,45 +929,63 @@ async function outlineArchitect(topic, selectedHook, researchData, niche = 'gene
   const nicheProfile = NICHES[niche] || NICHES.general;
   
   const prompt = isAr ?
-`أنت "مهندس محتوى" متخصص في بناء هيكل السكربتات الاحترافية.
+`أنت "Content Architect" خبير في هندسة انتباه المشاهدين.
+
+🎯 مهمتك: بناء هيكل (Outline) لسكربت فيديو قصير يضمن أقصى معدل احتفاظ بالمشاهدين (Retention Rate).
+
+📚 استخدام نظام V-A-S (Value-Authority-Action):
+1. **Value (القيمة الفورية):** بعد الهوك مباشرة، لازم المشاهد يحس إنه خد معلومة "غالية" أو صادمة.
+2. **Authority (الإثبات):** ليه الكلام ده حقيقي؟ (أرقام، إحصائيات، تشبيهات بشرية).
+3. **Action/So-What (التأثير):** إزاي ده هيغير حياة المشاهد أو رأيه؟
 
 📖 الموضوع: ${topic}
 🎣 الهوك المختار: ${selectedHook}
-📊 المعلومات: ${researchData}
+📊 المعلومات المتاحة: ${researchData}
 🎯 المجال: ${nicheProfile.nameAr}
 
 ⚠️ تعليمات اللهجة:
 ${langConfig.prompt}
 
-📐 المطلوب: بناء هيكل (Outline) للسكربت يضمن تدفق طبيعي من الهوك للنهاية.
+📐 المطلوب: بناء هيكل (Outline) احترافي يتجنب الممل.
 
-أجب بـ JSON:
+أجب بـ JSON فقط:
 {
-  "hookConnection": "كيف السكربت يكمل من الهوك بسلاسة",
-  "angle": "الزاوية الفريدة للموضوع",
-  "emotionalArc": "الرحلة العاطفية (مثال: دهشة → فضول → إعجاب)",
-  "keyFacts": ["الحقيقة 1", "الحقيقة 2", "الحقيقة 3", "الحقيقة 4"],
-  "ctaStrategy": "استراتيجية الـ CTA (سؤال تفاعلي، طلب إجراء، إلخ)"
+  "angle": "الزاوية السينمائية للموضوع (مثلاً: التحول من الفشل للنجاح)",
+  "emotionalArc": "الرحلة الشعورية (مثال: دهشة → قلق → تفاؤل)",
+  "v_section": "المعلومة الصادمة اللي هتيجي بعد الهوك فوراً (Value)",
+  "a_section": "كيف سنثبت صحة الكلام بأسلوب ممتع (Authority)",
+  "s_section": "التأثير الشخصي على المشاهد (Action/Impact)",
+  "keyFacts": ["حقيقة 1 مع تشبيه بشري", "حقيقة 2 مع تشبيه بشري"],
+  "ctaStrategy": "سؤال ذكي يفتح نقاش في التعليقات"
 }` :
-`You are a "Content Architect" specialized in building professional script structures.
+`You are a "Content Architect" expert in retention-rate engineering.
+
+🎯 Your Mission: Build a script Outline for a short video that ensures maximum viewer retention.
+
+📚 Using V-A-S System (Value-Authority-Action):
+1. **Value (Immediate Value):** Right after the hook, the viewer must get a "valuable" or shocking insight.
+2. **Authority (The Proof):** Why is this true? (Numbers, stats, human analogies).
+3. **Action/So-What (The Impact):** How does this change the viewer's life or perspective?
 
 📖 Topic: ${topic}
 🎣 Selected Hook: ${selectedHook}
-📊 Research: ${researchData}
+📊 Available Research: ${researchData}
 🎯 Niche: ${nicheProfile.name}
 
 ⚠️ Language:
 ${langConfig.prompt}
 
-📐 Required: Build an Outline ensuring natural flow from hook to end.
+📐 Required: Build a professional Outline that avoids boredom.
 
-Reply with JSON:
+Reply with JSON only:
 {
-  "hookConnection": "How the script continues from the hook smoothly",
-  "angle": "The unique angle for this topic",
-  "emotionalArc": "The emotional journey (e.g. shock → curiosity → admiration)",
-  "keyFacts": ["Fact 1", "Fact 2", "Fact 3", "Fact 4"],
-  "ctaStrategy": "CTA strategy (interactive question, action request, etc.)"
+  "angle": "The cinematic angle (e.g. Failure to Success transformation)",
+  "emotionalArc": "The emotional journey (e.g. Shock → Anxiety → Optimism)",
+  "v_section": "The shocking value insight right after the hook (Value)",
+  "a_section": "How we prove it using an engaging style (Authority)",
+  "s_section": "The personal impact on the viewer (Action/Impact)",
+  "keyFacts": ["Fact 1 with human analogy", "Fact 2 with human analogy"],
+  "ctaStrategy": "A smart question to spark comments"
 }`;
 
   const response = await axios.post(
@@ -1141,87 +1139,74 @@ async function writerPhase(topic, architectData, hook, style, language, duration
   };
   const config = durationConfig[duration] || durationConfig['60'];
 
-  // Build outline section if available
+  // Build outline section if available with cinematic focus
   const outlineSection = outline ? (isAr ?
-`📐 الخطة المحددة (اتبعها):
-- التدفق من الهوك: ${outline.hookConnection || ''}
+`📐 الخطة السينمائية (اتبعها بدقة):
 - الزاوية: ${outline.angle || ''}
-- الرحلة العاطفية: ${outline.emotionalArc || ''}
-- الحقائق بالترتيب: ${Array.isArray(outline.keyFacts) ? outline.keyFacts.join(' → ') : ''}
+- الرحلة الشعورية: ${outline.emotionalArc || ''}
+- فقرة القيمة (Value): ${outline.v_section || ''}
+- فقرة الإثبات (Authority): ${outline.a_section || ''}
+- فقرة التأثير (Action): ${outline.s_section || ''}
+- الحقائق بالترتيب: ${Array.isArray(outline.keyFacts) ? outline.keyFacts.join(' ← ') : ''}
 - الـ CTA: ${outline.ctaStrategy || ''}
 ` :
-`📐 Outline to Follow:
-- Hook Connection: ${outline.hookConnection || ''}
+`📐 Cinematic Plan (Follow Strictly):
 - Angle: ${outline.angle || ''}
-- Emotional Arc: ${outline.emotionalArc || ''}
+- Emotional Journey: ${outline.emotionalArc || ''}
+- Value Section: ${outline.v_section || ''}
+- Authority Section: ${outline.a_section || ''}
+- Action Section: ${outline.s_section || ''}
 - Facts in Order: ${Array.isArray(outline.keyFacts) ? outline.keyFacts.join(' → ') : ''}
-- CTA: ${outline.ctaStrategy || ''}
+- CTA Strategy: ${outline.ctaStrategy || ''}
 `) : '';
 
   const prompt = isAr ? 
-`أنت "كاتب محتوى بشرى" محترف متخصص في مجال "${nicheProfile.nameAr}". وظيفتك كتابة سكربت Short يكمل قصة الهوك بأسلوب "الحكاية الذكية".
+`أنت "حكواتي سينمائي" عبقري، مش مجرد كاتب محتوى. تخصصك هو تحويل المعلومات الجافة لقصص تشد المشاهدين في مجال "${nicheProfile.nameAr}".
+
+🎯 مهمتك: كتابة سكربت فيديو Short احترافي جداً يبدو وكأنه مكتوب بواسطة صانع محتوى بشري خبير.
 
 ${outlineSection}
 
-⚠️ تعليمات اللهجة (التزم بها بنسبة 100%):
+⚠️ تعليمات اللهجة (ممنوع الفصحى تماماً):
 ${langConfig.prompt}
 
 🎭 شخصيتك: ${nicheProfile.persona.ar}
 🎯 التركيز: ${nicheProfile.focus.ar}
-💡 قاعدة العمق: ${nicheProfile.depthRule.ar}
 
-الـ HOOK: ${hook}
-الزاوية: ${architectData.angle}
-الدهشة الأساسية: ${architectData.coreSurprise}
-منطق القصة: ${architectData.storyLogic}
-الحقائق المختارة: ${architectData.chosenFacts}
-التفاصيل المحلية: ${architectData.localContext}
+📝 قواعد "الخلاصة" (لأعلى كواليتي):
+1. **Show, Don't Tell:** بدل ما تقول "المشروع ناجح"، قول "المشروع ده خلى الناس تقف طوابير من الساعة 6 الصبح".
+2. **التشيبهات البشرية:** أي رقم لازم يتقارن بحاجة ملموسة (مثلاً: مساحة بحجم 10 ملاعب كورة، أو تكلفة تشتري لك 100 عربية فيراري).
+3. **أنسنة الأرقام:** لا تذكر الأرقام كبيانات، اذكرها كـ "تأثير".
+4. **ممنوع كليشيهات الـ AI نهائياً:** ممنوع تماماً: "في هذا الفيديو"، "تخيل معايا"، "يا جماعة"، "هل كنت تعلم"، "بص كده"، "ركز معايا"، "دعونا نستكشف".
+5. **اللغة البسيطة (Street Smart):** اكتب بلغة "ذكية بس بسيطة"، كأنك بتحكي لصاحبك في قعدة خاصة.
+6. **الـ So What:** كل جملة لازم تجاوب على سؤال المشاهد "وأنا مالي؟".
 
-📝 كلمات مفتاحية يُفضل استخدامها:
-${nicheProfile.keywords.ar.length > 0 ? nicheProfile.keywords.ar.join('، ') : 'لا يوجد'}
-
-🎯 تعليمات صارمة (منطق بشري):
-1. **استخدم اللهجة المحددة:** ممنوع استخدام الفصحى نهائياً.
-2. **ابدأ بالهوك** فوراً بدون أي ترحيب أو مقدمات.
-3. **اربط بالواقع:** استخدم التفاصيل المحلية (${architectData.localContext}) عشان تحسس الناس إنك بتتكلم عنهم.
-4. **أنسنة الأرقام:** أي رقم ضخم لازم توصفه بمشاعر أو تقارنه بحاجة ملموسة.
-5. **ممنوع الكليشيهات:** ممنوع تماماً: "تخيل معايا"، "بص كده"، "يا جماعة"، "هل كنت تعلم"، "ركز معايا".
-6. **ممنوع في هذا المجال:** ${nicheProfile.forbidden.ar.length > 0 ? nicheProfile.forbidden.ar.join('، ') : 'لا يوجد'}
-7. **الـ So What:** ركز على تأثير كل معلومة على المشاهد (المكسب الشخصي، توفير الوقت، الرفاهية).
-8. **التدفق:** اجعل الكلام يتدفق كأنك تحكي قصة لصديق في جلسة خاصة، بأسلوب ذكي وبسيط.
+الـ HOOK المختار (ابدأ به فوراً): ${hook}
 
 الطول المطلوب: ~${config.words} كلمة.
 
 السكربت:` : 
-`You are a professional "Human Content Writer" specialized in "${nicheProfile.name}". Your job is to write a Short script that continues the hook's story in a "Smart Narrative" style.
+`You are a genius "Cinematic Storyteller", not just a content writer. Your specialty is turning dry facts into unignorable stories in the "${nicheProfile.name}" niche.
+
+🎯 Your Mission: Write a professional Short video script that sounds 100% human.
 
 ${outlineSection}
-⚠️ Language Instructions:
+
+⚠️ Language Instructions (No formal language):
 ${langConfig.prompt}
 
 🎭 Your Persona: ${nicheProfile.persona.en}
 🎯 Focus: ${nicheProfile.focus.en}
-💡 Depth Rule: ${nicheProfile.depthRule.en}
 
-HOOK: ${hook}
-Angle: ${architectData.angle}
-Core Surprise: ${architectData.coreSurprise}
-Story Logic: ${architectData.storyLogic}
-Chosen Facts: ${architectData.chosenFacts}
-Local Context: ${architectData.localContext}
+📝 The "Elite Quality" Rules:
+1. **Show, Don't Tell:** Instead of "Successful project", say "People started lining up at 6 AM just to get a glimpse".
+2. **Human Analogies:** Compare every number to something tangible (e.g., "Size of 10 football fields", "Cost of 100 Ferraris").
+3. **Humanize Numbers:** Don't state numbers as data; state them as "Impact".
+4. **BAN AI CLICHÉS:** Strictly NO: "In this video", "Imagine with me", "Ya jama'a", "Did you know", "Let's explore", "Look at this".
+5. **Street Smart Language:** Write in a "smart but simple" way, like telling a story to a friend.
+6. **The So What:** Every sentence must answer the viewer's question: "Why should I care?".
 
-📝 Keywords to use:
-${nicheProfile.keywords.en.length > 0 ? nicheProfile.keywords.en.join(', ') : 'None specific'}
-
-🎯 Strict Instructions (Human Logic):
-1. **Use the specified language/dialect.** No formal language.
-2. **Start with the Hook** immediately with no greetings or intros.
-3. **Connect to Reality:** Use local details (${architectData.localContext}) to make it feel authentic.
-4. **Humanize Numbers:** Describe big numbers with emotions or tangible comparisons.
-5. **Ban Clichés:** Strictly NO "Imagine with me", "Look at this", "Ya jama'a", "Did you know".
-6. **Forbidden in this niche:** ${nicheProfile.forbidden.en.length > 0 ? nicheProfile.forbidden.en.join(', ') : 'None'}
-7. **The So What:** Focus on the impact on the viewer (Time saved, comfort, personal gain).
-8. **Flow:** Make it flow like you're telling a story to a friend in a private chat.
+The SELECTED HOOK (Start with it immediately): ${hook}
 
 Length: ~${config.words} words.
 
@@ -1386,52 +1371,52 @@ async function geminiPolish(script, datasheet, style, language) {
   // Calculate minimum output words (at least 90% of input)
   const minOutputWords = Math.floor(inputWordCount * 0.9);
   
-  const prompt = isAr ? `أنت "محرر محتوى بشري" عبقري. وظيفتك مراجعة السكربت وتحسين الصياغة فقط.
+  const prompt = isAr ? `أنت "ناقد ومحرر محتوى بشري" قاسي جداً. وظيفتك هي مراجعة السكربت وتحويله من "كلام مكتوب بواسطة AI" إلى "كلام حقيقي يقوله إنسان".
 
 📝 السكربت (${inputWordCount} كلمة):
 ${script}
 
-📊 الحقائق:
+📊 الحقائق المرجعية:
 ${datasheet}
 
 ⚠️ تعليمات اللهجة:
 ${langConfig.prompt}
 
-🚨 قواعد صارمة (ممنوع كسرها):
-1. **الهوك ثابت:** الجملة الأولى (الـ Hook) ممنوع تعديلها نهائياً! اليوزر اختارها بنفسه.
-2. **الطول ثابت:** السكربت لازم يكون ${minOutputWords}+ كلمة على الأقل. ممنوع تختصر أي شيء!
-3. **اللهجة ثابتة:** كل كلمة تبقى عامية. لو في فصحى، حولها لعامية ذكية.
-4. **ممنوع تقول "قمت" أو "بصفتي":** رد بالسكربت فوراً من أول كلمة.
-5. **ممنوع أقواس:** شيل أي [زووم] أو [B-roll] أو تعليمات مونتاج.
-6. **شيل الكليشيهات:** "تخيل معايا"، "يا جماعة"، "استنوا"، "بص كده" ممنوعين.
-7. **أنسنة الأرقام:** كل رقم له تأثير ملموس.
+🚨 اختبار "قعدة القهوة" (Strictest Rules):
+1. **اختبار النطق:** هل الكلام ده ينفع يتقال بصوت عالي في قعدة صحاب؟ لو في أي جملة "كتابية" أو "رسمية"، حولها لعامية "صايعة" وذكية.
+2. **ممنوع الـ AI Breath:** احذف أي كلمات حشو زي "في هذا السياق"، "مما يؤدي إلى"، "بفضل هذا".
+3. **الهوك ثابت:** الجملة الأولى ممنوع تتغير حرفياً!
+4. **الطول مقدس:** السكربت لازم يكون ${minOutputWords}+ كلمة. ممنوع الاختصار المخل.
+5. **تبسيط المعقد:** لو في معلومة تقنية، اشرحها كأنك بتشرحها لطفل عنده 10 سنين.
+6. **ممنوع "قمت" أو "بصفتي":** رد بالسكربت فوراً.
+7. **شيل أي ملاحظات:** ممنوع أي [زووم] أو [B-roll] أو تعليمات مونتاج.
 
-⚠️ تحذير: لو السكربت أقل من ${minOutputWords} كلمة، الإجابة مرفوضة!
+⚠️ تحذير: لو السكربت فقد روحه البصرية أو أصبح قصيراً، الإجابة مرفوضة.
 
-المطلوب: السكربت فقط (${minOutputWords}+ كلمة).` : 
-  `You are a genius "Human Content Editor". Your job is to review and improve phrasing ONLY.
+المطلوب: السكربت النهائي الصافي فقط.` : 
+  `You are a "Strict Human Content Critic & Editor". Your job is to transform this script from "AI-generated text" into "Authentic Human Speech".
 
 📝 Script (${inputWordCount} words):
 ${script}
 
-📊 Facts:
+📊 Reference Facts:
 ${datasheet}
 
 ⚠️ Language:
 ${langConfig.prompt}
 
-🚨 STRICT Rules (Cannot Break):
-1. **Hook UNTOUCHABLE:** The first sentence (Hook) MUST NOT be changed! User selected it themselves.
-2. **Length FIXED:** Output MUST be ${minOutputWords}+ words. DO NOT shorten anything!
-3. **Dialect FIXED:** Every word stays conversational. No formal language.
-4. **NO "I did" or "As an AI":** Reply with script immediately from the first word.
-5. **NO brackets:** Remove any [Zoom], [B-roll] or editing instructions.
-6. **Remove clichés:** "Imagine with me", "Ya jama'a", "Wait" are banned.
-7. **Humanize numbers:** Every number has tangible impact.
+🚨 The "Coffee Shop Test" (Strictest Rules):
+1. **Pronunciation Test:** Can this be said out loud to a friend naturally? If any sentence sounds "written" or "formal", convert it to smart conversational tone.
+2. **No AI Breath:** Remove filler words like "In this context", "Leading to", "Thanks to this".
+3. **Hook UNTOUCHABLE:** The first sentence must not be changed.
+4. **Length is Sacred:** Output MUST be ${minOutputWords}+ words. Do not shorten content.
+5. **Simplify Complexity:** Explain technical info like you're explaining it to a 10-year-old.
+6. **NO "I have polished" or "As an AI":** Reply with script immediately.
+7. **Clean output:** Remove any [Zoom], [B-roll], or editing instructions in brackets.
 
-⚠️ WARNING: If output is less than ${minOutputWords} words, answer is REJECTED!
+⚠️ WARNING: If the script loses its visual soul or becomes too short, the response is rejected.
 
-Required: Script only (${minOutputWords}+ words).`;
+Required: Final raw script only.`;
 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
