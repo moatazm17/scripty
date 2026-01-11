@@ -835,15 +835,10 @@ ${langConfig.prompt}
 **Hook B - سؤال/غموض (Curiosity Loop):** يفتح سؤال لا يمكن تجاهله.
 **Hook C - فائدة مباشرة (Outcome-Driven):** يركز على المكسب الشخصي للمشاهد فوراً.
 
-أجب بـ JSON فقط (مع ذكر السبب السيكولوجي لكل هوك لضمان الجودة):
-{
-  "shock": "نص الهوك الصادم هنا",
-  "shockReason": "ليه الهوك ده هيخلي الناس تقف؟",
-  "question": "نص هوك السؤال هنا", 
-  "questionReason": "إيه الفضول اللي بيفتحه؟",
-  "benefit": "نص هوك الفائدة هنا",
-  "benefitReason": "إيه المكسب اللي بيوعد بيه؟"
-}` :
+🧠 قبل ما تكتب، فكر في السبب السيكولوجي لكل هوك (ده هيحسن الجودة).
+
+أجب بـ JSON فقط بالشكل ده بالظبط:
+{"shock": "نص الهوك الصادم", "question": "نص هوك السؤال", "benefit": "نص هوك الفائدة"}` :
 `You are the "Hook Master" - the world's sharpest brain for creating Algorithm-breaking hooks.
 
 🎯 Your Mission: Write 3 "Scroll-Stopping" hooks that force viewers to watch.
@@ -872,15 +867,10 @@ ${langConfig.prompt}
 **Hook B - Curiosity Loop:** Opens an unignorable question.
 **Hook C - Outcome-Driven:** Focuses on immediate personal gain for the viewer.
 
-Reply with JSON only (include psychological reasoning for quality assurance):
-{
-  "shock": "Shock hook text here",
-  "shockReason": "Why will people stop scrolling?",
-  "question": "Question hook text here", 
-  "questionReason": "What curiosity loop does it open?",
-  "benefit": "Benefit hook text here",
-  "benefitReason": "What promise/gain does it offer?"
-}`;
+🧠 Before writing, think about the psychological reason for each hook (this improves quality).
+
+Reply with JSON only in this exact format:
+{"shock": "Shock hook text", "question": "Question hook text", "benefit": "Benefit hook text"}`;
 
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
