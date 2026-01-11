@@ -1398,12 +1398,13 @@ ${datasheet}
 ${langConfig.prompt}
 
 🚨 قواعد صارمة (ممنوع كسرها):
-1. **الطول ثابت:** السكربت لازم يكون ${minOutputWords}+ كلمة على الأقل. ممنوع تختصر أي شيء!
-2. **اللهجة ثابتة:** كل كلمة تبقى عامية. لو في فصحى، حولها لعامية ذكية.
-3. **ممنوع تقول "قمت" أو "بصفتي":** رد بالسكربت فوراً من أول كلمة.
-4. **ممنوع أقواس:** شيل أي [زووم] أو [B-roll] أو تعليمات مونتاج.
-5. **شيل الكليشيهات:** "تخيل معايا"، "يا جماعة"، "استنوا"، "بص كده" ممنوعين.
-6. **أنسنة الأرقام:** كل رقم له تأثير ملموس.
+1. **الهوك ثابت:** الجملة الأولى (الـ Hook) ممنوع تعديلها نهائياً! اليوزر اختارها بنفسه.
+2. **الطول ثابت:** السكربت لازم يكون ${minOutputWords}+ كلمة على الأقل. ممنوع تختصر أي شيء!
+3. **اللهجة ثابتة:** كل كلمة تبقى عامية. لو في فصحى، حولها لعامية ذكية.
+4. **ممنوع تقول "قمت" أو "بصفتي":** رد بالسكربت فوراً من أول كلمة.
+5. **ممنوع أقواس:** شيل أي [زووم] أو [B-roll] أو تعليمات مونتاج.
+6. **شيل الكليشيهات:** "تخيل معايا"، "يا جماعة"، "استنوا"، "بص كده" ممنوعين.
+7. **أنسنة الأرقام:** كل رقم له تأثير ملموس.
 
 ⚠️ تحذير: لو السكربت أقل من ${minOutputWords} كلمة، الإجابة مرفوضة!
 
@@ -1420,12 +1421,13 @@ ${datasheet}
 ${langConfig.prompt}
 
 🚨 STRICT Rules (Cannot Break):
-1. **Length FIXED:** Output MUST be ${minOutputWords}+ words. DO NOT shorten anything!
-2. **Dialect FIXED:** Every word stays conversational. No formal language.
-3. **NO "I did" or "As an AI":** Reply with script immediately from the first word.
-4. **NO brackets:** Remove any [Zoom], [B-roll] or editing instructions.
-5. **Remove clichés:** "Imagine with me", "Ya jama'a", "Wait" are banned.
-6. **Humanize numbers:** Every number has tangible impact.
+1. **Hook UNTOUCHABLE:** The first sentence (Hook) MUST NOT be changed! User selected it themselves.
+2. **Length FIXED:** Output MUST be ${minOutputWords}+ words. DO NOT shorten anything!
+3. **Dialect FIXED:** Every word stays conversational. No formal language.
+4. **NO "I did" or "As an AI":** Reply with script immediately from the first word.
+5. **NO brackets:** Remove any [Zoom], [B-roll] or editing instructions.
+6. **Remove clichés:** "Imagine with me", "Ya jama'a", "Wait" are banned.
+7. **Humanize numbers:** Every number has tangible impact.
 
 ⚠️ WARNING: If output is less than ${minOutputWords} words, answer is REJECTED!
 
