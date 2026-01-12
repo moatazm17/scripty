@@ -280,43 +280,30 @@ ${examplesText}
 }
 
 // ============================================
-// 🔧 STAGE 3: QUICK POLISH (Gemini)
+// 🔧 STAGE 3: QUICK POLISH (Light Touch Only)
 // ============================================
 
 async function quickPolish(script, dialect) {
   console.log('   🔧 Quick polish...');
   
-  const dialectConfig = DIALECTS[dialect] || DIALECTS.egyptian;
+  // Just clean without AI rewrite - the draft is good enough
+  // AI polish was destroying the script (163 words → 39 words)
+  let polished = script;
   
-  const prompt = `راجع السكربت ده وأصلح فقط:
-
-${script}
-
-═══════════════════════════════════════
-إصلاحات سريعة:
-═══════════════════════════════════════
-1. شيل "يُعد"، "حيث"، "علاوة" ← حولها لعامي
-2. شيل أي "━━━" أو "Caption:" أو "#"
-3. أي جملة > 20 كلمة ← قسمها لجملتين
-4. تأكد الختام بـ "وعشان كدة.. [situation].. لازم تسأل نفسك السؤال الأهم:"
-
-اللهجة: ${dialectConfig.name}
-
-أعطني السكربت المحسّن فقط (بدون مقدمات):`;
-
-  const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-    {
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.4,
-        maxOutputTokens: 2000,
-      },
-    },
-    { headers: { 'Content-Type': 'application/json' } }
-  );
+  // Light cleanup only
+  polished = polished
+    .replace(/يُعد/g, 'بيعتبر')
+    .replace(/حيث/g, 'لأن')
+    .replace(/علاوة على ذلك/g, 'وكمان')
+    .replace(/بالإضافة إلى/g, 'وكمان')
+    .replace(/في إطار/g, 'ضمن')
+    .replace(/[━═─]{3,}/g, '')
+    .replace(/^Caption:.*$/gim, '')
+    .replace(/^#.*$/gim, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   
-  return cleanScript(response.data.candidates[0].content.parts[0].text);
+  return polished;
 }
 
 // ============================================
@@ -426,8 +413,12 @@ Rules:
 - Professional documentary/news photography style
 - Each scene should be different (wide shot, medium shot, close-up)
 
-JSON only:
-{"prompts": ["prompt1", "prompt2", "prompt3"]}`;
+JSON only (MUST include hook, content, cta keys):
+{
+  "hook": {"prompt": "opening scene description", "caption": "hook caption in Arabic"},
+  "content": {"prompt": "main content scene description", "caption": "content caption in Arabic"},
+  "cta": {"prompt": "closing scene description", "caption": "cta caption in Arabic"}
+}`;
 
   try {
     const response = await axios.post(
@@ -435,7 +426,7 @@ JSON only:
       {
         model: CONFIG.CLAUDE_MODEL,
         max_tokens: 1000,
-        system: 'You create image generation prompts. Output: JSON only.',
+        system: 'You create image generation prompts. Output: JSON only with hook, content, cta keys.',
         messages: [{ role: 'user', content: prompt }],
       },
       {
@@ -451,17 +442,30 @@ JSON only:
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      return parsed.prompts || [];
+      // Ensure correct format
+      if (parsed.hook && parsed.content && parsed.cta) {
+        return parsed;
+      }
     }
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
   }
   
-  return [
-    `Photorealistic wide shot of ${topic}, professional documentary style`,
-    `Photorealistic medium shot showing details of ${topic}`,
-    `Photorealistic close-up dramatic shot of ${topic}`
-  ];
+  // Default fallback with correct structure
+  return {
+    hook: {
+      prompt: `Photorealistic wide shot of ${topic}, professional documentary style, cinematic lighting`,
+      caption: 'مشهد البداية'
+    },
+    content: {
+      prompt: `Photorealistic medium shot showing details of ${topic}, professional photography`,
+      caption: 'مشهد المحتوى'
+    },
+    cta: {
+      prompt: `Photorealistic close-up dramatic shot of ${topic}, emotional impact`,
+      caption: 'مشهد النهاية'
+    }
+  };
 }
 
 // ============================================
@@ -515,10 +519,13 @@ async function generateScript(topic, language, niche, duration) {
       success: true,
       script: polished,
       wordCount,
-      hooks,
-      mainHook: hooks[0] || '',
-      alternativeHooks: hooks.slice(1),
-      visualPrompts,
+      hook: hooks[0] || '',  // Main hook (Flutter expects 'hook' not 'mainHook')
+      alternativeHooks: {
+        shock: hooks[1] || '',
+        question: hooks[2] || '',
+        secret: hooks[0] || '',  // Reuse first as fallback
+      },
+      visualPrompts,  // Now a Map with {hook, content, cta} structure
       research: researchData.substring(0, 500),
       pipeline: 'n8n-style',
       elapsed: `${elapsed}s`,
