@@ -107,7 +107,7 @@ const STYLE_GUIDE = `
 `;
 
 // ============================================
-// 🔍 STAGE 1: RESEARCH (Perplexity with Retry)
+// 🔍 STAGE 1: RESEARCH (Fast + Accurate)
 // ============================================
 
 async function research(topic, retries = 3) {
@@ -122,23 +122,21 @@ async function research(topic, retries = 3) {
           messages: [
             {
               role: 'system',
-              content: 'باحث محترف. أرقام، تواريخ، تفاصيل دقيقة. في النهاية اذكر كل المصادر بالروابط.'
+              content: 'باحث محترف. أرقام دقيقة، تواريخ، تفاصيل. اذكر المصادر.'
             },
             {
               role: 'user',
-              content: `ابحث بعمق عن: ${topic}
+              content: `${topic}
 
-أريد:
-1. أرقام محددة (مبالغ، نسب، أحجام)
-2. تواريخ ومواعيد
-3. مقارنات (أكبر من X، يساوي Y)
-4. تفاصيل مفاجئة أو غير معروفة
-5. تأثير على الناس العاديين
+المطلوب:
+1. أرقام وتواريخ محددة
+2. تفاصيل مفاجئة أو غير معروفة
+3. المصادر
 
-في النهاية اذكر المصادر بالروابط الكاملة.`
+مختصر ودقيق.`
             }
           ],
-          max_tokens: 3000,
+          max_tokens: 2000,
           temperature: 0.2,
         },
         {
@@ -146,7 +144,7 @@ async function research(topic, retries = 3) {
             'Authorization': `Bearer ${CONFIG.PERPLEXITY_API_KEY}`,
             'Content-Type': 'application/json',
           },
-          timeout: 60000, // 60 second timeout
+          timeout: 45000, // 45 second timeout (faster)
         }
       );
       
@@ -236,11 +234,11 @@ JSON فقط:
 }
 
 // ============================================
-// ✍️ STAGE 3: WRITE SCRIPT (Golden Example Style)
+// ✍️ STAGE 3: WRITE SCRIPT (Zero Hallucination)
 // ============================================
 
 async function writeScript(topic, researchData, niche, selectedHook, duration) {
-  console.log('   ✍️ Writing dense script...');
+  console.log('   ✍️ Writing script...');
   
   const durationConfig = getDurationConfig(duration);
   const examples = getNicheExamples(niche);
@@ -248,42 +246,34 @@ async function writeScript(topic, researchData, niche, selectedHook, duration) {
   // Get the BEST example as the golden template
   const goldenExample = examples[0]?.script || '';
 
-  // System prompt for the writer
-  const systemPrompt = `Role: World-Class Egyptian Viral Storyteller (White Egyptian Colloquial فقط).
+  // System prompt - STRICT!
+  const systemPrompt = `أنت كاتب سكربتات فيرال مصري. عامية بيضة 100%.
 
-Goal: حوّل البحث لسكربت فيرال بنسخ DNA الـ Golden Example.
+⚠️ قاعدة حديدية:
+- كل رقم/تاريخ/حقيقة لازم يكون موجود في البحث حرفياً
+- لو معلومة مش موجودة في البحث → متذكرهاش خالص واتخطاها
+- ❌ ممنوع منعاً باتاً: "غير محدد"، "مش موجود"، "مش متأكد"، "في حدود"، "تقريباً"
+- ❌ ممنوع: "يُعد"، "حيث"، "علاوة على ذلك"، "هل تعلم"، "تخيل كده"، "بص بقى"
+- ✅ اكتب فقط اللي متأكد منه من البحث
 
-قواعد صارمة:
-- ابدأ بالـ Hook المختار حرفيًا بدون أي تعديل.
-- استخدم فقط الأرقام/التواريخ/الحقائق الموجودة في البحث.
-- لو معلومة مش موجودة في البحث → اتخطاها خالص!
-- ❌ ممنوع تقول "غير محدد" أو "مش موجود في المصادر" أو أي meta text
-- ❌ ممنوع: "يُعد"، "حيث"، "علاوة على ذلك"، "في إطار"، "هل تعلم"، "تخيل كده"، "بص بقى"
-- جمل قصيرة (≤12 كلمة). فراغ سطرين بين الفقرات.
-- ترجم كل حقيقة لإحساس المشاهد: "ده معناه إيه ليك؟"
+Output: السكربت بالعامية المصرية فقط. بدون مقدمات.`;
 
-Output: السكربت النهائي بالعامية المصرية فقط. بدون مقدمات، بدون إنجليزي.`;
-
-  const prompt = `### 1) GOLDEN EXAMPLE (قلّد الـ Structure والـ Tone):
+  const prompt = `=== GOLDEN EXAMPLE (قلّد الـ DNA بالظبط) ===
 ${goldenExample}
 
----
+=== INPUT ===
+الموضوع: ${topic}
 
-### 2) INPUT:
-Topic: ${topic}
-
-Hook (لازم يبدأ السكربت بيه حرفيًا!):
+الـ Hook (ابدأ بيه حرفياً!):
 "${selectedHook}"
 
-Research (المصدر الوحيد للحقائق - لو معلومة مش هنا متذكرهاش!):
-${researchData.substring(0, 2500)}
+البحث (المصدر الوحيد - لو مش هنا متألفوش!):
+${researchData}
 
----
-
-### 3) المطلوب:
-اكتب سكربت ~${durationConfig.words} كلمة.
-قلّد الـ Golden Example في الـ Structure والـ Flow.
-ابدأ بالـ Hook بالظبط!
+=== المطلوب ===
+سكربت ~${durationConfig.words} كلمة.
+ابدأ بالـ Hook بالظبط. قلّد الـ Golden Example.
+من البحث فقط - لو معلومة مش موجودة اتخطاها!
 
 اكتب السكربت:`;
 
@@ -317,147 +307,9 @@ ${researchData.substring(0, 2500)}
 }
 
 // ============================================
-// 🔍 STAGE 4: FACT-CHECK (Compare with Research)
+// ❌ REMOVED: Fact-Check & Fix (Now in writeScript)
 // ============================================
-
-async function factCheck(script, researchData, selectedHook) {
-  console.log('   🔍 Fact-checking...');
-  
-  const prompt = `راجع السكربت وقارنه بالبحث حرفياً.
-
-السكربت:
-${script}
-
-البحث (المصدر الوحيد للحقيقة):
-${researchData}
-
-الـ Hook المطلوب:
-"${selectedHook}"
-
----
-
-مهمتك:
-1. قارن كل رقم/تاريخ/حقيقة في السكربت بالبحث
-2. لو رقم غلط (موجود في البحث بس مختلف) → action: "REPLACE" + الرقم الصح من البحث
-3. لو معلومة مألفة (مش موجودة في البحث خالص) → action: "DELETE"
-4. تأكد إن الـ Hook في أول السكربت بالظبط
-
----
-
-قواعد:
-- ممنوع تضيف توضيحات أو تعليقات
-- ممنوع تقول "غير محدد" أو "مش موجود"
-- فقط: REPLACE (بالصح) أو DELETE (شيل الجملة)
-
----
-
-JSON فقط:
-{
-  "hasErrors": true/false,
-  "hookCorrect": true/false,
-  "errors": [
-    {"wrong": "الجملة أو الرقم الغلط", "action": "REPLACE", "correct": "الرقم الصح من البحث"},
-    {"wrong": "الجملة المألفة", "action": "DELETE", "correct": ""}
-  ]
-}`;
-
-  const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
-    {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 1500,
-      system: 'أنت مدقق حقائق صارم. قارن بالبحث فقط. ممنوع تضيف تعليقات. Output: JSON فقط.',
-      messages: [{ role: 'user', content: prompt }],
-    },
-    {
-      headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  
-  try {
-    const text = response.data.content[0].text;
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      return JSON.parse(match[0]);
-    }
-  } catch (e) {
-    console.error('   ⚠️ Fact-check parsing error:', e.message);
-  }
-  
-  return { hasErrors: false, hookCorrect: true, errors: [] };
-}
-
-// ============================================
-// 🔧 STAGE 5: FIX SCRIPT (If Errors Found)
-// ============================================
-
-async function fixScript(script, errors, selectedHook, researchData) {
-  console.log('   🔧 Fixing errors...');
-  
-  // Format errors for the prompt
-  const formattedErrors = errors.map(e => {
-    if (e.action === 'DELETE') {
-      return `- احذف: "${e.wrong}"`;
-    } else {
-      return `- بدّل "${e.wrong}" بـ "${e.correct}"`;
-    }
-  }).join('\n');
-  
-  const prompt = `صحّح السكربت بناءً على التعليمات التالية:
-
-السكربت:
-${script}
-
----
-
-التصحيحات المطلوبة:
-${formattedErrors}
-
----
-
-الـ Hook (لازم يفضل في الأول بالظبط!):
-"${selectedHook}"
-
----
-
-قواعد التصحيح:
-1. لو التعليمة "بدّل" → استبدل القيمة الغلط بالصح
-2. لو التعليمة "احذف" → شيل الجملة كلها من السكربت
-3. ❌ ممنوع تضيف "غير محدد" أو "مش موجود في المصادر" أو أي توضيحات
-4. ❌ ممنوع تغير أي حاجة تانية غير الأخطاء المحددة
-5. لازم السكربت يبدأ بالـ Hook بالظبط!
-
----
-
-ارجع السكربت المصحح فقط (بدون مقدمات):`;
-
-  const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
-    {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 2000,
-      system: 'أنت مصحح سكربتات. نفّذ التعليمات بالظبط. ممنوع تضيف توضيحات. Output: السكربت المصحح فقط.',
-      messages: [{ role: 'user', content: prompt }],
-    },
-    {
-      headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  
-  return response.data.content[0].text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/#{1,3}\s*/g, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .trim();
-}
+// الكاتب بقى صارم ومبيألفش - مش محتاجين Fact-Check منفصل
 
 // ============================================
 // 🧹 STAGE 6: STYLE CHECK & CLEANUP
@@ -563,15 +415,14 @@ JSON only:
 }
 
 // ============================================
-// 🚀 MAIN PIPELINE (n8n Style)
+// 🚀 MAIN PIPELINE (Fast & Accurate)
 // ============================================
 
 async function generateScript(topic, language, niche, duration) {
   console.log('');
   console.log('═══════════════════════════════════════');
-  console.log('🚀 n8n-Style Pipeline Started');
+  console.log('🚀 Fast Pipeline Started');
   console.log(`📌 Topic: ${topic}`);
-  console.log(`🌍 Dialect: ${language}`);
   console.log(`🎯 Niche: ${niche} → ${getNicheKey(niche)}`);
   console.log(`⏱️ Duration: ${duration}s`);
   console.log('═══════════════════════════════════════');
@@ -579,7 +430,7 @@ async function generateScript(topic, language, niche, duration) {
   const startTime = Date.now();
   
   try {
-    // Stage 1: Research
+    // Stage 1: Research (Fast)
     const researchData = await research(topic);
     console.log('   ✓ Research done');
     
@@ -590,35 +441,16 @@ async function generateScript(topic, language, niche, duration) {
     // Select first hook as main
     const selectedHook = hooks[0] || topic;
     
-    // Stage 3: Write Script (with golden example from niche)
+    // Stage 3: Write Script (Zero Hallucination - No Fact-Check needed!)
     let script = await writeScript(topic, researchData, niche, selectedHook, duration);
-    console.log(`   ✓ Draft: ${script.split(/\s+/).length} words`);
+    console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
-    // Stage 4: Fact-Check
-    const factCheckResult = await factCheck(script, researchData, selectedHook);
-    console.log(`   ✓ Fact-check: ${factCheckResult.hasErrors ? '❌ Errors found' : '✅ Clean'}`);
-    
-    // Stage 5: Fix if errors
-    if (factCheckResult.hasErrors && factCheckResult.errors?.length > 0) {
-      script = await fixScript(script, factCheckResult.errors, selectedHook, researchData);
-      console.log('   ✓ Errors fixed');
-    }
-    
-    // Fix hook if wrong
-    if (!factCheckResult.hookCorrect) {
-      console.log('   ⚠️ Hook was changed, enforcing...');
-      if (!script.startsWith(selectedHook)) {
-        const firstLine = script.split('\n')[0];
-        script = script.replace(firstLine, selectedHook);
-      }
-    }
-    
-    // Stage 6: Style Cleanup
+    // Stage 4: Style Cleanup
     script = styleCleanup(script, selectedHook);
     const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
-    console.log(`   ✓ Final: ${wordCount} words`);
+    console.log(`   ✓ Cleaned: ${wordCount} words`);
     
-    // Stage 7: Visual Prompts
+    // Stage 5: Visual Prompts
     const visualPrompts = await generateVisualPrompts(topic, script);
     console.log('   ✓ Visual prompts ready');
     
@@ -640,11 +472,7 @@ async function generateScript(topic, language, niche, duration) {
       },
       visualPrompts,
       research: researchData.substring(0, 500),
-      factCheck: {
-        passed: !factCheckResult.hasErrors,
-        errors: factCheckResult.errors || [],
-      },
-      pipeline: 'n8n-style-v2',
+      pipeline: 'fast-v3',
       elapsed: `${elapsed}s`,
     };
     
@@ -661,9 +489,9 @@ async function generateScript(topic, language, niche, duration) {
 app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'Scripty API - n8n Style Pipeline V2',
+    message: 'Scripty API - Fast Pipeline V3',
     niches: Object.keys(NICHE_EXAMPLES.categories || {}),
-    features: ['Fact-Check', 'Hook Enforcement', 'Dense Scripts', 'Niche Examples'],
+    features: ['Zero Hallucination', 'Fast Research', 'Niche Examples'],
   });
 });
 
@@ -708,5 +536,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Scripty API running on port ${PORT}`);
   console.log(`📚 Loaded niches: ${Object.keys(NICHE_EXAMPLES.categories || {}).join(', ')}`);
-  console.log(`🔥 Features: Fact-Check, Hook Enforcement, Dense Scripts`);
+  console.log(`🔥 Features: Zero Hallucination, Fast Research, 3-Stage Pipeline`);
 });
