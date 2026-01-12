@@ -43,6 +43,50 @@ const SCRIPT_STRUCTURE = {
 };
 
 // ============================================
+// ⏱️ DURATION CONFIG HELPER
+// ============================================
+
+function getDurationConfig(duration) {
+  const durationInt = parseInt(duration) || 60;
+  
+  const configs = {
+    15: {
+      words: 80,
+      structure: { hook: 3, bridge: 3, main: 7, close: 2 },
+      maxTokens: 600,
+    },
+    30: {
+      words: 150,
+      structure: { hook: 5, bridge: 5, main: 15, close: 5 },
+      maxTokens: 1200,
+    },
+    60: {
+      words: 300,
+      structure: { hook: 5, bridge: 10, main: 35, close: 10 },
+      maxTokens: 2500,
+    },
+    90: {
+      words: 450,
+      structure: { hook: 5, bridge: 15, main: 55, close: 15 },
+      maxTokens: 3000,
+    }
+  };
+  
+  // Return exact match or closest
+  if (configs[durationInt]) {
+    return configs[durationInt];
+  }
+  
+  // Find closest duration
+  const durations = Object.keys(configs).map(Number);
+  const closest = durations.reduce((prev, curr) => 
+    Math.abs(curr - durationInt) < Math.abs(prev - durationInt) ? curr : prev
+  );
+  
+  return configs[closest];
+}
+
+// ============================================
 // 📏 RULES
 // ============================================
 
