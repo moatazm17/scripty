@@ -21,7 +21,6 @@ const CONFIG = {
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
   GEMINI_MODEL: 'gemini-2.5-flash',
-  DALLE_MODEL: 'dall-e-3',
 };
 
 // ============================================
@@ -32,7 +31,7 @@ let NICHE_EXAMPLES = {};
 try {
   const examplesPath = path.join(__dirname, 'examples', 'niche-examples.json');
   NICHE_EXAMPLES = JSON.parse(fs.readFileSync(examplesPath, 'utf8'));
-  console.log('✅ Loaded niche examples:', Object.keys(NICHE_EXAMPLES.categories).join(', '));
+  console.log('✅ Loaded niche examples:', Object.keys(NICHE_EXAMPLES.categories || {}).join(', '));
 } catch (e) {
   console.error('⚠️ Could not load niche-examples.json:', e.message);
 }
@@ -42,50 +41,25 @@ try {
 // ============================================
 
 const DIALECTS = {
-  egyptian: {
-    name: 'Egyptian Arabic',
-    style: 'مصري عامي - زي ما بتكلم صاحبك',
-  },
-  gulf: {
-    name: 'Gulf Arabic',
-    style: 'خليجي - سعودي/إماراتي',
-  },
-  levantine: {
-    name: 'Levantine Arabic',
-    style: 'شامي - سوري/لبناني',
-  },
-  english: {
-    name: 'English',
-    style: 'Casual conversational English',
-  },
+  egyptian: { name: 'Egyptian Arabic', style: 'مصري عامي - زي ما بتكلم صاحبك' },
+  gulf: { name: 'Gulf Arabic', style: 'خليجي - سعودي/إماراتي' },
+  levantine: { name: 'Levantine Arabic', style: 'شامي - سوري/لبناني' },
+  english: { name: 'English', style: 'Casual conversational English' },
 };
 
 // ============================================
-// 🎯 NICHE MAPPING
+// 🎯 NICHE HELPERS
 // ============================================
 
 const NICHE_MAP = {
-  'real_estate': 'real_estate',
-  'realestate': 'real_estate',
-  'عقارات': 'real_estate',
-  'content': 'content_creation',
-  'content_creation': 'content_creation',
-  'محتوى': 'content_creation',
-  'business': 'business',
-  'بيزنس': 'business',
-  'technology': 'technology',
-  'tech': 'technology',
-  'تكنولوجيا': 'technology',
-  'general': 'general',
-  'عام': 'general',
-  'self_development': 'self_development',
-  'self': 'self_development',
-  'تطوير': 'self_development',
-  'restaurants': 'restaurants',
-  'food': 'restaurants',
-  'مطاعم': 'restaurants',
-  'fashion': 'fashion',
-  'فاشون': 'fashion',
+  'real_estate': 'real_estate', 'realestate': 'real_estate', 'عقارات': 'real_estate',
+  'content': 'content_creation', 'content_creation': 'content_creation', 'محتوى': 'content_creation',
+  'business': 'business', 'بيزنس': 'business',
+  'technology': 'technology', 'tech': 'technology', 'تكنولوجيا': 'technology',
+  'general': 'general', 'عام': 'general',
+  'self_development': 'self_development', 'self': 'self_development', 'تطوير': 'self_development',
+  'restaurants': 'restaurants', 'food': 'restaurants', 'مطاعم': 'restaurants',
+  'fashion': 'fashion', 'فاشون': 'fashion',
 };
 
 function getNicheKey(niche) {
@@ -96,9 +70,7 @@ function getNicheKey(niche) {
 function getNicheExamples(niche) {
   const key = getNicheKey(niche);
   const category = NICHE_EXAMPLES.categories?.[key];
-  if (category && category.examples) {
-    return category.examples;
-  }
+  if (category && category.examples) return category.examples;
   return NICHE_EXAMPLES.categories?.general?.examples || [];
 }
 
@@ -106,32 +78,33 @@ function getUniversalHooks() {
   return NICHE_EXAMPLES.universal_hooks || [];
 }
 
-// ============================================
-// 🔧 HELPER FUNCTIONS
-// ============================================
-
 function getDurationConfig(duration) {
   const durationInt = parseInt(duration) || 60;
   const configs = {
     15: { words: 80, maxTokens: 600 },
     30: { words: 150, maxTokens: 1200 },
-    60: { words: 280, maxTokens: 2500 },
-    90: { words: 400, maxTokens: 3000 },
+    60: { words: 200, maxTokens: 2000 },
+    90: { words: 300, maxTokens: 2500 },
   };
   return configs[durationInt] || configs[60];
 }
 
-function cleanScript(text) {
-  return text
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/[━═─]{3,}/g, '')
-    .replace(/^Caption:.*$/gim, '')
-    .replace(/^#.*$/gim, '')
-    .replace(/^(إليك|السكربت|هذا)[:\s]*/im, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
+// ============================================
+// 🔧 STYLE GUIDE (n8n Style)
+// ============================================
+
+const STYLE_GUIDE = `
+=== أسلوب الكتابة ===
+• لهجة مصرية 100%: "بص بقى"، "من الآخر"، "الخلاصة"
+• أرقام بالأرقام: "500 مليون"، "128 طن"
+• تشبيهات: "أكبر من 10 ملاعب!"، "يكفي لتشغيل مدينة كاملة!"
+
+=== ممنوعات ===
+❌ "يُعد"، "حيث"، "علاوة على ذلك"، "في إطار"، "بالإضافة إلى"
+❌ "هل تعلم"، "تخيل كده" (كبداية)
+❌ أعلام أو إيموجي وطنية (🇪🇬) إلا لو الموضوع وطني فعلاً
+❌ فواصل (━━━) أو Caption أو هاشتاجات
+`;
 
 // ============================================
 // 🔍 STAGE 1: RESEARCH (Perplexity)
@@ -147,7 +120,7 @@ async function research(topic) {
       messages: [
         {
           role: 'system',
-          content: 'باحث محترف. هات أرقام محددة، تواريخ، تفاصيل دقيقة، ومقارنات.'
+          content: 'باحث محترف. أرقام، تواريخ، تفاصيل دقيقة. في النهاية اذكر كل المصادر بالروابط.'
         },
         {
           role: 'user',
@@ -158,10 +131,13 @@ async function research(topic) {
 2. تواريخ ومواعيد
 3. مقارنات (أكبر من X، يساوي Y)
 4. تفاصيل مفاجئة أو غير معروفة
-5. تأثير على الناس العاديين`
+5. تأثير على الناس العاديين
+
+في النهاية اذكر المصادر بالروابط الكاملة.`
         }
       ],
-      max_tokens: 2500,
+      max_tokens: 3000,
+      temperature: 0.2,
     },
     {
       headers: {
@@ -175,182 +151,38 @@ async function research(topic) {
 }
 
 // ============================================
-// ✍️ STAGE 2: WRITE SCRIPT (Claude - One Shot)
+// 🎣 STAGE 2: GENERATE HOOKS (n8n Style)
 // ============================================
 
-async function writeScript(topic, researchData, niche, dialect, duration) {
-  console.log('   ✍️ Writing script...');
-  
-  const dialectConfig = DIALECTS[dialect] || DIALECTS.egyptian;
-  const durationConfig = getDurationConfig(duration);
-  const examples = getNicheExamples(niche);
-  const hooks = getUniversalHooks();
-  
-  // Build examples section
-  let examplesText = '';
-  if (examples.length > 0) {
-    examplesText = examples.map((ex, i) => 
-      `═══ مثال ${i + 1}: ${ex.title} ═══\n${ex.script}`
-    ).join('\n\n');
-  }
-  
-  // Build hooks section
-  let hooksText = '';
-  if (hooks.length > 0) {
-    hooksText = hooks.map((h, i) => `${i + 1}. "${h}"`).join('\n');
-  }
-
-  const prompt = `اكتب سكربت فيديو قصير (~${durationConfig.words} كلمة) عن:
-${topic}
-
-═══════════════════════════════════════
-📚 المعلومات من البحث:
-═══════════════════════════════════════
-${researchData.substring(0, 2500)}
-
-═══════════════════════════════════════
-🗣️ اللهجة: ${dialectConfig.name}
-${dialectConfig.style}
-═══════════════════════════════════════
-
-═══════════════════════════════════════
-🎣 أمثلة Hooks (استخدم كإلهام - لا تنسخ):
-═══════════════════════════════════════
-${hooksText}
-
-(استبدل {topic} بجزء غامض من الموضوع)
-
-═══════════════════════════════════════
-📝 أمثلة سكربتات ممتازة (تعلم الأسلوب - لا تنسخ):
-═══════════════════════════════════════
-
-${examplesText}
-
-═══════════════════════════════════════
-🎯 لاحظ في الأمثلة:
-═══════════════════════════════════════
-
-1️⃣ HOOK قوي في البداية:
-   - سؤال أو تحدي أو صدمة
-   - "لو فاكر إن..."، "ليه..."، "أوعى..."
-
-2️⃣ "إحنا مش بنتكلم عن X.. إحنا بنتكلم عن Y":
-   - توضيح الفرق بين السطحي والعميق
-
-3️⃣ أرقام + تشبيهات:
-   - "5 مليون جنيه"، "20% سنوياً"
-   - "تخيل إن..."
-
-4️⃣ معلومة مفاجئة أو سر
-
-5️⃣ "وعشان كدة.. [situation].. لازم تسأل نفسك السؤال الأهم:":
-   - الختام دايماً بالصيغة دي
-   - سؤال مفتوح يخلي المشاهد يفكر
-
-═══════════════════════════════════════
-❌ ممنوع تماماً:
-═══════════════════════════════════════
-• "هل تعلم"، "تخيل كده"، "بص كده"
-• "يُعد"، "حيث"، "علاوة على ذلك"، "في إطار"
-• فواصل (━━━) أو Caption أو هاشتاجات
-• أي كلام بعد الختام
-
-═══════════════════════════════════════
-اكتب السكربت مباشرة عن: ${topic}
-═══════════════════════════════════════`;
-
-  const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
-    {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: durationConfig.maxTokens,
-      system: 'أنت كاتب سكربتات viral. اكتب بالعامية كما تتكلم. Output: نص السكربت فقط بدون مقدمات.',
-      messages: [{ role: 'user', content: prompt }],
-    },
-    {
-      headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-  
-  return cleanScript(response.data.content[0].text);
-}
-
-// ============================================
-// 🔧 STAGE 3: QUICK POLISH (Light Touch Only)
-// ============================================
-
-async function quickPolish(script, dialect) {
-  console.log('   🔧 Quick polish...');
-  
-  // Just clean without AI rewrite - the draft is good enough
-  // AI polish was destroying the script (163 words → 39 words)
-  let polished = script;
-  
-  // Light cleanup only
-  polished = polished
-    .replace(/يُعد/g, 'بيعتبر')
-    .replace(/حيث/g, 'لأن')
-    .replace(/علاوة على ذلك/g, 'وكمان')
-    .replace(/بالإضافة إلى/g, 'وكمان')
-    .replace(/في إطار/g, 'ضمن')
-    .replace(/[━═─]{3,}/g, '')
-    .replace(/^Caption:.*$/gim, '')
-    .replace(/^#.*$/gim, '')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-  
-  return polished;
-}
-
-// ============================================
-// 🎣 GENERATE HOOKS (Separate)
-// ============================================
-
-async function generateHooks(topic, researchData, niche, dialect) {
+async function generateHooks(topic, researchData, niche) {
   console.log('   🎣 Generating hooks...');
   
-  const dialectConfig = DIALECTS[dialect] || DIALECTS.egyptian;
-  const hooks = getUniversalHooks();
   const examples = getNicheExamples(niche);
+  const universalHooks = getUniversalHooks();
   
-  // Get hook examples from scripts
-  const hookExamples = examples.map(ex => {
+  // Extract hooks from examples
+  const exampleHooks = examples.map(ex => {
     const firstLine = ex.script.split('\n')[0];
     return firstLine;
-  }).join('\n');
+  }).slice(0, 3);
 
-  const prompt = `اكتب 3 Hooks مختلفة للموضوع ده:
+  const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
 
 الموضوع: ${topic}
+البحث: ${researchData.substring(0, 800)}
 
-البحث (للإلهام):
-${researchData.substring(0, 800)}
+=== أمثلة Hooks من نفس المجال ===
+${exampleHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
-═══════════════════════════════════════
-🎣 أنماط Hooks (استخدم كإلهام):
-═══════════════════════════════════════
-${hooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+=== أنماط Hooks عامة (للإلهام) ===
+${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
-═══════════════════════════════════════
-📝 أمثلة Hooks من سكربتات ناجحة:
-═══════════════════════════════════════
-${hookExamples}
-
-═══════════════════════════════════════
-🎯 القواعد:
-═══════════════════════════════════════
-• كل Hook مختلف عن الثاني في الأسلوب
-• غموض يثير الفضول (مش تكشف كل الموضوع)
-• ممكن تستخدم: سؤال، تحدي، صدمة، رقم
-• اللهجة: ${dialectConfig.name}
-
-❌ ممنوع:
-• "هل تعلم"، "تخيل كده"
-• كشف كل التفاصيل
+=== لاحظ الأسلوب ===
+• غموض يثير الفضول
+• سؤال أو تحدي أو صدمة
+• ❌ ممنوع تكشف الموضوع بالكامل
+• ❌ ممنوع "هل تعلم" أو "تخيل كده"
+• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."
 
 JSON فقط:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
@@ -383,15 +215,254 @@ JSON فقط:
     console.error('   ⚠️ Hook parsing error:', e.message);
   }
   
+  // Fallback
   return [
     `اللي بيوصلك عن ${topic.substring(0, 30)} ده نص الحقيقة بس...`,
     `لو فاكر إن اللي بيحصل في ${topic.substring(0, 30)} ده صدفة... تبقى غلطان!`,
-    `أتحداك تكون واخد بالك من التفصيلة دي في ${topic.substring(0, 30)}...`
+    `أتحداك تكون واخد بالك من التفصيلة دي...`
   ];
 }
 
 // ============================================
-// 🖼️ GENERATE VISUAL PROMPTS (DALL-E Ready)
+// ✍️ STAGE 3: WRITE SCRIPT (n8n Style - Dense)
+// ============================================
+
+async function writeScript(topic, researchData, niche, selectedHook, duration) {
+  console.log('   ✍️ Writing dense script...');
+  
+  const durationConfig = getDurationConfig(duration);
+  const examples = getNicheExamples(niche);
+  
+  // Get the BEST example (first one) as the golden template
+  const goldenExample = examples[0]?.script || '';
+
+  const prompt = `اكتب سكربت يوتيوب قصير (${durationConfig.words} كلمة تقريباً) دسم ومليان معلومات.
+
+الموضوع: ${topic}
+
+=== الـ HOOK - مهم جداً! ===
+⚠️ استخدم الـ Hook ده بالظبط حرف بحرف من غير أي تغيير:
+"${selectedHook}"
+
+❌ ممنوع تغيّر ولا كلمة في الـ Hook!
+✅ ابدأ السكربت بالـ Hook ده بالظبط!
+
+=== البحث (المصدر الوحيد للمعلومات!) ===
+${researchData.substring(0, 2500)}
+
+=== هيكل السكربت الدسم ===
+
+1. HOOK (السطر الأول - الـ Hook بالظبط!):
+"${selectedHook}"
+
+2. "إحنا مش بنتكلم عن [السطحي].. إحنا بنتكلم عن [العميق]":
+- وضّح الفرق بين الفهم السطحي والحقيقة
+
+3. الكشف + شرح ببساطة (ده معناه إيه؟):
+- اكشف الموضوع بأرقام محددة من البحث
+- اشرح للمشاهد العادي: "يعني إيه؟"
+- وضّح الفايدة: "ده معناه إن..."
+
+4. تفاصيل وأرقام أكتر:
+- أرقام محددة من البحث: "500 مليون"، "12 ألف"
+- مقارنات: "أكبر من 10 ملاعب!"، "يكفي لتشغيل مدينة!"
+
+5. "لكن الحاجة الخطيرة؟" + مفاجأة:
+- معلومة مفاجئة من البحث
+
+6. الخلاصة + "وعشان كدة.. لازم تسأل نفسك السؤال الأهم:":
+- سؤال ذكي يخلي المشاهد يفكر
+
+=== مثال سكربت دسم (اتعلم منه الـ Density والـ Flow!) ===
+${goldenExample}
+
+=== قواعد مهمة ===
+⚠️ الـ Hook بالظبط من غير تغيير!
+⚠️ كل رقم لازم يكون من البحث - ممنوع تألف!
+⚠️ اشرح للمشاهد العادي - إيه الفايدة؟
+${STYLE_GUIDE}
+
+اكتب السكربت فقط:`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: durationConfig.maxTokens,
+      system: 'أنت كاتب سكربتات viral. اكتب بالعامية المصرية. Output: نص السكربت فقط بدون مقدمات.',
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  let script = response.data.content[0].text;
+  
+  // Clean markdown artifacts
+  script = script
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/#{1,3}\s*/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .trim();
+  
+  return script;
+}
+
+// ============================================
+// 🔍 STAGE 4: FACT-CHECK (Compare with Research)
+// ============================================
+
+async function factCheck(script, researchData, selectedHook) {
+  console.log('   🔍 Fact-checking...');
+  
+  const prompt = `راجع السكربت وقارنه بالبحث.
+
+السكربت:
+${script}
+
+البحث (المصدر الوحيد للحقيقة!):
+${researchData}
+
+الـ Hook المطلوب:
+"${selectedHook}"
+
+ابحث عن:
+1. أرقام غلط أو مألفة (مش موجودة في البحث)
+2. تواريخ غلط
+3. معلومات اتألفت من دماغ الـ AI
+4. هل الـ Hook في أول السكربت هو بالظبط: "${selectedHook}"؟
+
+JSON فقط:
+{
+  "hasErrors": true/false,
+  "hookCorrect": true/false,
+  "errors": [{"wrong": "...", "correct": "...", "reason": "..."}]
+}`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 1500,
+      system: 'أنت مدقق حقائق. Output: JSON فقط.',
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  try {
+    const text = response.data.content[0].text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      return JSON.parse(match[0]);
+    }
+  } catch (e) {
+    console.error('   ⚠️ Fact-check parsing error:', e.message);
+  }
+  
+  return { hasErrors: false, hookCorrect: true, errors: [] };
+}
+
+// ============================================
+// 🔧 STAGE 5: FIX SCRIPT (If Errors Found)
+// ============================================
+
+async function fixScript(script, errors, selectedHook, researchData) {
+  console.log('   🔧 Fixing errors...');
+  
+  const prompt = `صحّح الأخطاء دي في السكربت مع الحفاظ على الـ Hook في الأول بالظبط:
+
+السكربت:
+${script}
+
+الـ Hook اللي لازم يفضل في الأول بالظبط (حرف بحرف!):
+"${selectedHook}"
+
+الأخطاء المطلوب تصحيحها:
+${JSON.stringify(errors, null, 2)}
+
+البحث (للتأكد من الأرقام الصحيحة):
+${researchData.substring(0, 1500)}
+
+${STYLE_GUIDE}
+
+⚠️ لازم السكربت يبدأ بالـ Hook بالظبط!
+⚠️ صحّح الأخطاء بس - ماتغيرش الباقي!
+
+ارجع السكربت المصحح فقط:`;
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 2000,
+      system: 'أنت مصحح سكربتات. Output: السكربت المصحح فقط.',
+      messages: [{ role: 'user', content: prompt }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  return response.data.content[0].text
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/#{1,3}\s*/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .trim();
+}
+
+// ============================================
+// 🧹 STAGE 6: STYLE CHECK & CLEANUP
+// ============================================
+
+function styleCleanup(script, selectedHook) {
+  let cleaned = script;
+  
+  // Ensure hook is at the start
+  if (!cleaned.startsWith(selectedHook)) {
+    // Try to find and replace wrong hook
+    const firstLine = cleaned.split('\n')[0];
+    if (firstLine.length < 200) {
+      cleaned = cleaned.replace(firstLine, selectedHook);
+    } else {
+      cleaned = selectedHook + '\n\n' + cleaned;
+    }
+  }
+  
+  // Remove forbidden words/patterns
+  cleaned = cleaned
+    .replace(/يُعد/g, 'بيعتبر')
+    .replace(/حيث/g, 'لأن')
+    .replace(/علاوة على ذلك/g, 'وكمان')
+    .replace(/بالإضافة إلى/g, 'وكمان')
+    .replace(/في إطار/g, 'ضمن')
+    .replace(/[━═─—–_]{3,}/g, '')
+    .replace(/^Caption:.*$/gim, '')
+    .replace(/^#.*$/gim, '')
+    .replace(/🇪🇬/g, '') // Remove flag unless topic is national
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
+  return cleaned;
+}
+
+// ============================================
+// 🖼️ GENERATE VISUAL PROMPTS
 // ============================================
 
 async function generateVisualPrompts(topic, script) {
@@ -400,24 +471,24 @@ async function generateVisualPrompts(topic, script) {
   const prompt = `Based on this script, create 3 image descriptions for a video storyboard.
 
 Topic: ${topic}
+Script: ${script.substring(0, 1000)}
 
-Script:
-${script.substring(0, 1000)}
-
-Create 3 different scenes that would work well as video backgrounds or B-roll.
-Each description should be a detailed prompt for image generation.
+Create 3 different scenes:
+1. Hook scene (opening - grab attention)
+2. Content scene (main information)
+3. CTA scene (closing - call to action)
 
 Rules:
-- Photorealistic style
-- No text, watermarks, or logos in the image
-- Professional documentary/news photography style
-- Each scene should be different (wide shot, medium shot, close-up)
+- Photorealistic documentary style
+- No text, watermarks, or logos
+- Professional photography
+- Each scene different angle/mood
 
-JSON only (MUST include hook, content, cta keys):
+JSON only:
 {
-  "hook": {"prompt": "opening scene description", "caption": "hook caption in Arabic"},
-  "content": {"prompt": "main content scene description", "caption": "content caption in Arabic"},
-  "cta": {"prompt": "closing scene description", "caption": "cta caption in Arabic"}
+  "hook": {"prompt": "...", "caption": "مشهد البداية"},
+  "content": {"prompt": "...", "caption": "مشهد المحتوى"},
+  "cta": {"prompt": "...", "caption": "مشهد النهاية"}
 }`;
 
   try {
@@ -426,7 +497,7 @@ JSON only (MUST include hook, content, cta keys):
       {
         model: CONFIG.CLAUDE_MODEL,
         max_tokens: 1000,
-        system: 'You create image generation prompts. Output: JSON only with hook, content, cta keys.',
+        system: 'Create image prompts. Output: JSON only.',
         messages: [{ role: 'user', content: prompt }],
       },
       {
@@ -442,7 +513,6 @@ JSON only (MUST include hook, content, cta keys):
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      // Ensure correct format
       if (parsed.hook && parsed.content && parsed.cta) {
         return parsed;
       }
@@ -451,25 +521,16 @@ JSON only (MUST include hook, content, cta keys):
     console.error('   ⚠️ Visual prompt error:', e.message);
   }
   
-  // Default fallback with correct structure
+  // Fallback
   return {
-    hook: {
-      prompt: `Photorealistic wide shot of ${topic}, professional documentary style, cinematic lighting`,
-      caption: 'مشهد البداية'
-    },
-    content: {
-      prompt: `Photorealistic medium shot showing details of ${topic}, professional photography`,
-      caption: 'مشهد المحتوى'
-    },
-    cta: {
-      prompt: `Photorealistic close-up dramatic shot of ${topic}, emotional impact`,
-      caption: 'مشهد النهاية'
-    }
+    hook: { prompt: `Photorealistic wide shot of ${topic}`, caption: 'مشهد البداية' },
+    content: { prompt: `Photorealistic medium shot of ${topic}`, caption: 'مشهد المحتوى' },
+    cta: { prompt: `Photorealistic close-up of ${topic}`, caption: 'مشهد النهاية' }
   };
 }
 
 // ============================================
-// 🚀 MAIN PIPELINE (n8n Style - Simple)
+// 🚀 MAIN PIPELINE (n8n Style)
 // ============================================
 
 async function generateScript(topic, language, niche, duration) {
@@ -489,25 +550,44 @@ async function generateScript(topic, language, niche, duration) {
     const researchData = await research(topic);
     console.log('   ✓ Research done');
     
-    // Stage 2: Generate Hooks (parallel with script)
-    const hooksPromise = generateHooks(topic, researchData, niche, language);
-    
-    // Stage 3: Write Script (One Shot with inline examples)
-    const draft = await writeScript(topic, researchData, niche, language, duration);
-    console.log(`   ✓ Draft: ${draft.split(/\s+/).length} words`);
-    
-    // Stage 4: Quick Polish
-    const polished = await quickPolish(draft, language);
-    const wordCount = polished.split(/\s+/).filter(w => w.length > 0).length;
-    console.log(`   ✓ Polished: ${wordCount} words`);
-    
-    // Wait for hooks
-    const hooks = await hooksPromise;
+    // Stage 2: Generate Hooks
+    const hooks = await generateHooks(topic, researchData, niche);
     console.log(`   ✓ Hooks: ${hooks.length}`);
     
-    // Stage 5: Visual Prompts
-    const visualPrompts = await generateVisualPrompts(topic, polished);
-    console.log(`   ✓ Visual prompts: ${visualPrompts.length}`);
+    // Select first hook as main
+    const selectedHook = hooks[0] || topic;
+    
+    // Stage 3: Write Script (with golden example from niche)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration);
+    console.log(`   ✓ Draft: ${script.split(/\s+/).length} words`);
+    
+    // Stage 4: Fact-Check
+    const factCheckResult = await factCheck(script, researchData, selectedHook);
+    console.log(`   ✓ Fact-check: ${factCheckResult.hasErrors ? '❌ Errors found' : '✅ Clean'}`);
+    
+    // Stage 5: Fix if errors
+    if (factCheckResult.hasErrors && factCheckResult.errors?.length > 0) {
+      script = await fixScript(script, factCheckResult.errors, selectedHook, researchData);
+      console.log('   ✓ Errors fixed');
+    }
+    
+    // Fix hook if wrong
+    if (!factCheckResult.hookCorrect) {
+      console.log('   ⚠️ Hook was changed, enforcing...');
+      if (!script.startsWith(selectedHook)) {
+        const firstLine = script.split('\n')[0];
+        script = script.replace(firstLine, selectedHook);
+      }
+    }
+    
+    // Stage 6: Style Cleanup
+    script = styleCleanup(script, selectedHook);
+    const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
+    console.log(`   ✓ Final: ${wordCount} words`);
+    
+    // Stage 7: Visual Prompts
+    const visualPrompts = await generateVisualPrompts(topic, script);
+    console.log('   ✓ Visual prompts ready');
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log('═══════════════════════════════════════');
@@ -517,17 +597,21 @@ async function generateScript(topic, language, niche, duration) {
     
     return {
       success: true,
-      script: polished,
+      script,
       wordCount,
-      hook: hooks[0] || '',  // Main hook (Flutter expects 'hook' not 'mainHook')
+      hook: selectedHook,
       alternativeHooks: {
         shock: hooks[1] || '',
         question: hooks[2] || '',
-        secret: hooks[0] || '',  // Reuse first as fallback
+        secret: hooks[0] || '',
       },
-      visualPrompts,  // Now a Map with {hook, content, cta} structure
+      visualPrompts,
       research: researchData.substring(0, 500),
-      pipeline: 'n8n-style',
+      factCheck: {
+        passed: !factCheckResult.hasErrors,
+        errors: factCheckResult.errors || [],
+      },
+      pipeline: 'n8n-style-v2',
       elapsed: `${elapsed}s`,
     };
     
@@ -544,8 +628,9 @@ async function generateScript(topic, language, niche, duration) {
 app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'Scripty API - n8n Style Pipeline',
+    message: 'Scripty API - n8n Style Pipeline V2',
     niches: Object.keys(NICHE_EXAMPLES.categories || {}),
+    features: ['Fact-Check', 'Hook Enforcement', 'Dense Scripts', 'Niche Examples'],
   });
 });
 
@@ -590,4 +675,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Scripty API running on port ${PORT}`);
   console.log(`📚 Loaded niches: ${Object.keys(NICHE_EXAMPLES.categories || {}).join(', ')}`);
+  console.log(`🔥 Features: Fact-Check, Hook Enforcement, Dense Scripts`);
 });
