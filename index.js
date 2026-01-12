@@ -2078,7 +2078,7 @@ Required: Reply with JSON only in this format:
 }
 
 // V2 Stage 3: Draft - Write with example-based prompts
-async function v2DraftPhase(research, strategy, dialect, style, duration) {
+async function v2DraftPhase(topic, research, strategy, dialect, style, duration) {
   const isAr = dialect.isArabic;
   const styleConfig = STYLES[style] || STYLES.default;
   
@@ -2087,6 +2087,11 @@ async function v2DraftPhase(research, strategy, dialect, style, duration) {
   
   const prompt = isAr ?
 `اكتب سكربت ${duration} ثانية (~${wordCount} كلمة).
+
+═══════════════════════════════════════
+🎯 الموضوع الأساسي (اذكره صراحة في السكربت):
+═══════════════════════════════════════
+${topic}
 
 ═══════════════════════════════════════
 الخطة:
@@ -2101,19 +2106,35 @@ async function v2DraftPhase(research, strategy, dialect, style, duration) {
 ${research}
 
 ═══════════════════════════════════════
-مثال على النبرة المطلوبة (${dialect.nameAr}):
+✅ أمثلة على الصياغة الصحيحة:
 ═══════════════════════════════════════
-"${dialect.example}"
+• "8 ساعات سفر كل يوم... تخيل التعب؟" ← (تخيل + سؤال = OK)
+• "والمفاجأة؟ بتتباع في أول يوم!" ← (قصيرة وطبيعية = OK)
+• "بس استنى... المشروع ده وفر 5 مليار!" ← (انتقال طبيعي = OK)
 
 ═══════════════════════════════════════
-مثال على ما لا أريده:
+❌ أمثلة على الصياغة الممنوعة:
 ═══════════════════════════════════════
-"يُعد هذا الموضوع من أهم المواضيع، حيث أنه يُشير إلى تطورات ملحوظة. علاوة على ذلك، تجدر الإشارة إلى أن..."
+• "تخيل كده... ده أكبر من محافظات" ← (افتتاحية فارغة = ممنوع)
+• "والمفاجأة الكبيرة إيه؟ هتتصدم!" ← (مط وكليشيه = ممنوع)
+• "يُعد هذا من أهم... حيث أنه..." ← (فصحى = ممنوع)
+
+═══════════════════════════════════════
+⚠️ ممنوع تماماً في الـ Output:
+═══════════════════════════════════════
+• أي فواصل رسومية (━━━ أو ═══)
+• أي "Caption:" أو هاشتاجات (#)
+• أي مقدمات أو خواتيم من عندك
 
 ═══════════════════════════════════════
 اكتب السكربت مباشرة - ابدأ بالهوك:
 ═══════════════════════════════════════` :
 `Write a ${duration} second script (~${wordCount} words).
+
+═══════════════════════════════════════
+🎯 Main Topic (mention it explicitly in the script):
+═══════════════════════════════════════
+${topic}
 
 ═══════════════════════════════════════
 Plan:
@@ -2128,14 +2149,23 @@ Information:
 ${research}
 
 ═══════════════════════════════════════
-Example of desired tone (${dialect.name}):
+✅ Good phrasing examples:
 ═══════════════════════════════════════
-"${dialect.example}"
+• "8 hours of travel every day... imagine the exhaustion?" ← (imagine + question = OK)
+• "And the surprise? It sold out on day one!" ← (short and natural = OK)
 
 ═══════════════════════════════════════
-Example of what I DON'T want:
+❌ Bad phrasing examples:
 ═══════════════════════════════════════
-"It's important to note that this topic is significant. Furthermore, it should be mentioned that in this context, the developments are noteworthy..."
+• "Imagine this... it's bigger than provinces" ← (empty opener = forbidden)
+• "It's important to note that..." ← (AI cliché = forbidden)
+
+═══════════════════════════════════════
+⚠️ Forbidden in output:
+═══════════════════════════════════════
+• Any decorative separators (━━━ or ═══)
+• Any "Caption:" or hashtags (#)
+• Any AI prefixes or suffixes
 
 ═══════════════════════════════════════
 Write the script directly - start with the hook:
@@ -2163,16 +2193,60 @@ Write the script directly - start with the hook:
   return cleanScript(response.data.content[0].text);
 }
 
+// V2 Stage 3.5: Self-Check - Verify script mentions topic and has no forbidden patterns
+function selfCheckScript(script, topic) {
+  const issues = [];
+  const scriptLower = script.toLowerCase();
+  const topicLower = topic.toLowerCase();
+  
+  // Check if topic is mentioned (for Arabic, check if any word from topic appears)
+  const topicWords = topic.split(/\s+/).filter(w => w.length > 2);
+  const topicMentioned = topicWords.some(word => script.includes(word));
+  
+  if (!topicMentioned) {
+    issues.push(`الموضوع "${topic}" غير مذكور في السكربت - أضفه صراحة`);
+  }
+  
+  // Check for forbidden openers
+  const forbiddenPatterns = [
+    { pattern: /^تخيل كده/i, msg: 'ابدأ مباشرة بدون "تخيل كده"' },
+    { pattern: /^هل تعلم/i, msg: 'ابدأ مباشرة بدون "هل تعلم"' },
+    { pattern: /والمفاجأة الكبيرة/i, msg: 'استخدم "والمفاجأة؟" أو "والأغرب؟" بدلاً من "والمفاجأة الكبيرة إيه"' },
+    { pattern: /بس استنى كده/i, msg: 'استخدم "بس استنى..." بدون "كده"' },
+  ];
+  
+  forbiddenPatterns.forEach(({ pattern, msg }) => {
+    if (pattern.test(script)) {
+      issues.push(msg);
+    }
+  });
+  
+  // Check for unwanted elements
+  if (/[━═─]{3,}/.test(script)) {
+    issues.push('احذف الفواصل الرسومية');
+  }
+  if (/Caption:/i.test(script)) {
+    issues.push('احذف سطر الـ Caption');
+  }
+  if (/^#\w+/m.test(script)) {
+    issues.push('احذف الهاشتاجات');
+  }
+  
+  return issues;
+}
+
 // V2 Stage 4: Calibrate - Polish language only
-async function v2CalibratePhase(draft, dialect) {
+async function v2CalibratePhase(topic, draft, dialect) {
   const isAr = dialect.isArabic;
   
   const prompt = isAr ?
 `راجع هذا السكربت وحسّن طبيعية اللغة:
 
 ═══════════════════════════════════════
-السكربت:
+🎯 الموضوع الأساسي: ${topic}
 ═══════════════════════════════════════
+
+السكربت:
 ${draft}
 
 ═══════════════════════════════════════
@@ -2184,21 +2258,27 @@ ${dialect.reference}
 ═══════════════════════════════════════
 
 قواعد المراجعة:
-1. اختبار النَفَس: كل جملة تُنطق في نَفَس واحد
-2. اختبار المحادثة: هل هذا كلام شخص حقيقي؟
-3. ممنوع: ${(dialect.avoid || []).join('، ')}
+1. تأكد إن الموضوع "${topic}" مذكور صراحة في السكربت
+2. اختبار النَفَس: كل جملة تُنطق في نَفَس واحد
+3. اختبار المحادثة: هل هذا كلام شخص حقيقي؟
+4. ممنوع: ${(dialect.avoid || []).join('، ')}
+5. ممنوع: "تخيل كده"، "هل تعلم"، "والمفاجأة الكبيرة إيه"
 
 لا تغير:
 - المعلومات والأرقام
 - الهوك (الجملة الأولى)
 - الإغلاق (آخر جملة)
 
+⚠️ Output نظيف فقط - بدون فواصل أو captions أو هاشتاجات.
+
 أعطني السكربت المحسّن فقط:` :
 `Review this script and improve language naturalness:
 
 ═══════════════════════════════════════
-Script:
+🎯 Main Topic: ${topic}
 ═══════════════════════════════════════
+
+Script:
 ${draft}
 
 ═══════════════════════════════════════
@@ -2210,14 +2290,18 @@ Example of correct tone:
 ═══════════════════════════════════════
 
 Review rules:
-1. Breath test: Each sentence spoken in one breath
-2. Conversation test: Is this real person speech?
-3. Avoid: ${(dialect.avoid || []).join(', ')}
+1. Ensure the topic "${topic}" is explicitly mentioned in the script
+2. Breath test: Each sentence spoken in one breath
+3. Conversation test: Is this real person speech?
+4. Avoid: ${(dialect.avoid || []).join(', ')}
+5. Forbidden: "Imagine this...", "Did you know", AI clichés
 
 Do not change:
 - Facts and numbers
 - Hook (first sentence)
 - Closing (last sentence)
+
+⚠️ Clean output only - no separators, captions, or hashtags.
 
 Give me the improved script only:`;
 
@@ -2407,14 +2491,25 @@ function cleanScript(text) {
   return text
     // Remove markdown code blocks
     .replace(/```[\s\S]*?```/g, '')
+    // Remove decorative separators
+    .replace(/[━═─]{3,}/g, '')
+    // Remove Caption lines
+    .replace(/^Caption:.*$/gim, '')
+    // Remove hashtag lines
+    .replace(/^#.*$/gim, '')
+    // Remove lines that are only hashtags
+    .replace(/^[\s]*#\w+[\s#\w]*$/gim, '')
     // Remove common AI prefixes (Arabic)
-    .replace(/^(إليك السكربت|السكربت المحسّن|هذا هو السكربت|تفضل|بالتأكيد|طبعاً)[:\s]*/i, '')
+    .replace(/^(إليك السكربت|السكربت المحسّن|هذا هو السكربت|تفضل|بالتأكيد|طبعاً|هذا السكربت|السكربت:)[:\s]*/i, '')
     // Remove common AI prefixes (English)
-    .replace(/^(Here's the script|Here is the script|The improved script)[:\s]*/i, '')
+    .replace(/^(Here's the script|Here is the script|The improved script|Script:)[:\s]*/i, '')
     // Remove meta-text at the start
     .replace(/^(إيه يا عم|يلا|امسك ده|خلينا نبدأ)[^\n]*\n+/i, '')
-    // Remove extra whitespace
+    // Remove "هل تعلم" opener
+    .replace(/^هل تعلم (أن|إن|ان)/i, '')
+    // Remove extra whitespace and empty lines
     .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s+|\s+$/g, '')
     .trim();
 }
 
@@ -2450,11 +2545,22 @@ async function v2GenerateScript(topic, language, duration, style, niche) {
   
   // Stage 3: Draft
   console.log('✍️ Stage 3: Draft...');
-  let draft = await v2DraftPhase(research, strategy, dialect, style, duration);
+  let draft = await v2DraftPhase(topic, research, strategy, dialect, style, duration);
+  
+  // Stage 3.5: Self-Check
+  console.log('🔍 Stage 3.5: Self-Check...');
+  const selfCheckIssues = selfCheckScript(draft, topic);
+  if (selfCheckIssues.length > 0) {
+    console.log(`   Found ${selfCheckIssues.length} issues:`, selfCheckIssues);
+    // Auto-fix via revision
+    draft = await v2RevisionPhase(draft, selfCheckIssues, dialect);
+  } else {
+    console.log('   ✓ Self-check passed');
+  }
   
   // Stage 4: Calibrate
   console.log('🔧 Stage 4: Calibrate...');
-  let calibrated = await v2CalibratePhase(draft, dialect);
+  let calibrated = await v2CalibratePhase(topic, draft, dialect);
   
   // Stage 5: Quality Gate (with revision loop)
   console.log('✅ Stage 5: Quality Gate...');
@@ -2498,9 +2604,12 @@ async function v2GenerateScript(topic, language, duration, style, niche) {
   
   console.log('✨ V2 Pipeline Complete');
   
+  // Final cleanup before returning
+  const finalScript = cleanScript(currentScript);
+  
   return {
     success: true,
-    script: currentScript,
+    script: finalScript,
     hook: strategy.hook?.text || '',
     strategy: strategy,
     quality: quality,
