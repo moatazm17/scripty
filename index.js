@@ -107,24 +107,26 @@ const STYLE_GUIDE = `
 `;
 
 // ============================================
-// 🔍 STAGE 1: RESEARCH (Perplexity)
+// 🔍 STAGE 1: RESEARCH (Perplexity with Retry)
 // ============================================
 
-async function research(topic) {
+async function research(topic, retries = 3) {
   console.log('   📚 Researching...');
   
-  const response = await axios.post(
-    'https://api.perplexity.ai/chat/completions',
-    {
-      model: CONFIG.PERPLEXITY_MODEL,
-      messages: [
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const response = await axios.post(
+        'https://api.perplexity.ai/chat/completions',
         {
-          role: 'system',
-          content: 'باحث محترف. أرقام، تواريخ، تفاصيل دقيقة. في النهاية اذكر كل المصادر بالروابط.'
-        },
-        {
-          role: 'user',
-          content: `ابحث بعمق عن: ${topic}
+          model: CONFIG.PERPLEXITY_MODEL,
+          messages: [
+            {
+              role: 'system',
+              content: 'باحث محترف. أرقام، تواريخ، تفاصيل دقيقة. في النهاية اذكر كل المصادر بالروابط.'
+            },
+            {
+              role: 'user',
+              content: `ابحث بعمق عن: ${topic}
 
 أريد:
 1. أرقام محددة (مبالغ، نسب، أحجام)
@@ -134,20 +136,30 @@ async function research(topic) {
 5. تأثير على الناس العاديين
 
 في النهاية اذكر المصادر بالروابط الكاملة.`
+            }
+          ],
+          max_tokens: 3000,
+          temperature: 0.2,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${CONFIG.PERPLEXITY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 60000, // 60 second timeout
         }
-      ],
-      max_tokens: 3000,
-      temperature: 0.2,
-    },
-    {
-      headers: {
-        'Authorization': `Bearer ${CONFIG.PERPLEXITY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      );
+      
+      return response.data.choices[0].message.content;
+    } catch (error) {
+      console.log(`   ⚠️ Research attempt ${attempt}/${retries} failed: ${error.message}`);
+      if (attempt === retries) {
+        throw new Error(`Research failed after ${retries} attempts: ${error.message}`);
+      }
+      // Wait 2 seconds before retry
+      await new Promise(r => setTimeout(r, 2000));
     }
-  );
-  
-  return response.data.choices[0].message.content;
+  }
 }
 
 // ============================================
