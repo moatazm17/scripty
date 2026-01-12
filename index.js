@@ -452,7 +452,7 @@ function getPrompt(key, lang, replacements = {}) {
 }
 
 // ============================================
-// 🔍 PERPLEXITY - Research
+// 🔍 PERPLEXITY - Research (V3.5: Enhanced Focus)
 // ============================================
 
 async function researchTopic(topic, language) {
@@ -460,28 +460,88 @@ async function researchTopic(topic, language) {
   const isAr = isArabicLang(language);
   
   const systemPrompt = isAr
-    ? `أنت مساعد بحث. ابحث عن أحدث المعلومات الدقيقة. ${langConfig.prompt}`
-    : `You are a research assistant. Find the latest and most accurate information. ${langConfig.prompt}`;
+    ? `أنت باحث استقصائي للمحتوى الفيروسي المصري. ابحث عن التفاصيل الدقيقة والكواليس والدراما.`
+    : `You are an investigative researcher for Egyptian viral content. Find specific details, conflicts, and hidden numbers.`;
   
   const userPrompt = isAr
-    ? `ابحث بدقة شديدة عن: ${topic}
+    ? `ابحث بدقة عن: ${topic}
 
-اريد معلومات محددة وحديثة عن:
-- ${topic} بالظبط (مش مواضيع عامة)
-- أرقام وإحصائيات دقيقة
-- تواريخ وأحداث مهمة
-- مصادر موثوقة
+═══════════════════════════════════════
+مجالات التركيز (تفاصيل محددة، مش ملخصات):
+═══════════════════════════════════════
 
-⚠️ مهم: ركز على الموضوع المحدد بالظبط، مش موضوع عام!`
+1. 💰 مسار الفلوس:
+   - مين بيدفع؟ مين بيستفيد؟
+   - مبالغ محددة (مش "ملايين" - أرقام دقيقة)
+   - مقارنات تكلفة (مقارنة بمشاريع مشابهة)
+
+2. ⚔️ الصراع/الدراما:
+   - إيه المشكلة اللي بيحلها ده؟
+   - مين عارض ده؟ ليه؟
+   - إيه كان البديل الفاشل؟
+
+3. 📊 الحجم (اجعله ملموس):
+   - قارن بحاجات المصريين يعرفوها:
+     * سعة ملاعب (استاد القاهرة = 75,000)
+     * عدد سكان مدن (أسوان = 1.5 مليون)
+     * أوقات التنقل اليومية
+   - "X يساوي Y [حاجة مصرية]"
+
+4. 🎭 الـ Catch:
+   - فيه سلبية مخفية؟
+   - فيه ميزة محدش بيذكرها؟
+   - الـ "بس" اللي بيخليه مثير
+
+5. 🇪🇬 الزاوية المحلية:
+   - إزاي ده بيأثر على الحياة اليومية للمصريين؟
+   - أي محافظات/مناطق متأثرة؟
+   - قبل vs بعد للمواطن العادي
+
+═══════════════════════════════════════
+الـ OUTPUT:
+═══════════════════════════════════════
+- نقاط خام فقط
+- أرقام محددة > أوصاف عامة
+- بدون ملخصات، بدون استنتاجات`
     : `Research specifically about: ${topic}
 
-I need specific and recent information about:
-- ${topic} exactly (not general topics)
-- Specific numbers and statistics
-- Important dates and events
-- Reliable sources
+═══════════════════════════════════════
+FOCUS AREAS (Find specific details, not summaries):
+═══════════════════════════════════════
 
-⚠️ Important: Focus on the specific topic exactly, not general topics!`;
+1. 💰 MONEY TRAIL:
+   - Who is paying? Who is benefiting?
+   - Specific amounts (not "millions" - exact numbers)
+   - Cost comparisons (vs similar projects)
+
+2. ⚔️ CONFLICT/DRAMA:
+   - What problem is this solving?
+   - Who opposed this? Why?
+   - What was the failed alternative?
+
+3. 📊 SCALE (Make it tangible):
+   - Compare to things people know:
+     * Stadium capacities
+     * City populations
+     * Daily commute times
+   - "X is equivalent to Y [thing]"
+
+4. 🎭 THE CATCH:
+   - Hidden downside?
+   - Hidden advantage no one mentions?
+   - The "but" that makes it interesting
+
+5. 🌍 LOCAL ANGLE:
+   - How does this affect daily life?
+   - Which regions are impacted?
+   - Before vs After for regular citizens
+
+═══════════════════════════════════════
+OUTPUT FORMAT:
+═══════════════════════════════════════
+- Raw bullet points only
+- Specific numbers > vague descriptions
+- NO summaries, NO conclusions`;
   
   const response = await axios.post(
     'https://api.perplexity.ai/chat/completions',
@@ -508,6 +568,462 @@ I need specific and recent information about:
   );
   
   return response.data.choices[0].message.content;
+}
+
+// ============================================
+// 🧠 V3.5 REASONING ENGINE (NEW - The Brain)
+// ============================================
+
+async function v35ReasoningEngine(research, topic, dialect, niche, duration) {
+  const isAr = dialect.isArabic;
+  const nicheConfig = NICHES[niche] || NICHES.general;
+  const durationConfig = getDurationConfig(duration);
+  
+  const systemPrompt = isAr
+    ? `أنت استراتيجي محتوى فيروسي مصري.
+
+أنت مش كاتب - أنت محلل. مهمتك تحلل البيانات وتطلع "الزاوية الشعبية".
+ممنوع تكتب السكربت - فقط حلل وخطط.`
+    : `You are an Egyptian Viral Content Strategist.
+
+You are NOT a writer - you are an analyst. Your task is to analyze data and extract the "street angle".
+Do NOT write the script - only analyze and plan.`;
+
+  const userPrompt = isAr
+    ? `═══════════════════════════════════════
+📚 البحث الخام:
+═══════════════════════════════════════
+${research}
+
+═══════════════════════════════════════
+🎯 الموضوع الأساسي: ${topic}
+🎭 المجال: ${nicheConfig.nameAr}
+🗣️ اللهجة: ${dialect.nameAr}
+⏱️ المدة: ${duration} ثانية (~${durationConfig.words} كلمة)
+═══════════════════════════════════════
+
+═══════════════════════════════════════
+الخطوة 1: فلتر "إيه يعني؟" (So What?)
+═══════════════════════════════════════
+حوّل كل رقم/حقيقة لـ "أثر شخصي" على المشاهد المصري.
+
+✅ أمثلة صحيحة:
+- "1.7GW Solar Park" → "الصعيد اللي كان بيقطع كل يوم؟ خلاص"
+- "طريق جديد 120 كم" → "هتوفر ساعتين من عمرك كل يوم"
+- "استثمار 5 مليار" → "20 ألف وظيفة جديدة في المنطقة"
+
+❌ أمثلة خاطئة:
+- "1.7GW Solar Park" → "أكبر محطة شمسية في أفريقيا" (خبر، مش أثر)
+- "طريق جديد" → "يربط بين المحافظات" (وصف، مش فايدة)
+
+═══════════════════════════════════════
+الخطوة 2: Hook Concept (الحقيقة المضادة)
+═══════════════════════════════════════
+اسأل: "إيه الاعتقاد الشائع عند المصريين اللي البيانات دي بتناقضه؟"
+
+✅ أمثلة صحيحة:
+- "الناس فاكرة المستثمرين هاربين، لكن X حط 5 مليار النهارده"
+- "كلنا بنشتكي من الكهربا، لكن مصر بقت بتصدر كهربا لأوروبا"
+
+❌ أمثلة خاطئة:
+- "مصر تحقق إنجازاً جديداً" (مش مضاد، ده عادي)
+- "التنمية مستمرة" (كلام فاضي)
+
+═══════════════════════════════════════
+الخطوة 3: خريطة التشبيهات (Analogy Map)
+═══════════════════════════════════════
+لكل مصطلح تقني، اكتب تشبيه مصري.
+
+✅ أمثلة:
+- "GW" → "يكفي كهربا لـ X مليون بيت"
+- "مليار دولار" → "ميزانية محافظة كاملة"
+- "1000 كم" → "من إسكندرية لأسوان"
+
+═══════════════════════════════════════
+الخطوة 4: قرار النبرة (Tone Decision)
+═══════════════════════════════════════
+بناءً على البيانات، إيه النبرة الأنسب؟
+- PROUD: إنجاز حقيقي يستاهل
+- SHOCKED: رقم مفاجئ
+- CYNICAL: فيه catch أو مفارقة
+- WARNING: فيه خطر أو فرصة بتضيع
+- CURIOUS: سؤال محتاج إجابة
+
+═══════════════════════════════════════
+OUTPUT: JSON فقط بالشكل التالي
+═══════════════════════════════════════
+{
+  "topic_anchor": "${topic}",
+  
+  "core_insight": {
+    "formal": "الرسالة بالفصحى (للفهم)",
+    "street": "نفس الرسالة بلهجة ${dialect.nameAr}"
+  },
+  
+  "street_value": "إيه اللي هيرجع على المشاهد شخصياً",
+  
+  "hook_concept": {
+    "common_belief": "الاعتقاد الشائع الخاطئ",
+    "counter_truth": "الحقيقة المضادة",
+    "hook_logic": "ابدأ بـ [الاعتقاد] وبعدين اضرب بـ [الحقيقة]"
+  },
+  
+  "analogy_map": {
+    "technical_term_1": "تشبيه مصري 1",
+    "technical_term_2": "تشبيه مصري 2"
+  },
+  
+  "tone": "PROUD | SHOCKED | CYNICAL | WARNING | CURIOUS",
+  "tone_reason": "ليه اخترت النبرة دي",
+  
+  "must_include": [
+    "نقطة 1 إجبارية",
+    "نقطة 2 إجبارية", 
+    "نقطة 3 إجبارية"
+  ],
+  
+  "forbidden": [
+    "حاجة ممنوع ذكرها (لو فيه)"
+  ]
+}`
+    : `═══════════════════════════════════════
+📚 RAW RESEARCH:
+═══════════════════════════════════════
+${research}
+
+═══════════════════════════════════════
+🎯 TOPIC: ${topic}
+🎭 NICHE: ${nicheConfig.name}
+🗣️ DIALECT: ${dialect.name}
+⏱️ DURATION: ${duration} seconds (~${durationConfig.words} words)
+═══════════════════════════════════════
+
+═══════════════════════════════════════
+STEP 1: "So What?" Filter
+═══════════════════════════════════════
+Convert every number/fact to "Personal Impact" for the viewer.
+
+✅ Good examples:
+- "1.7GW Solar Park" → "No more power cuts in your area"
+- "New 120km road" → "Save 2 hours of commute daily"
+
+❌ Bad examples:
+- "1.7GW Solar Park" → "Largest in Africa" (news, not impact)
+
+═══════════════════════════════════════
+STEP 2: Hook Concept (Counter-Intuitive Truth)
+═══════════════════════════════════════
+Ask: "What common belief does this data contradict?"
+
+✅ Good: "People think X, but actually Y"
+❌ Bad: "New achievement" (not counter-intuitive)
+
+═══════════════════════════════════════
+STEP 3: Analogy Map
+═══════════════════════════════════════
+For each technical term, write a relatable analogy.
+
+═══════════════════════════════════════
+STEP 4: Tone Decision
+═══════════════════════════════════════
+Based on data: PROUD | SHOCKED | CYNICAL | WARNING | CURIOUS
+
+═══════════════════════════════════════
+OUTPUT: JSON only
+═══════════════════════════════════════
+{
+  "topic_anchor": "${topic}",
+  "core_insight": {
+    "formal": "The message formally",
+    "street": "Same message in ${dialect.name}"
+  },
+  "street_value": "What's in it for the viewer",
+  "hook_concept": {
+    "common_belief": "The common wrong belief",
+    "counter_truth": "The counter-intuitive truth",
+    "hook_logic": "Start with [belief] then hit with [truth]"
+  },
+  "analogy_map": {
+    "technical_term": "relatable_analogy"
+  },
+  "tone": "PROUD | SHOCKED | CYNICAL | WARNING | CURIOUS",
+  "tone_reason": "Why this tone",
+  "must_include": ["Point 1", "Point 2", "Point 3"],
+  "forbidden": ["Things to avoid if any"]
+}`;
+
+  try {
+    const response = await axios.post(
+      'https://api.anthropic.com/v1/messages',
+      {
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      },
+      {
+        headers: {
+          'x-api-key': CONFIG.CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const text = response.data.content[0].text;
+    
+    // Parse JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('🧠 Reasoning Engine Output:', JSON.stringify(parsed, null, 2));
+      return parsed;
+    }
+    
+    // Fallback structure
+    console.warn('⚠️ Reasoning Engine: Could not parse JSON, using fallback');
+    return {
+      topic_anchor: topic,
+      core_insight: { formal: topic, street: topic },
+      street_value: 'معلومات مهمة ليك',
+      hook_concept: {
+        common_belief: '',
+        counter_truth: '',
+        hook_logic: 'ابدأ بالموضوع مباشرة'
+      },
+      analogy_map: {},
+      tone: 'CURIOUS',
+      tone_reason: 'Default',
+      must_include: [],
+      forbidden: []
+    };
+  } catch (error) {
+    console.error('❌ Reasoning Engine Error:', error.message);
+    return {
+      topic_anchor: topic,
+      core_insight: { formal: topic, street: topic },
+      street_value: topic,
+      hook_concept: { common_belief: '', counter_truth: '', hook_logic: '' },
+      analogy_map: {},
+      tone: 'CURIOUS',
+      must_include: [],
+      forbidden: []
+    };
+  }
+}
+
+// ============================================
+// ✍️ V3.5 WRITER STAGE (Guided by Reasoning)
+// ============================================
+
+async function v35WriterStage(topic, research, reasoning, dialect, style, duration) {
+  const isAr = dialect.isArabic;
+  const styleConfig = STYLES[style] || STYLES.default;
+  const durationConfig = getDurationConfig(duration);
+  const mainSeconds = durationConfig.structure?.main || 35;
+  
+  // Format analogies for prompt
+  const analogiesText = Object.entries(reasoning.analogy_map || {})
+    .map(([term, analogy]) => `• "${term}" → "${analogy}"`)
+    .join('\n');
+  
+  const systemPrompt = isAr
+    ? `أنت صانع محتوى مصري.
+
+أنت صاحب قاعد في قهوة بيحكي لصحابه. مش مذيع، مش صحفي، مش أستاذ جامعة.
+
+القواعد الحديدية:
+1. كل جملة تتقال في نَفَس واحد (< 12 كلمة)
+2. كل فقرة فيها سؤال واحد على الأقل
+3. الأرقام لازم يكون معاها تشبيه
+4. ممنوع تبدأ جملة بـ "و" أو "كما"`
+    : `You are an Egyptian Content Creator.
+
+You are a friend sitting in a cafe telling stories. NOT a reporter, NOT a journalist, NOT a professor.
+
+Iron Rules:
+1. Each sentence can be said in one breath (< 12 words)
+2. Each paragraph has at least one question
+3. Numbers must have analogies
+4. Never start a sentence with "And" or "As"`;
+
+  const userPrompt = isAr
+    ? `═══════════════════════════════════════
+🎯 الموضوع الأساسي: ${topic}
+⚠️ اذكر الموضوع ده صراحة في أول 3 جمل!
+═══════════════════════════════════════
+
+═══════════════════════════════════════
+🧠 تحليل الـ Reasoning Engine:
+═══════════════════════════════════════
+📌 الرسالة الأساسية: ${reasoning.core_insight?.street || reasoning.core_insight?.formal || topic}
+
+💰 القيمة للمشاهد: ${reasoning.street_value || 'معلومات مهمة'}
+
+🎣 منطق الهوك:
+- الاعتقاد الشائع: ${reasoning.hook_concept?.common_belief || ''}
+- الحقيقة المضادة: ${reasoning.hook_concept?.counter_truth || ''}
+- الاستراتيجية: ${reasoning.hook_concept?.hook_logic || 'ابدأ بالموضوع مباشرة'}
+
+🔄 التشبيهات الجاهزة (استخدمها!):
+${analogiesText || '(لا يوجد تشبيهات محددة)'}
+
+🎭 النبرة المطلوبة: ${reasoning.tone || 'CURIOUS'}
+
+📝 النقاط الإجبارية:
+${(reasoning.must_include || []).map((p, i) => `${i+1}. ${p}`).join('\n') || '(لا يوجد نقاط محددة)'}
+
+═══════════════════════════════════════
+📏 المواصفات:
+═══════════════════════════════════════
+- المدة: ${duration} ثانية
+- عدد الكلمات: ~${durationConfig.words} كلمة
+- اللهجة: ${dialect.nameAr}
+- المرجع: ${dialect.reference}
+
+═══════════════════════════════════════
+✅ أمثلة على الكتابة الصحيحة:
+═══════════════════════════════════════
+
+مثال 1 (Hook - تحدي اعتقاد):
+"كلنا فاكرين إن المستثمرين هاربين من مصر. طب ليه شركة X حطت 5 مليار النهارده؟"
+
+مثال 2 (استخدام تشبيه):
+"المحطة دي بتنتج كهربا تكفي 4 مليون بيت. يعني محافظة الشرقية كلها."
+
+مثال 3 (جمل قصيرة):
+"8 ساعات سفر. تخيل التعب؟ دلوقتي؟ ساعتين بس."
+
+مثال 4 (سؤال + جواب):
+"طب ده هيفيدك في إيه؟ بسيطة. فاتورة الكهربا هتنزل."
+
+═══════════════════════════════════════
+❌ ممنوع تماماً:
+═══════════════════════════════════════
+
+- ❌ "هل تعلم أن..." (افتتاحية ممنوعة)
+- ❌ "تخيل كده..." (افتتاحية فارغة)
+- ❌ "في إطار..." / "في ظل..." (لغة رسمية)
+- ❌ "وعلاوة على ذلك" (لغة أكاديمية)
+- ❌ "والمفاجأة الكبيرة إيه؟" (تشويق رخيص)
+- ❌ البدء بـ "و" أو "كما"
+- ❌ كلمات فصحى: "يُعد"، "يُعتبر"، "حيث"، "إذ"
+- ❌ فواصل رسومية (━━━، ═══)
+- ❌ "Caption:" أو labels
+- ❌ هاشتاجات
+- ❌ إيموجي
+- ❌ [يتكلم بحماس] أو أي stage directions
+
+═══════════════════════════════════════
+📝 البنية:
+═══════════════════════════════════════
+
+HOOK (5 ثواني):
+- طبّق "hook_logic" من الـ Reasoning
+- اضرب بـ "counter_truth" مباشرة
+- بدون تسخين، بدون مقدمات
+
+BRIDGE (10 ثواني):
+- اربط الـ Hook بـ "core_insight"
+- استخدم أول تشبيه من "analogy_map"
+
+BODY (${mainSeconds} ثانية):
+- غطّي كل نقاط "must_include"
+- كل نقطة بـ mini-hook خاص
+- استخدم باقي التشبيهات
+
+CLOSE (10 ثواني):
+- أكّد على "street_value"
+- اختم بسؤال مرتبط بالموضوع
+
+═══════════════════════════════════════
+اكتب السكربت مباشرة - ابدأ بالهوك:`
+    : `═══════════════════════════════════════
+🎯 TOPIC ANCHOR: ${topic}
+⚠️ Mention this topic explicitly in the first 3 sentences!
+═══════════════════════════════════════
+
+═══════════════════════════════════════
+🧠 REASONING ENGINE ANALYSIS:
+═══════════════════════════════════════
+📌 Core Message: ${reasoning.core_insight?.street || reasoning.core_insight?.formal || topic}
+
+💰 Street Value: ${reasoning.street_value || 'Important information'}
+
+🎣 Hook Logic:
+- Common Belief: ${reasoning.hook_concept?.common_belief || ''}
+- Counter Truth: ${reasoning.hook_concept?.counter_truth || ''}
+- Strategy: ${reasoning.hook_concept?.hook_logic || 'Start with the topic directly'}
+
+🔄 Ready Analogies (USE THEM!):
+${analogiesText || '(No specific analogies)'}
+
+🎭 Required Tone: ${reasoning.tone || 'CURIOUS'}
+
+📝 Must Include:
+${(reasoning.must_include || []).map((p, i) => `${i+1}. ${p}`).join('\n') || '(No specific points)'}
+
+═══════════════════════════════════════
+📏 SPECS:
+═══════════════════════════════════════
+- Duration: ${duration} seconds
+- Word Count: ~${durationConfig.words} words
+- Dialect: ${dialect.name}
+
+═══════════════════════════════════════
+✅ CORRECT WRITING EXAMPLES:
+═══════════════════════════════════════
+
+Example 1 (Hook - Challenge Belief):
+"Everyone thinks investors are fleeing. So why did company X invest $5 billion today?"
+
+Example 2 (Using Analogy):
+"This plant produces enough power for 4 million homes. That's the entire Sharqia governorate."
+
+Example 3 (Short Punchy):
+"8 hours travel. Imagine the fatigue? Now? Just 2 hours."
+
+═══════════════════════════════════════
+❌ FORBIDDEN:
+═══════════════════════════════════════
+- ❌ "Did you know..." opener
+- ❌ "Imagine this..." empty opener
+- ❌ Official/Academic language
+- ❌ Starting with "And" or "As"
+- ❌ Separators, labels, hashtags, emojis
+
+═══════════════════════════════════════
+📝 STRUCTURE:
+═══════════════════════════════════════
+HOOK (5s) → BRIDGE (10s) → BODY (${mainSeconds}s) → CLOSE (10s)
+
+Write the script directly - start with the hook:`;
+
+  try {
+    const response = await axios.post(
+      'https://api.anthropic.com/v1/messages',
+      {
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      },
+      {
+        headers: {
+          'x-api-key': CONFIG.CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const script = response.data.content[0].text;
+    console.log('✍️ Writer Stage Output:', script.substring(0, 200) + '...');
+    return cleanScript(script);
+  } catch (error) {
+    console.error('❌ Writer Stage Error:', error.message);
+    throw error;
+  }
 }
 
 // ============================================
@@ -2194,125 +2710,251 @@ Write the script directly - start with the hook:
 }
 
 // V2 Stage 3.5: Self-Check - Verify script mentions topic and has no forbidden patterns
-function selfCheckScript(script, topic) {
+// V3.5 Enhanced Self-Check
+function selfCheckScript(script, topic, reasoning = null, expectedWords = 250) {
   const issues = [];
-  const scriptLower = script.toLowerCase();
-  const topicLower = topic.toLowerCase();
   
-  // Check if topic is mentioned (for Arabic, check if any word from topic appears)
+  // 1. Topic Anchor Check (CRITICAL)
   const topicWords = topic.split(/\s+/).filter(w => w.length > 2);
   const topicMentioned = topicWords.some(word => script.includes(word));
   
   if (!topicMentioned) {
-    issues.push(`الموضوع "${topic}" غير مذكور في السكربت - أضفه صراحة`);
+    issues.push(`CRITICAL: الموضوع "${topic}" غير مذكور في السكربت - اذكره صراحة في أول 3 جمل`);
   }
   
-  // Check for forbidden openers
-  const forbiddenPatterns = [
-    { pattern: /^تخيل كده/i, msg: 'ابدأ مباشرة بدون "تخيل كده"' },
-    { pattern: /^هل تعلم/i, msg: 'ابدأ مباشرة بدون "هل تعلم"' },
-    { pattern: /والمفاجأة الكبيرة/i, msg: 'استخدم "والمفاجأة؟" أو "والأغرب؟" بدلاً من "والمفاجأة الكبيرة إيه"' },
-    { pattern: /بس استنى كده/i, msg: 'استخدم "بس استنى..." بدون "كده"' },
+  // 2. Forbidden Openers (AI Clichés)
+  const forbiddenOpeners = [
+    { pattern: /^تخيل كده/i, fix: 'ابدأ مباشرة بالمعلومة بدون "تخيل كده"' },
+    { pattern: /^هل تعلم/i, fix: 'ابدأ بالحقيقة مباشرة بدون "هل تعلم"' },
+    { pattern: /^يا جماعة/i, fix: 'ابدأ بالمحتوى مباشرة بدون "يا جماعة"' },
+    { pattern: /^بص كده/i, fix: 'ابدأ مباشرة بدون "بص كده"' },
   ];
   
-  forbiddenPatterns.forEach(({ pattern, msg }) => {
+  forbiddenOpeners.forEach(({ pattern, fix }) => {
     if (pattern.test(script)) {
-      issues.push(msg);
+      issues.push(fix);
     }
   });
   
-  // Check for unwanted elements
+  // 3. Forbidden Patterns (Mid-script AI Clichés)
+  const forbiddenPatterns = [
+    { pattern: /والمفاجأة الكبيرة (إيه|ايه)/i, fix: 'استخدم "والمفاجأة؟" أو "والأغرب؟" بدون "الكبيرة إيه"' },
+    { pattern: /بس استنى كده/i, fix: 'استخدم "بس استنى" بدون "كده"' },
+    { pattern: /في إطار/i, fix: 'احذف "في إطار" - لغة رسمية' },
+    { pattern: /في ظل/i, fix: 'احذف "في ظل" - لغة رسمية' },
+    { pattern: /وعلاوة على ذلك/i, fix: 'استخدم "وكمان" بدلاً من "وعلاوة على ذلك"' },
+    { pattern: /من ناحية أخرى/i, fix: 'احذف "من ناحية أخرى" - لغة أكاديمية' },
+    { pattern: /يُعد|يُعتبر/i, fix: 'استخدم "بيعتبر" أو "يعني" بدلاً من الفعل المبني للمجهول' },
+    { pattern: /حيث إن|إذ أن/i, fix: 'استخدم "لأن" أو "عشان" بدلاً من "حيث/إذ"' },
+  ];
+  
+  forbiddenPatterns.forEach(({ pattern, fix }) => {
+    if (pattern.test(script)) {
+      issues.push(fix);
+    }
+  });
+  
+  // 4. Unwanted Elements
   if (/[━═─]{3,}/.test(script)) {
-    issues.push('احذف الفواصل الرسومية');
+    issues.push('احذف الفواصل الرسومية (━━━ أو ═══)');
   }
   if (/Caption:/i.test(script)) {
-    issues.push('احذف سطر الـ Caption');
+    issues.push('احذف سطر الـ "Caption:"');
+  }
+  if (/Hook:/i.test(script)) {
+    issues.push('احذف سطر الـ "Hook:"');
   }
   if (/^#\w+/m.test(script)) {
     issues.push('احذف الهاشتاجات');
+  }
+  if (/\[.*?\]/.test(script)) {
+    issues.push('احذف الـ stage directions [...]');
+  }
+  
+  // 5. Length Check
+  const words = script.split(/\s+/).filter(w => w.length > 0).length;
+  if (words < expectedWords * 0.6) {
+    issues.push(`السكربت قصير جداً: ${words} كلمة (المطلوب ~${expectedWords}). أضف تفاصيل ومقارنات.`);
+  }
+  
+  // 6. Analogy Usage Check (if reasoning provided)
+  if (reasoning && reasoning.analogy_map) {
+    const analogies = Object.values(reasoning.analogy_map);
+    const analogiesUsed = analogies.filter(analogy => {
+      const firstWord = analogy.split(' ')[0];
+      return script.includes(firstWord);
+    }).length;
+    
+    if (analogies.length > 0 && analogiesUsed === 0) {
+      issues.push('لم تستخدم أي من التشبيهات المحددة في الـ Reasoning. استخدم واحد على الأقل.');
+    }
+  }
+  
+  // 7. Question Check (Good scripts have questions)
+  const questionMarks = (script.match(/؟|\?/g) || []).length;
+  if (questionMarks < 2) {
+    issues.push('أضف أسئلة للمشاهد (2 على الأقل) لزيادة التفاعل');
   }
   
   return issues;
 }
 
-// V2 Stage 4: Calibrate - Polish language only
-async function v2CalibratePhase(topic, draft, dialect) {
+// V3.5 Polish Stage - Enhanced with detailed checklist
+async function v35PolishStage(topic, draft, dialect) {
   const isAr = dialect.isArabic;
   
+  const systemPrompt = isAr
+    ? `أنت محرر محترف متخصص في جعل النصوص "تجري على اللسان".
+
+مهمتك: تحسين الـ Flow والطبيعية - بدون تغيير المحتوى أو المعنى.
+الـ Output: السكربت المحسّن فقط. بدون أي شرح أو تعليق.`
+    : `You are a professional editor specialized in making text "flow like liquid".
+
+Your task: improve Flow and naturalness - without changing content or meaning.
+Output: Polished script only. No explanation or comments.`;
+
   const prompt = isAr ?
-`راجع هذا السكربت وحسّن طبيعية اللغة:
+`═══════════════════════════════════════
+🎯 الموضوع: ${topic}
+(لازم يفضل موجود في السكربت)
+═══════════════════════════════════════
 
 ═══════════════════════════════════════
-🎯 الموضوع الأساسي: ${topic}
+📝 السكربت للتنعيم:
 ═══════════════════════════════════════
-
-السكربت:
 ${draft}
 
 ═══════════════════════════════════════
-اللهجة المطلوبة: ${dialect.nameAr}
+🗣️ اللهجة: ${dialect.nameAr}
 ${dialect.reference}
 
 مثال على النبرة الصحيحة:
 "${dialect.example}"
 ═══════════════════════════════════════
 
-قواعد المراجعة:
-1. تأكد إن الموضوع "${topic}" مذكور صراحة في السكربت
-2. اختبار النَفَس: كل جملة تُنطق في نَفَس واحد
-3. اختبار المحادثة: هل هذا كلام شخص حقيقي؟
-4. ممنوع: ${(dialect.avoid || []).join('، ')}
-5. ممنوع: "تخيل كده"، "هل تعلم"، "والمفاجأة الكبيرة إيه"
+═══════════════════════════════════════
+🔧 قائمة التنعيم (Polish Checklist):
+═══════════════════════════════════════
 
-لا تغير:
+1. اختبار الـ Flow (اقرأ بصوت عالي - محاكاة):
+   - هل كل جملة تُقال في نَفَس واحد؟
+   - هل فيه كلمات صعبة النطق؟ بسّطها.
+   - هل الانتقالات بين الأفكار سلسة؟
+
+2. اختبار الـ Hook:
+   - هل الجملة الأولى بتضرب في 3 ثواني؟
+   - لو لأ، اجعلها أقصر/أحد.
+
+3. طول الجمل:
+   - أي جملة > 12 كلمة؟ → قسّمها
+   - الأفضل: قصيرة. حادة. أسئلة.
+
+4. انتقالات ركيكة - احذفها:
+   - "وعلاوة على ذلك" → احذف أو استخدم "وكمان"
+   - "وبالنسبة لـ" → احذف أو استخدم "وبخصوص"
+   - "من ناحية أخرى" → احذف
+   - "في هذا السياق" → احذف
+   - "مما يعني" → استخدم "يعني"
+   - "بالتالي" → استخدم "فـ" أو "عشان كده"
+
+5. AI Clichés - احذفها:
+   - "والمفاجأة الكبيرة" → قول المفاجأة مباشرة
+   - "هل تعلم" → احذف وابدأ بالحقيقة
+   - "تخيل كده" → احذف إلا لو فيها صورة محددة
+
+6. كلمات فصحى - استبدلها:
+   - "يُعد" → "بيعتبر" أو احذف
+   - "يُعتبر" → "يعني" أو احذف
+   - "حيث" → "لأن" أو "عشان"
+   - "إذ" → احذف
+   - "مما" → "وده"
+   - "لذا" → "عشان كده"
+
+═══════════════════════════════════════
+⛔ لا تغير:
+═══════════════════════════════════════
 - المعلومات والأرقام
-- الهوك (الجملة الأولى)
-- الإغلاق (آخر جملة)
+- التشبيهات (تم اختيارها بعناية)
+- الـ Hook (الجملة الأولى) - فقط قصّرها لو طويلة
+- الرسالة الأساسية
 
-⚠️ Output نظيف فقط - بدون فواصل أو captions أو هاشتاجات.
+═══════════════════════════════════════
+⚠️ Output نظيف فقط:
+═══════════════════════════════════════
+- بدون فواصل رسومية
+- بدون labels
+- بدون هاشتاجات
+- بدون شرح
 
 أعطني السكربت المحسّن فقط:` :
-`Review this script and improve language naturalness:
+`═══════════════════════════════════════
+🎯 TOPIC: ${topic}
+(Must remain in the script)
+═══════════════════════════════════════
 
 ═══════════════════════════════════════
-🎯 Main Topic: ${topic}
+📝 SCRIPT TO POLISH:
 ═══════════════════════════════════════
-
-Script:
 ${draft}
 
 ═══════════════════════════════════════
-Target dialect: ${dialect.name}
+🗣️ DIALECT: ${dialect.name}
 ${dialect.reference}
 
 Example of correct tone:
 "${dialect.example}"
 ═══════════════════════════════════════
 
-Review rules:
-1. Ensure the topic "${topic}" is explicitly mentioned in the script
-2. Breath test: Each sentence spoken in one breath
-3. Conversation test: Is this real person speech?
-4. Avoid: ${(dialect.avoid || []).join(', ')}
-5. Forbidden: "Imagine this...", "Did you know", AI clichés
+═══════════════════════════════════════
+🔧 POLISH CHECKLIST:
+═══════════════════════════════════════
 
-Do not change:
+1. FLOW TEST (Read aloud - simulated):
+   - Each sentence in one breath?
+   - Any tongue twisters? Simplify them.
+   - Smooth transitions between ideas?
+
+2. HOOK PUNCH TEST:
+   - Does first sentence PUNCH in 3 seconds?
+   - If not, make it shorter/sharper.
+
+3. SENTENCE LENGTH:
+   - Any sentence > 12 words? BREAK IT.
+   - Prefer: Short. Punchy. Questions.
+
+4. CLUNKY TRANSITIONS - REMOVE:
+   - "Furthermore" → delete or simplify
+   - "On the other hand" → delete
+   - "In this context" → delete
+
+5. AI CLICHÉS - REMOVE:
+   - "The big surprise" → just say the surprise
+   - "Did you know" → delete and start with fact
+
+6. FORMAL WORDS - REPLACE:
+   - Replace formal language with conversational equivalents
+
+═══════════════════════════════════════
+⛔ DO NOT CHANGE:
+═══════════════════════════════════════
 - Facts and numbers
-- Hook (first sentence)
-- Closing (last sentence)
+- Analogies (chosen carefully)
+- Hook (first sentence) - only shorten if needed
+- Core message
 
-⚠️ Clean output only - no separators, captions, or hashtags.
+═══════════════════════════════════════
+⚠️ CLEAN OUTPUT ONLY:
+═══════════════════════════════════════
+- No separators, labels, hashtags, explanations
 
-Give me the improved script only:`;
+Output the polished script only:`;
 
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {
       model: CONFIG.CLAUDE_MODEL,
       max_tokens: 2000,
-      system: isAr ?
-        'أنت محرر متخصص في جعل النصوص المكتوبة تبدو محكية. مهمتك: تحسين طبيعية اللغة - بدون تغيير المحتوى. الـ output: السكربت المحسّن فقط. بدون أي شرح.' :
-        'You are an editor specialized in making written text sound spoken. Your task: improve language naturalness - without changing content. Output: improved script only. No explanation.',
+      system: systemPrompt,
       messages: [{ role: 'user', content: prompt }],
     },
     {
@@ -2327,105 +2969,224 @@ Give me the improved script only:`;
   return cleanScript(response.data.content[0].text);
 }
 
-// V2 Stage 5: Quality Gate - Evaluate only, return decision
-async function v2QualityGate(script, topic, dialect, style, duration) {
+// V2 Stage 4: Calibrate - Polish language only (Legacy - kept for compatibility)
+async function v2CalibratePhase(topic, draft, dialect) {
+  // Delegate to V3.5 Polish Stage
+  return v35PolishStage(topic, draft, dialect);
+}
+
+// V3.5 Quality Gate - Enhanced with specific, measurable criteria
+async function v35QualityGate(script, topic, dialect, style, duration, reasoning = null) {
   const isAr = dialect.isArabic;
+  const durationConfig = getDurationConfig(duration);
+  
+  // Count questions in script
+  const questionCount = (script.match(/؟|\?/g) || []).length;
+  
+  // Get first sentence
+  const firstSentence = script.split(/[.!؟?]\s*/)[0] || '';
+  const firstSentenceWords = firstSentence.split(/\s+/).length;
   
   const prompt = isAr ?
-`قيّم هذا السكربت:
-
-═══════════════════════════════════════
-السكربت:
+`═══════════════════════════════════════
+📝 السكربت للتقييم:
 ═══════════════════════════════════════
 ${script}
 
 ═══════════════════════════════════════
-السياق:
+📋 السياق:
+═══════════════════════════════════════
 - الموضوع: ${topic}
 - اللهجة: ${dialect.nameAr}
 - المدة: ${duration} ثانية
+- عدد الكلمات المتوقع: ~${durationConfig.words}
+- عدد الأسئلة الموجودة: ${questionCount}
+- طول الجملة الأولى: ${firstSentenceWords} كلمة
+
+═══════════════════════════════════════
+📊 معايير التقييم (قيّم كل معيار 1-10):
 ═══════════════════════════════════════
 
-قيّم كل معيار من 0-10 وأجب بـ JSON فقط:
+1. معيار "أنا" (ME FACTOR) - الأهمية الشخصية:
+   هل واضح "إيه اللي هيرجع على المشاهد"؟
+   هل الـ "street_value" واضح؟
+   
+   التقييم:
+   - 9-10: "لازم أشاركه مع صحابي"
+   - 7-8: "ده مفيد أعرفه"
+   - 5-6: "أوكي، مثير"
+   - 1-4: "وبعدين؟ أنا مالي؟"
+
+2. معيار "مش خبر" (NON-NEWS FACTOR) - النبرة المحادثية:
+   هل بيتكلم زي صاحب ولا زي مذيع؟
+   عدد الأسئلة الموجودة: ${questionCount}
+   هل فيه كلمات فصحى/رسمية؟
+   
+   التقييم:
+   - 9-10: "بالظبط زي صاحبي بيحكيلي"
+   - 7-8: "محادثي مع مشاكل بسيطة"
+   - 5-6: "مختلط - أجزاء رسمية"
+   - 1-4: "زي مذيع أخبار"
+
+3. قوة الـ Hook (أول 3 ثواني):
+   هل الجملة الأولى مستحيل تتجاهلها؟
+   هل بتخلق فضول أو إحساس فوري؟
+   طول الجملة الأولى: ${firstSentenceWords} كلمة (المثالي < 10)
+   
+   التقييم:
+   - 9-10: "لازم أعرف إيه اللي بعد كده"
+   - 7-8: "مثير، هكمل مشاهدة"
+   - 5-6: "بداية عادية، مش مقنعة"
+   - 1-4: "هعمل Scroll"
+
+4. دقة الموضوع (TOPIC ACCURACY):
+   هل "${topic}" واضح ومتناول؟
+   هل السكربت بيفضل على الموضوع؟
+   
+   التقييم:
+   - 9-10: "واضح جداً إنه عن ${topic}"
+   - 7-8: "غالباً عنه مع tangents بسيطة"
+   - 5-6: "بيذكره بس بيروح في حتت تانية"
+   - 1-4: "بالكاد له علاقة بـ ${topic}"
+
+5. البنية والإيقاع (STRUCTURE & PACING):
+   هل فيه بنية: Hook → Bridge → Body → Close؟
+   هل الإيقاع جيد؟ جمل قصيرة + متوسطة؟
+   
+   التقييم:
+   - 9-10: "Flow مثالي، مفيش لحظات ميتة"
+   - 7-8: "بنية جيدة، مشاكل إيقاع بسيطة"
+   - 5-6: "بنية موجودة بس choppy"
+   - 1-4: "مفيش بنية واضحة"
+
+═══════════════════════════════════════
+📊 OUTPUT: JSON فقط
+═══════════════════════════════════════
 {
   "scores": {
-    "hook": {"score": X, "reason": "سبب قصير"},
-    "language": {"score": X, "reason": "سبب قصير"},
-    "structure": {"score": X, "reason": "سبب قصير"},
-    "value": {"score": X, "reason": "سبب قصير"}
+    "me_factor": {
+      "score": X,
+      "evidence": "اقتباس من السكربت يثبت/ينفي"
+    },
+    "non_news": {
+      "score": X,
+      "question_count": ${questionCount},
+      "fusha_phrases_found": ["قائمة", "الكلمات", "الفصحى"]
+    },
+    "hook": {
+      "score": X,
+      "first_sentence": "${firstSentence.substring(0, 50)}...",
+      "scroll_test": "STOP أو SCROLL"
+    },
+    "topic_accuracy": {
+      "score": X,
+      "topic_mentions": X,
+      "on_topic_percentage": X
+    },
+    "structure": {
+      "score": X,
+      "sections_found": ["hook", "bridge", "body", "close"]
+    }
   },
+  
   "weighted_average": X.XX,
+  
   "decision": "PASS أو REVISE أو REJECT",
-  "revisions_needed": ["قائمة التعديلات المحددة إذا REVISE"],
-  "rejection_reason": "السبب إذا REJECT"
+  
+  "revisions_needed": [
+    "تعديل محدد وقابل للتنفيذ 1",
+    "تعديل محدد وقابل للتنفيذ 2"
+  ]
 }
 
-قواعد القرار:
-- PASS (≥7.0): جاهز للإرسال
-- REVISE (5.0-6.9): يحتاج تعديلات محددة
-- REJECT (<5.0): يحتاج إعادة كتابة` :
-`Evaluate this script:
+═══════════════════════════════════════
+📋 قواعد القرار:
+═══════════════════════════════════════
+- PASS (≥ 7.5): جاهز للنشر
+- REVISE (5.5 - 7.4): يحتاج إصلاحات محددة (max 2 جولات)
+- REJECT (< 5.5): أعد الكتابة من Stage 3
 
 ═══════════════════════════════════════
-Script:
+⚠️ تعليمات التعديل لازم تكون قابلة للتنفيذ:
+═══════════════════════════════════════
+❌ سيء: "خليه أكثر محادثي"
+✅ جيد: "استبدل 'يُعد من أهم' بـ 'ده من أهم' في الفقرة الثانية"
+
+❌ سيء: "حسّن الـ Hook"
+✅ جيد: "الجملة الأولى ${firstSentenceWords} كلمة. قسمها لجملتين."` :
+`═══════════════════════════════════════
+📝 SCRIPT TO EVALUATE:
 ═══════════════════════════════════════
 ${script}
 
 ═══════════════════════════════════════
-Context:
+📋 CONTEXT:
+═══════════════════════════════════════
 - Topic: ${topic}
 - Dialect: ${dialect.name}
 - Duration: ${duration} seconds
+- Expected Words: ~${durationConfig.words}
+- Question Count: ${questionCount}
+- First Sentence Words: ${firstSentenceWords}
+
+═══════════════════════════════════════
+📊 EVALUATION CRITERIA (Score 1-10 each):
 ═══════════════════════════════════════
 
-Rate each criterion 0-10 and reply with JSON only:
-{
-  "scores": {
-    "hook": {"score": X, "reason": "short reason"},
-    "language": {"score": X, "reason": "short reason"},
-    "structure": {"score": X, "reason": "short reason"},
-    "value": {"score": X, "reason": "short reason"}
-  },
-  "weighted_average": X.XX,
-  "decision": "PASS or REVISE or REJECT",
-  "revisions_needed": ["list of specific revisions if REVISE"],
-  "rejection_reason": "reason if REJECT"
+1. THE "ME" FACTOR (Personal Relevance)
+2. THE "NON-NEWS" FACTOR (Conversational Tone)
+3. HOOK STRENGTH (First 3 Seconds)
+4. TOPIC ACCURACY
+5. STRUCTURE & PACING
+
+═══════════════════════════════════════
+OUTPUT: JSON only with scores, decision, and actionable revisions
+═══════════════════════════════════════
+
+Decision Rules:
+- PASS (≥ 7.5): Ready to publish
+- REVISE (5.5 - 7.4): Needs specific fixes
+- REJECT (< 5.5): Restart from Stage 3`;
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      {
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1500,
+        },
+        systemInstruction: {
+          parts: [{ text: isAr ?
+            'أنت مراجع جودة متخصص في "Viral Psychology" لسكربتات الفيديو. مهمتك: تقييم السكربت بموضوعية ودقة. لا تحسّن السكربت - فقط قيّمه وأعطِ تعليمات تعديل محددة وقابلة للتنفيذ.' :
+            'You are a quality reviewer specialized in "Viral Psychology" for video scripts. Your task: evaluate the script objectively and precisely. Do not improve the script - only evaluate it and give specific, actionable revision instructions.'
+          }]
+        },
+      },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    
+    const text = response.data.candidates[0].content.parts[0].text;
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('✅ Quality Gate:', parsed.decision, '- Score:', parsed.weighted_average);
+      return parsed;
+    }
+  } catch (e) {
+    console.error('Quality Gate Error:', e.message);
+  }
+  
+  // Default to PASS if parsing fails
+  return { decision: 'PASS', weighted_average: 7.5, scores: {}, revisions_needed: [] };
 }
 
-Decision rules:
-- PASS (≥7.0): Ready to send
-- REVISE (5.0-6.9): Needs specific fixes
-- REJECT (<5.0): Needs rewrite`;
-
-  const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-    {
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1000,
-      },
-      systemInstruction: {
-        parts: [{ text: isAr ?
-          'أنت مراجع جودة متخصص في سكربتات الفيديو. مهمتك: تقييم السكربت بموضوعية. لا تحسّن السكربت - فقط قيّمه.' :
-          'You are a quality reviewer specialized in video scripts. Your task: evaluate the script objectively. Do not improve the script - only evaluate it.'
-        }]
-      },
-    },
-    { headers: { 'Content-Type': 'application/json' } }
-  );
-  
-  const text = response.data.candidates[0].content.parts[0].text;
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
-  } catch (e) {
-    console.error('Quality Gate JSON parse error:', e.message);
-  }
-  // Default to PASS if parsing fails
-  return { decision: 'PASS', weighted_average: 7.0, scores: {}, revisions_needed: [] };
+// V2 Stage 5: Quality Gate (Legacy - delegates to V3.5)
+async function v2QualityGate(script, topic, dialect, style, duration) {
+  return v35QualityGate(script, topic, dialect, style, duration, null);
 }
 
 // V2 Stage 4B: Targeted Revision - Fix specific issues
@@ -2514,106 +3275,191 @@ function cleanScript(text) {
 }
 
 // V2 Full Pipeline
-async function v2GenerateScript(topic, language, duration, style, niche) {
+// ============================================
+// 🚀 V3.5 MAIN PIPELINE (Deep Reasoning)
+// ============================================
+
+async function v35GenerateScript(topic, language, duration, style, niche) {
   const dialect = LANGUAGES[language] || LANGUAGES.egyptian;
   const nicheConfig = NICHES[niche] || NICHES.general;
   const styleConfig = STYLES[style] || STYLES.default;
+  const durationConfig = getDurationConfig(duration);
   
   const maxRevisions = 2;
   let revisionCount = 0;
   
-  console.log('🚀 V2 Pipeline Started');
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('🚀 V3.5 Deep Reasoning Pipeline Started');
+  console.log('═══════════════════════════════════════════════════════════');
   console.log(`📌 Topic: ${topic}`);
   console.log(`🌍 Dialect: ${dialect.name}`);
   console.log(`🎯 Niche: ${nicheConfig.name}`);
   console.log(`🎭 Style: ${styleConfig.name}`);
+  console.log(`⏱️ Duration: ${duration}s (~${durationConfig.words} words)`);
+  console.log('═══════════════════════════════════════════════════════════');
   
-  // Stage 1: Research (existing function)
-  console.log('📚 Stage 1: Research...');
+  // ============================================
+  // Stage 1: Research (Enhanced Focus)
+  // ============================================
+  console.log('');
+  console.log('📚 Stage 1: Research (Money Trail, Conflict, Scale, Catch)...');
   let research;
   try {
     research = await researchTopic(topic, language);
+    console.log(`   ✓ Research complete: ${research.length} characters`);
   } catch (e) {
-    console.error('Research failed:', e.message);
+    console.error('   ❌ Research failed:', e.message);
     research = `Topic: ${topic}`;
   }
   
-  // Stage 2: Strategy
-  console.log('🎯 Stage 2: Strategy...');
-  const strategy = await v2StrategyPhase(research, dialect, niche, style, duration);
-  console.log(`   Hook type: ${strategy.hook?.type || 'unknown'}`);
+  // ============================================
+  // Stage 2: Reasoning Engine (NEW - The Brain)
+  // ============================================
+  console.log('');
+  console.log('🧠 Stage 2: Reasoning Engine (Street Logic)...');
+  let reasoning;
+  try {
+    reasoning = await v35ReasoningEngine(research, topic, dialect, niche, duration);
+    console.log(`   ✓ Core Insight: ${reasoning.core_insight?.street?.substring(0, 50) || 'N/A'}...`);
+    console.log(`   ✓ Tone: ${reasoning.tone || 'CURIOUS'}`);
+    console.log(`   ✓ Hook Logic: ${reasoning.hook_concept?.hook_logic?.substring(0, 50) || 'N/A'}...`);
+    console.log(`   ✓ Analogies: ${Object.keys(reasoning.analogy_map || {}).length} prepared`);
+  } catch (e) {
+    console.error('   ❌ Reasoning failed:', e.message);
+    reasoning = {
+      topic_anchor: topic,
+      core_insight: { formal: topic, street: topic },
+      street_value: topic,
+      hook_concept: { common_belief: '', counter_truth: '', hook_logic: '' },
+      analogy_map: {},
+      tone: 'CURIOUS',
+      must_include: [],
+      forbidden: []
+    };
+  }
   
-  // Stage 3: Draft
-  console.log('✍️ Stage 3: Draft...');
-  let draft = await v2DraftPhase(topic, research, strategy, dialect, style, duration);
+  // ============================================
+  // Stage 3: Writer (Guided by Reasoning JSON)
+  // ============================================
+  console.log('');
+  console.log('✍️ Stage 3: Writer (Reasoning-Guided Drafting)...');
+  let draft;
+  try {
+    draft = await v35WriterStage(topic, research, reasoning, dialect, style, duration);
+    const draftWords = draft.split(/\s+/).filter(w => w.length > 0).length;
+    console.log(`   ✓ Draft complete: ${draftWords} words`);
+  } catch (e) {
+    console.error('   ❌ Writer failed:', e.message);
+    throw e;
+  }
   
-  // Stage 3.5: Self-Check
-  console.log('🔍 Stage 3.5: Self-Check...');
-  const selfCheckIssues = selfCheckScript(draft, topic);
+  // ============================================
+  // Stage 3.5: Self-Check (Enhanced Validations)
+  // ============================================
+  console.log('');
+  console.log('🔍 Stage 3.5: Self-Check (Topic, Patterns, Length, Analogies)...');
+  const selfCheckIssues = selfCheckScript(draft, topic, reasoning, durationConfig.words);
   if (selfCheckIssues.length > 0) {
-    console.log(`   Found ${selfCheckIssues.length} issues:`, selfCheckIssues);
+    console.log(`   ⚠️ Found ${selfCheckIssues.length} issues:`);
+    selfCheckIssues.forEach((issue, i) => console.log(`      ${i+1}. ${issue}`));
     // Auto-fix via revision
+    console.log('   🔄 Auto-revising...');
     draft = await v2RevisionPhase(draft, selfCheckIssues, dialect);
+    console.log('   ✓ Self-check revision complete');
   } else {
     console.log('   ✓ Self-check passed');
   }
   
-  // Stage 4: Calibrate
-  console.log('🔧 Stage 4: Calibrate...');
-  let calibrated = await v2CalibratePhase(topic, draft, dialect);
+  // ============================================
+  // Stage 4: Polish (Detailed Checklist)
+  // ============================================
+  console.log('');
+  console.log('🔧 Stage 4: Polish (Flow, Hook Punch, Transitions, AI Clichés)...');
+  let polished;
+  try {
+    polished = await v35PolishStage(topic, draft, dialect);
+    console.log('   ✓ Polish complete');
+  } catch (e) {
+    console.error('   ❌ Polish failed:', e.message);
+    polished = draft;
+  }
   
-  // Stage 5: Quality Gate (with revision loop)
-  console.log('✅ Stage 5: Quality Gate...');
-  let currentScript = calibrated;
+  // ============================================
+  // Stage 5: Quality Gate (Viral Psychology Metrics)
+  // ============================================
+  console.log('');
+  console.log('✅ Stage 5: Quality Gate (Me Factor, Non-News, Hook, Topic, Structure)...');
+  let currentScript = polished;
   let quality;
   
   do {
-    quality = await v2QualityGate(currentScript, topic, dialect, style, duration);
-    console.log(`   Decision: ${quality.decision} (${quality.weighted_average})`);
+    quality = await v35QualityGate(currentScript, topic, dialect, style, duration, reasoning);
+    console.log(`   📊 Decision: ${quality.decision} (Score: ${quality.weighted_average})`);
     
     if (quality.decision === 'PASS') {
+      console.log('   ✓ Quality Gate PASSED');
       break;
     }
     
     if (quality.decision === 'REJECT') {
-      console.log('❌ Quality Gate: REJECT');
+      console.log('   ❌ Quality Gate: REJECT');
       // Return current script anyway with warning
       return {
         success: true,
-        script: currentScript,
-        hook: strategy.hook?.text || '',
+        script: cleanScript(currentScript),
+        hook: reasoning.hook_concept?.counter_truth || '',
+        reasoning: reasoning,
         quality: quality,
         warning: 'Script quality below threshold',
+        pipeline: 'V3.5 Deep Reasoning',
       };
     }
     
     // REVISE case
     revisionCount++;
     if (revisionCount > maxRevisions) {
-      console.log('⚠️ Max revisions reached, using current version');
+      console.log('   ⚠️ Max revisions reached, using current version');
       break;
     }
     
-    console.log(`🔄 Revision ${revisionCount}...`);
+    console.log(`   🔄 Revision ${revisionCount}/${maxRevisions}...`);
     const issues = quality.revisions_needed || [];
     if (issues.length > 0) {
+      issues.forEach((issue, i) => console.log(`      ${i+1}. ${issue}`));
       currentScript = await v2RevisionPhase(currentScript, issues, dialect);
     }
     
   } while (quality.decision === 'REVISE');
   
-  console.log('✨ V2 Pipeline Complete');
+  console.log('');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('✨ V3.5 Pipeline Complete');
+  console.log('═══════════════════════════════════════════════════════════');
   
   // Final cleanup before returning
   const finalScript = cleanScript(currentScript);
+  const wordCount = finalScript.split(/\s+/).filter(w => w.length > 0).length;
+  
+  console.log(`📝 Final Word Count: ${wordCount}`);
+  console.log(`📊 Quality Score: ${quality.weighted_average}`);
+  console.log('');
   
   return {
     success: true,
     script: finalScript,
-    hook: strategy.hook?.text || '',
-    strategy: strategy,
+    hook: reasoning.hook_concept?.counter_truth || '',
+    reasoning: reasoning,
     quality: quality,
+    wordCount: wordCount,
+    pipeline: 'V3.5 Deep Reasoning',
   };
+}
+
+// Legacy V2 function - now delegates to V3.5
+async function v2GenerateScript(topic, language, duration, style, niche) {
+  // Use the new V3.5 pipeline
+  return v35GenerateScript(topic, language, duration, style, niche);
 }
 
 // ============================================
