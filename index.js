@@ -227,7 +227,7 @@ async function generateHooks(topic, researchData, niche) {
     return firstLine;
   }).slice(0, 3);
 
-  const prompt = `أنت كاتب Hooks viral. اكتب 3 Hooks مثيرة للفضول.
+  const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
 
 الموضوع: ${topic}
 البحث: ${researchData.substring(0, 800)}
@@ -235,48 +235,45 @@ async function generateHooks(topic, researchData, niche) {
 === أمثلة Hooks من نفس المجال ===
 ${exampleHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
-=== قواعد ===
+=== أنماط Hooks عامة (للإلهام) ===
+${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+
+=== لاحظ الأسلوب ===
 • غموض يثير الفضول
 • سؤال أو تحدي أو صدمة
 • ❌ ممنوع تكشف الموضوع بالكامل
 • ❌ ممنوع "هل تعلم" أو "تخيل كده"
 • ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."
 
-المطلوب رد بصيغة JSON فقط:
+JSON فقط:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
 
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
-        contents: [{
-          parts: [{ text: prompt }]
-        }],
+        contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           maxOutputTokens: 500,
           temperature: 0.8,
-          response_mime_type: "application/json" // Force JSON output
         }
       },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: { 'Content-Type': 'application/json' } }
     );
 
-    const candidates = response.data?.candidates;
-    if (candidates && candidates[0]?.content?.parts?.[0]?.text) {
-      const text = candidates[0].content.parts[0].text;
-      const parsed = JSON.parse(text);
+    const text = response.data.candidates[0].content.parts[0].text;
+    // Clean markdown if any
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const match = cleanText.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
       if (parsed.hooks && parsed.hooks.length > 0) {
-        console.log(`   ✓ Parsed ${parsed.hooks.length} hooks from Gemini`);
+        console.log(`   ✓ Got ${parsed.hooks.length} hooks`);
         return parsed.hooks;
       }
     }
   } catch (e) {
-    console.error('   ⚠️ Hook parsing error:', e.message);
-    if (e.response) console.error('   API Error:', e.response.data);
+    console.error('   ⚠️ Gemini hooks error:', e.message);
   }
   
   // Fallback
