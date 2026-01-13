@@ -223,29 +223,33 @@ async function generateHooks(topic, researchData, niche) {
   const examples = getNicheExamples(niche);
   const universalHooks = getUniversalHooks();
   
-  // Extract hooks from examples
+  // Extract hooks from examples (first line of each script)
   const exampleHooks = examples.map(ex => {
     const firstLine = ex.script.split('\n')[0];
     return firstLine;
-  }).slice(0, 3);
+  }).slice(0, 5); // Use up to 5 hook examples
 
+  // FIX #1: Use full research instead of truncated
   const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
 
 الموضوع: ${topic}
-البحث: ${researchData.substring(0, 800)}
 
-=== أمثلة Hooks من نفس المجال ===
+البحث الكامل:
+${researchData}
+
+=== أمثلة Hooks من نفس المجال (قلّد الأسلوب) ===
 ${exampleHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
 === أنماط Hooks عامة (للإلهام) ===
 ${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
 === لاحظ الأسلوب ===
-• غموض يثير الفضول
+• غموض يثير الفضول - متكشفش كل حاجة
 • سؤال أو تحدي أو صدمة
+• استخدم رقم أو حقيقة صادمة من البحث
 • ❌ ممنوع تكشف الموضوع بالكامل
 • ❌ ممنوع "هل تعلم" أو "تخيل كده"
-• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."
+• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."، "الرقم ده..."
 
 JSON فقط:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
@@ -307,20 +311,44 @@ async function writeScript(topic, researchData, niche, selectedHook, duration) {
   const durationConfig = getDurationConfig(duration);
   const examples = getNicheExamples(niche);
   
-  // Get the BEST example as the golden template
-  const goldenExample = examples[0]?.script || '';
+  // FIX #2: Use 2-3 golden examples instead of just one
+  const goldenExamples = examples.slice(0, Math.min(3, examples.length));
+  const examplesText = goldenExamples.map((ex, idx) => `
+--- مثال #${idx + 1}: ${ex.title || ''} ---
+${ex.script}
+`).join('\n');
 
+  // FIX #4: Clarify prompt priorities
   const prompt = `أنت كاتب سكربتات فيرال مصري. عامية بيضة 100%.
 
-⚠️ قاعدة حديدية:
-- كل رقم/تاريخ/حقيقة لازم يكون موجود في البحث حرفياً
-- لو معلومة مش موجودة في البحث → متذكرهاش خالص واتخطاها
-- ❌ ممنوع منعاً باتاً: "غير محدد"، "مش موجود"، "مش متأكد"، "في حدود"، "تقريباً"
-- ❌ ممنوع: "يُعد"، "حيث"، "علاوة على ذلك"، "هل تعلم"، "تخيل كده"، "بص بقى"
-- ✅ اكتب فقط اللي متأكد منه من البحث
+=== GOLDEN EXAMPLES (قلّد الـ DNA مش الموضوع) ===
+${examplesText}
 
-=== GOLDEN EXAMPLE (قلّد الـ DNA بالظبط) ===
-${goldenExample}
+⚠️ لاحظ في الأمثلة:
+- الأسلوب: عامية طبيعية، بدون تكلف
+- البناء: hook → صدمة → تفاصيل → خاتمة قوية
+- الإيقاع: جمل قصيرة، سريعة، مباشرة
+- الطاقة: حماسي، مثير، فيه حركة
+
+=== قواعد الكتابة (مهمة جداً) ===
+
+الأولوية #1: DNA من الأمثلة
+- احتفظ بنفس الطاقة والأسلوب والإيقاع
+- جمل قصيرة، سريعة، مباشرة
+- عامية مصرية طبيعية 100%
+
+الأولوية #2: معلومات دقيقة فقط
+- كل رقم/تاريخ/حقيقة لازم يكون في البحث حرفياً
+- لو معلومة مش موجودة → اتجنب الجزء ده
+- ❌ ممنوع تقول "غير محدد" أو "مش معروف" أو "تقريباً"
+
+⚠️ لو البحث ناقص:
+✅ صح: "الاستثمارات الضخمة" بدل رقم محدد مش موجود
+✅ صح: "في السنوات الأخيرة" بدل تاريخ محدد مش موجود
+✅ صح: تجنب الجزء ده خالص وركز على اللي موجود
+❌ غلط: "الرقم غير محدد" أو "التاريخ مش معروف"
+
+❌ ممنوع: "يُعد"، "حيث"، "علاوة على ذلك"، "هل تعلم"، "تخيل كده"، "بص بقى"
 
 === INPUT ===
 الموضوع: ${topic}
@@ -328,15 +356,18 @@ ${goldenExample}
 الـ Hook (ابدأ بيه حرفياً!):
 "${selectedHook}"
 
-البحث (المصدر الوحيد - لو مش هنا متألفوش!):
+البحث الكامل (المصدر الوحيد):
 ${researchData}
 
 === المطلوب ===
-سكربت ~${durationConfig.words} كلمة.
-ابدأ بالـ Hook بالظبط. قلّد الـ Golden Example.
-من البحث فقط - لو معلومة مش موجودة اتخطاها!
+اكتب سكربت ~${durationConfig.words} كلمة بنفس DNA الأمثلة.
 
-اكتب السكربت بالعامية المصرية فقط (بدون مقدمات):`;
+⚠️ الأولويات:
+1. التزم بالـ DNA من الأمثلة (الأسلوب، الإيقاع، الطاقة)
+2. استخدم فقط المعلومات الموجودة في البحث
+3. احتفظ بالإيقاع السريع والطاقة العالية
+
+ابدأ بالـ Hook بالظبط، واكتب السكربت بالعامية المصرية:`;
 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
@@ -365,7 +396,83 @@ ${researchData}
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .trim();
   
+  // FIX #3: Word count validation
+  let wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
+  const targetWords = durationConfig.words;
+  
+  // If script is too short (less than 80% of target), expand it
+  if (wordCount < targetWords * 0.8) {
+    console.log(`   ⚠️ Script too short (${wordCount}/${targetWords}). Expanding...`);
+    script = await expandScript(script, researchData, selectedHook, targetWords, niche);
+    wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
+    console.log(`   ✓ Expanded to ${wordCount} words`);
+  }
+  
   return script;
+}
+
+// ============================================
+// 📏 EXPAND SHORT SCRIPTS
+// ============================================
+
+async function expandScript(shortScript, research, selectedHook, targetWords, niche) {
+  const examples = getNicheExamples(niche);
+  const examplesText = examples.slice(0, 2).map((ex, idx) => `
+--- مثال #${idx + 1} ---
+${ex.script}
+`).join('\n');
+
+  const currentWords = shortScript.split(/\s+/).filter(w => w.length > 0).length;
+  
+  const prompt = `السكربت ده قصير جداً ومحتاج يتطوّل.
+
+السكربت الحالي (${currentWords} كلمة):
+${shortScript}
+
+المطلوب: ${targetWords} كلمة (±10%)
+
+البحث الكامل (استخدم معلومات إضافية منه):
+${research}
+
+الأمثلة المرجعية (للأسلوب):
+${examplesText}
+
+المطلوب:
+- طوّل السكربت لـ ${targetWords} كلمة
+- أضف تفاصيل، أمثلة، مقارنات من البحث
+- احتفظ بنفس الأسلوب السريع والمثير
+- ابدأ بنفس الـ Hook: "${selectedHook}"
+- ❌ متكررش معلومات موجودة
+- ✅ أضف معلومات جديدة من البحث
+- ❌ ممنوع "غير محدد" أو "مش معروف"
+
+اكتب السكربت الموسّع بالعامية المصرية:`;
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: targetWords * 8, // More tokens for longer script
+          temperature: 0.7,
+        }
+      },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    
+    let expanded = response.data.candidates[0].content.parts[0].text;
+    expanded = expanded
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/#{1,3}\s*/g, '')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .trim();
+    
+    return expanded;
+  } catch (e) {
+    console.error('   ⚠️ Expand error:', e.message);
+    return shortScript; // Return original if expansion fails
+  }
 }
 
 // ============================================
