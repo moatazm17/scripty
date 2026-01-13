@@ -267,23 +267,29 @@ JSON فقط:
   );
   
   try {
+    // Log full response for debugging
+    console.log('   📝 Gemini raw response:', JSON.stringify(response.data).substring(0, 800));
+    
     // Handle Gemini response structure
     const candidates = response.data?.candidates;
     if (candidates && candidates[0]?.content?.parts?.[0]?.text) {
       const text = candidates[0].content.parts[0].text;
-      console.log('   📝 Gemini hooks response:', text.substring(0, 200));
+      console.log('   📝 Gemini text:', text.substring(0, 300));
+      
+      // Try to extract JSON
       const match = text.match(/\{[\s\S]*\}/);
       if (match) {
         const parsed = JSON.parse(match[0]);
         if (parsed.hooks && parsed.hooks.length > 0) {
-          console.log(`   ✓ Parsed ${parsed.hooks.length} hooks`);
+          console.log(`   ✓ Parsed ${parsed.hooks.length} hooks from Gemini`);
           return parsed.hooks;
         }
       }
+    } else {
+      console.log('   ⚠️ No candidates in response');
     }
   } catch (e) {
     console.error('   ⚠️ Hook parsing error:', e.message);
-    console.error('   Response:', JSON.stringify(response.data).substring(0, 500));
   }
   
   // Fallback
