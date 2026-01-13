@@ -254,7 +254,7 @@ JSON فقط:
       {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 500,
+          maxOutputTokens: 2000,
           temperature: 0.8,
         }
       },
