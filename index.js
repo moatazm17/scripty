@@ -125,7 +125,7 @@ function getDurationConfig(duration) {
   // Word counts aligned with Golden Examples per duration
   const configs = {
     30: { words: 100, maxTokens: 3000, displayRange: '30-40 ثانية' },   // ~100 words
-    60: { words: 200, maxTokens: 5000, displayRange: '45-60 ثانية' },   // ~180-200 words
+    60: { words: 170, maxTokens: 5000, displayRange: '45-60 ثانية' },   // ~150-170 words
   };
   return configs[durationInt] || configs[30];  // Default to 30s
 }
@@ -516,7 +516,7 @@ ${researchData}
   // If script is too short (less than 80% of target), expand it
   if (wordCount < targetWords * 0.8) {
     console.log(`   ⚠️ Script too short (${wordCount}/${targetWords}). Expanding...`);
-    script = await expandScript(script, researchData, selectedHook, targetWords, niche, duration);
+    script = await expandScript(script, researchData, selectedHook, targetWords, niche, duration, language, costTracker);
     wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Expanded to ${wordCount} words`);
   }
