@@ -24,28 +24,35 @@ const CONFIG = {
 };
 
 // ============================================
-// 📚 LOAD NICHE EXAMPLES (Hooks + Scripts per Duration)
+// 📚 LOAD HOOKS & SCRIPTS (Per Language & Duration)
 // ============================================
 
-let NICHE_EXAMPLES = {};  // Hooks
-let SCRIPTS_30S = {};     // 30-second scripts
-let SCRIPTS_60S = {};     // 60-second scripts
+let HOOKS = {};           // Hooks for all languages
+let SCRIPTS = {};         // Scripts for all languages and durations
+
+const SUPPORTED_LANGUAGES = ['egyptian', 'gulf', 'english', 'frensh'];
+const SUPPORTED_DURATIONS = ['30', '60'];
 
 try {
-  // Load hooks from niche-examples.json
-  const examplesPath = path.join(__dirname, 'examples', 'niche-examples.json');
-  NICHE_EXAMPLES = JSON.parse(fs.readFileSync(examplesPath, 'utf8'));
-  console.log('✅ Loaded hooks:', Object.keys(NICHE_EXAMPLES.hooks_by_category || {}).join(', '));
+  // Load hooks from hooks.json (all languages in one file)
+  const hooksPath = path.join(__dirname, 'examples', 'hooks.json');
+  HOOKS = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+  console.log('✅ Loaded hooks for:', Object.keys(HOOKS).filter(k => k !== 'metadata').join(', '));
   
-  // Load 30s scripts
-  const scripts30Path = path.join(__dirname, 'examples', 'scripts-30s.json');
-  SCRIPTS_30S = JSON.parse(fs.readFileSync(scripts30Path, 'utf8'));
-  console.log('✅ Loaded 30s scripts:', Object.keys(SCRIPTS_30S.categories || {}).join(', '));
-  
-  // Load 60s scripts
-  const scripts60Path = path.join(__dirname, 'examples', 'scripts-60s.json');
-  SCRIPTS_60S = JSON.parse(fs.readFileSync(scripts60Path, 'utf8'));
-  console.log('✅ Loaded 60s scripts:', Object.keys(SCRIPTS_60S.categories || {}).join(', '));
+  // Load scripts for each language and duration
+  for (const lang of SUPPORTED_LANGUAGES) {
+    SCRIPTS[lang] = {};
+    for (const dur of SUPPORTED_DURATIONS) {
+      const scriptPath = path.join(__dirname, 'examples', `scripts-${dur}s-${lang}.json`);
+      try {
+        SCRIPTS[lang][dur] = JSON.parse(fs.readFileSync(scriptPath, 'utf8'));
+        console.log(`✅ Loaded scripts: ${lang} ${dur}s`);
+      } catch (e) {
+        console.log(`⚠️ No scripts file for ${lang} ${dur}s`);
+        SCRIPTS[lang][dur] = { categories: {} };
+      }
+    }
+  }
 } catch (e) {
   console.error('⚠️ Could not load examples:', e.message);
 }
@@ -81,11 +88,13 @@ function getNicheKey(niche) {
   return NICHE_MAP[normalized] || 'general';
 }
 
-function getNicheExamples(niche, duration = '30') {
+function getNicheExamples(niche, duration = '30', language = 'egyptian') {
   const key = getNicheKey(niche);
+  const lang = SUPPORTED_LANGUAGES.includes(language) ? language : 'egyptian';
+  const dur = SUPPORTED_DURATIONS.includes(duration) ? duration : '30';
   
-  // Choose the right scripts file based on duration
-  const scriptsData = duration === '60' ? SCRIPTS_60S : SCRIPTS_30S;
+  // Get scripts for this language and duration
+  const scriptsData = SCRIPTS[lang]?.[dur] || SCRIPTS['egyptian']?.['30'] || {};
   
   const category = scriptsData.categories?.[key];
   if (category && category.examples) return category.examples;
@@ -94,16 +103,21 @@ function getNicheExamples(niche, duration = '30') {
   return scriptsData.categories?.general?.examples || [];
 }
 
-function getUniversalHooks() {
-  return NICHE_EXAMPLES.universal_hooks || [];
+function getUniversalHooks(language = 'egyptian') {
+  const lang = SUPPORTED_LANGUAGES.includes(language) ? language : 'egyptian';
+  return HOOKS[lang]?.universal_hooks || HOOKS['egyptian']?.universal_hooks || [];
 }
 
-function getNicheHooks(niche) {
+function getNicheHooks(niche, language = 'egyptian') {
   const key = getNicheKey(niche);
-  const category = NICHE_EXAMPLES.hooks_by_category?.[key];
+  const lang = SUPPORTED_LANGUAGES.includes(language) ? language : 'egyptian';
+  
+  const langHooks = HOOKS[lang] || HOOKS['egyptian'];
+  const category = langHooks?.hooks_by_category?.[key];
   if (category && category.hooks) return category.hooks;
-  // Fallback to general hooks
-  return NICHE_EXAMPLES.hooks_by_category?.general?.hooks || getUniversalHooks();
+  
+  // Fallback to general hooks for this language
+  return langHooks?.hooks_by_category?.general?.hooks || getUniversalHooks(language);
 }
 
 function getDurationConfig(duration) {
@@ -307,14 +321,14 @@ async function research(topic, costTracker = null, retries = 3) {
 // 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
-async function generateHooks(topic, researchData, niche, costTracker = null) {
+async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null) {
   console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
-  // Get niche-specific hooks (5 per niche)
-  const nicheHooks = getNicheHooks(niche);
-  const universalHooks = getUniversalHooks();
+  // Get niche-specific hooks for this language
+  const nicheHooks = getNicheHooks(niche, language);
+  const universalHooks = getUniversalHooks(language);
   
-  console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks`);
+  console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks (${language})`);
 
   // FIX #1: Use full research instead of truncated
   const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
@@ -398,11 +412,11 @@ JSON فقط:
 // ✍️ STAGE 3: WRITE SCRIPT (Gemini 3 Pro)
 // ============================================
 
-async function writeScript(topic, researchData, niche, selectedHook, duration, costTracker = null) {
+async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null) {
   console.log('   ✍️ Writing script (Gemini 3 Pro)...');
   
   const durationConfig = getDurationConfig(duration);
-  const examples = getNicheExamples(niche, duration);  // Get examples for this duration
+  const examples = getNicheExamples(niche, duration, language);  // Get examples for this language & duration
   
   // FIX #2: Use 2-3 golden examples instead of just one
   const goldenExamples = examples.slice(0, Math.min(3, examples.length));
@@ -514,8 +528,8 @@ ${researchData}
 // 📏 EXPAND SHORT SCRIPTS
 // ============================================
 
-async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30', costTracker = null) {
-  const examples = getNicheExamples(niche, duration);
+async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30', language = 'egyptian', costTracker = null) {
+  const examples = getNicheExamples(niche, duration, language);
   const examplesText = examples.slice(0, 2).map((ex, idx) => `
 --- مثال #${idx + 1} ---
 ${ex.script}
@@ -832,6 +846,7 @@ app.post('/api/generate-hooks', async (req, res) => {
   console.log('🎣 Step 1: Generate Hooks');
   console.log(`📌 Topic: ${topic.substring(0, 80)}...`);
   console.log(`🎯 Niche: ${niche}`);
+  console.log(`🌍 Language: ${language}`);
   console.log('═══════════════════════════════════════');
   
   const startTime = Date.now();
@@ -846,8 +861,8 @@ app.post('/api/generate-hooks', async (req, res) => {
     const researchData = await research(extractedTopic, costTracker);
     console.log('   ✓ Research done');
     
-    // Generate 3 hooks
-    const hooks = await generateHooks(extractedTopic, researchData, niche, costTracker);
+    // Generate 3 hooks (with language)
+    const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker);
     console.log(`   ✓ Generated ${hooks.length} hooks`);
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -880,6 +895,7 @@ app.post('/api/write-script', async (req, res) => {
     research: researchData,
     niche = 'general',
     duration = '30',  // Default to 30s
+    language = 'egyptian',
   } = req.body;
   
   if (!topic || !selectedHook || !researchData) {
@@ -895,14 +911,15 @@ app.post('/api/write-script', async (req, res) => {
   console.log(`📌 Topic: ${topic.substring(0, 50)}...`);
   console.log(`🎣 Hook: ${selectedHook.substring(0, 50)}...`);
   console.log(`⏱️ Duration: ${duration}s`);
+  console.log(`🌍 Language: ${language}`);
   console.log('═══════════════════════════════════════');
   
   const startTime = Date.now();
   const costTracker = createCostTracker();
   
   try {
-    // Write script with selected hook
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration, costTracker);
+    // Write script with selected hook (with language)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Style cleanup
@@ -1109,11 +1126,11 @@ app.post('/api/generate-image', async (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     success: true,
-    niches: Object.keys(SCRIPTS_30S.categories || {}),
-    durations: ['30', '60'],  // Only 30s and 60s
+    niches: Object.keys(SCRIPTS['egyptian']?.['30']?.categories || {}),
+    durations: SUPPORTED_DURATIONS,
     defaultDuration: '30',
-    languages: ['egyptian', 'arabic', 'english'],
-    // Removed styles - not needed
+    languages: SUPPORTED_LANGUAGES,
+    defaultLanguage: 'egyptian',
   });
 });
 

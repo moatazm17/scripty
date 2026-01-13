@@ -1,62 +1,371 @@
 {
-  "shocking_numbers": [
-    "المصريين صرفوا 70 مليار جنيه على السجاير في سنة واحدة بس.",
-    "صلاح بيقبض 350 ألف استرليني في الأسبوع، يعني 14 مليون جنيه.",
-    "الفيديو ده هيتشاف 10 آلاف مرة وأنا نايم في بيتي.",
-    "الهرم الأكبر فيه 2.3 مليون حجر، وزن الحجر الواحد 15 طن.",
-    "شات جي بي تي جاب 100 مليون مستخدم في شهرين بس.",
-    "شقة في الشيخ زايد بـ 40 مليون جنيه واتباعت في يومين.",
-    "أنت بتضيع 45 يوم كل سنة وأنت بتعمل سكرول على تيك توك.",
-    "العربية دي بتوصل من 0 لـ 100 في 3 ثواني بالظبط.",
-    "شركة أمازون بتشحن 1.6 مليون طرد كل يوم حول العالم.",
-    "المخ البشري بيعمل 50 ألف فكرة عشوائية في اليوم الواحد."
-  ],
-  "confusing_questions": [
-    "ليه أبل بتبيع الموبايل بـ 60 ألف جنيه والناس بتقف طوابير؟",
-    "ليه 90% من المطاعم في مصر بتقفل قبل ما تكمل سنة؟",
-    "إزاي كريم بيوصلك بـ 20 جنيه وبيدفع للسواق 30 جنيه وبيكسب؟",
-    "ليه بتفتكر المواقف المحرجة اللي حصلت من 10 سنين قبل النوم؟",
-    "ليه إيكيا بتحط المطعم في آخر المعرض مش في أوله؟",
-    "ليه أسعار كل المنتجات آخرها 99 قرش ومش رقم صحيح؟",
-    "إزاي أوبر هي أكبر شركة تاكسي في العالم ومعندهاش ولا عربية؟",
-    "ليه المصريين بيشربوا شاي سخن مولع في عز حر شهر 8؟",
-    "ليه الفقير بيشتري أيفون قسط والغني بيشتري دهب وأسهم؟",
-    "ليه مياه \"إيفيان\" أغلى 10 مرات من المياه المعدنية العادية؟"
-  ],
-  "challenging_beliefs": [
-    "الشهادة الجامعية مبقتش تضمن وظيفة، والشركات الكبيرة بطلت تطلبها.",
-    "تحويش الفلوس في البنك هو أسرع طريقة عشان تخسر قيمتها.",
-    "\"اشتغل اللي بتحبه\" دي أسوأ نصيحة ممكن تسمعها في البيزنس.",
-    "الرياضة لوحدها مستحيل تخسسك لو لسه بتاكل محشي ومكرونة.",
-    "تعدد المهام كذبة كبيرة، أنت بس بتشتت مخك وبتقلل إنتاجيتك.",
-    "العقار مش دايماً \"الابن البار\"، ممكن يبقى ورطة لو اشتريت غلط.",
-    "المنتج الحلو مش بيبيع نفسه، ده كلام فارغ بيضيع شركات.",
-    "عدد المتابعين مش دليل على النجاح، ممكن يكونوا وهميين أو مفلسين.",
-    "الصحيان الساعة 5 الفجر مش هو سر نجاح المليارديرات.",
-    "فكرة \"المدير هو اللي بيقبض أكتر\" انتهت، الفريلانسر بيعمل أضعافه."
-  ],
-  "personal_stories": [
-    "محمود بدأ بـ 500 جنيه، ودلوقتي عنده مصنع بيصدر لأوروبا.",
-    "سارة سابت هندسة وبقت بتكسب 2000 دولار من تعليم العربي للأجانب.",
-    "صاحبي سدد ديون بـ 100 ألف جنيه في سنة لما بطل منظرة.",
-    "اترفضت في 20 انترفيو، والنهاردة أنا اللي بعين الموظفين دول.",
-    "ندى خسرت 30 كيلو في 6 شهور من غير دايت قاسي.",
-    "اتعلمت مونتاج في شهر، ودلوقتي ساعتي بـ 50 دولار.",
-    "زميلي اشترى عربية جديدة كاش من أرباح قناته على يوتيوب.",
-    "جربت أبيع مياه في الإشارات، واكتشفت درس غير حياتي للأبد.",
-    "عملت سيستم بيبيع كورساتي وأنا نايم، صحيت لقيت 5 مبيعات.",
-    "الفيديو ده جابلي 10 عملاء جدد عشان غيرت جملة واحدة بس."
-  ],
-  "shocking_comparisons": [
-    "تيشيرت زارا بـ 2000 جنيه، وتكلفته في المصنع 150 جنيه بس.",
-    "لو استثمرت 1000 جنيه في أمازون سنة 97، معاك 12 مليون.",
-    "قسط الشقة دي أرخص من إيجارها الشهري بـ 2000 جنيه كاملين.",
-    "سعر تويوتا كورولا في مصر يجيبلك بورش مستعملة في دبي.",
-    "تصميم لوجو واحد ممكن يجيبلك مرتب شهر كامل لموظف حكومة.",
-    "ساندوتش البرجر ده فيه سعرات قد 5 أطباق سلطة فواكه.",
-    "اشتراك الجيم سنة أرخص من عملية تكميم ومشاكلها بكتير.",
-    "إعلان واحد عند انفلونسر أغلى من إيجار بيلبورد على المحور.",
-    "سعر جرام الدهب زاد 500% في آخر 5 سنين بس.",
-    "تكلفة سفرية للساحل أسبوع، ممكن تفتحلك مشروع صغير يغير حياتك."
-  ]
+  "metadata": {
+    "version": "1.0",
+    "description": "Viral Hooks for All Languages",
+    "last_updated": "2026-01-13"
+  },
+  "egyptian": {
+    "universal_hooks": [
+      "اللي بيوصلك عن {topic} ده نص الحقيقة بس... النص التاني هو اللي فيه السر اللي محدش عايزك تعرفه!",
+      "لو فاكر إن اللي بيحصل في {topic} ده صدفة... تبقى غلطان! السيناريو ده مترتب لسبب واحد بس.",
+      "أوعى تاخد خطوة في {topic} قبل ما تسمع الكلمتين دول... عشان الغلطة هنا تمنها غالي أوي!",
+      "أتحداك تكون واخد بالك من التفصيلة دي في {topic}... عشان 99% من الناس بيشوفوها ومش فاهمين معناها!",
+      "رقم واحد بس في {topic} قلب الموازين كلها... الرقم ده مش صدفة، ده جرس إنذار!"
+    ],
+    "hooks_by_category": {
+      "general": {
+        "name": "عام",
+        "hooks": [
+          "لو بتصحى من النوم جسمك مكسر حتى لو نايم 10 ساعات كاملين.. يبقى أنت بتعمل كارثة في حق نفسك وأنت مش دريان!",
+          "حركة واحدة بس لو حد عملها بعينه وهو بيكلمك.. اعرف فوراً إنه بيكدب عليك حتى لو بيحلف بـ ميت يمين!",
+          "أوعى تكون من الناس اللي بتدوس 'Accept All' على أي موقع يدخلوه.. الكسل ده هو السبب إن بياناتك وصورك بتتباع في المزاد دلوقتي!",
+          "الناس فاكرة إن 'الحظ' ده صدفة وتوزيع أرزاق بس.. بس العلم أثبت إن الحظ ليه 'معادلة رياضية' لو طبقتها هتتحول لمغناطيس فرص!",
+          "أخطر خدعة عقلك بيعملها فيك هي جملة 'هبقى أعملها بكرة'.. الجملة دي هي المقبرة اللي اتدفن فيها 90% من أحلام البشر!"
+        ]
+      },
+      "real_estate": {
+        "name": "العقارات",
+        "hooks": [
+          "قرار واحد غلط وأنت بتشتري شقة ممكن يلبسك في حيطة ويدينك للبنك 20 سنة قدام من غير ما تحس!",
+          "لو لسه مصدق إن 'الاستثمار في العقار عمره ما بيخسر'.. يبقى أنت متعرفش اللي حصل في 2008 وممكن يتكرر تاني!",
+          "أوعى تمضي عقد نهائي لأي وحدة سكنية قبل ما تتأكد من البند رقم 4.. البند ده هو اللي بيضيع حقك في إعادة البيع!",
+          "السمسار الشاطر مش هيقولك تشتري فين.. السمسار الشاطر هيقولك 'متشتريش' فين، والفرق بين الكلمتين ملايين!",
+          "كل الناس بتجري تشتري في التجمع والعاصمة.. بس الحيتان الكبار بيبيعوا هناك وبيشتروا في مكان تاني خالص محدش واخد باله منه!"
+        ]
+      },
+      "business": {
+        "name": "البيزنس",
+        "hooks": [
+          "لو خايف تقول فكرة مشروعك لحد ليسرقها.. يبقى أنت لسه مبتدئ ومفهمتش اللعبة، لأن الفكرة لوحدها تمنها صفر!",
+          "أوعى تعمل خصم 50% عشان تبيع أكتر.. الحركة دي ممكن تمشي البضاعة النهاردة، بس بكرة هتقفل شركتك بالضبة والمفتاح!",
+          "ليه علبة الفشار الوسط في السينما سعرها قريب أوي من العلبة الكبيرة؟.. دي مش غلطة تسعير، دي مصيدة معمولة عشانك مخصوص!",
+          "عايز تفتح شركة برمجيات أو تصميم وأنت مابتعرفش تكتب كود ولا ترسم؟.. مبروك، أنت معاك أهم مؤهل لبيزنس المستقبل!",
+          "ليه شركات الاتصالات ممكن تديك خط ونت ببلاش في الأول؟.. هما أغبياء وبيخسروا؟.. بالعكس، دول أشطر منك في الحساب!"
+        ]
+      },
+      "technology": {
+        "name": "التكنولوجيا",
+        "hooks": [
+          "لو فاكر إن خدمات 'جوجل' ببلاش عشان بيحبك.. يبقى أنت فايتك نص الحقيقة، لأنك في المعادلة دي مش العميل، أنت المنتج اللي بيتباع!",
+          "أوعى تكون بتشحن موبايلك طول الليل وأنت نايم.. العادة دي هي السبب إن بطاريتك بتموت بعد سنة واحدة بس!",
+          "خايف الذكاء الاصطناعي ياخد شغلك؟.. اطمن، الروبوت مش هياخد مكانك، اللي هياخد مكانك هو واحد بيعرف يستخدم الـ AI أحسن منك!",
+          "ليه لما بتفتح تيك توك دقيقة بتلاقي نفسك سرحت ساعتين؟.. دي مش قلة إرادة منك، ده مخدر رقمي متصمم بمليارات الدولارات!",
+          "أوعى تشتري الأيفون الجديد دلوقتي.. عشان أبل بتحاول تبيعلك نفس الموبايل القديم بسعر أغلى 10 آلاف جنيه!"
+        ]
+      },
+      "content_creation": {
+        "name": "صناعة المحتوى",
+        "hooks": [
+          "لو فاكر إن المليون مشاهدة هما اللي هيخلوك مليونير.. يبقى أنت بتجري ورا سراب وهتتصدم لما تشوف أرباحك الحقيقية!",
+          "أكبر جريمة ممكن تعملها في حق صفحتك هي إنك تشتري متابعين.. الحركة دي هي رصاصة الرحمة اللي بتقتل بيها الريتش للأبد!",
+          "السر اللي التيك توكرز الكبار مخبيينه عنك.. إن الفيديو مش بينجح عشان 'محتواه حلو'، الفيديو بينجح عشان طبقوا قاعدة الـ 3 ثواني!",
+          "مش محتاج تكون موديل ولا دمك خفيف عشان تقبض بالدولار.. فيه شغلانة جديدة اسمها UGC بتخليك تعمل فلوس وأنت ببيجامة البيت!",
+          "تفتكر تعمل فيديو واحد متعوب عليه كل أسبوع، ولا تنزل فيديو أي كلام كل يوم؟.. إجابة الخوارزمية هتصدمك وهتغير خطتك تماماً!"
+        ]
+      },
+      "self_development": {
+        "name": "تطوير الذات",
+        "hooks": [
+          "التحفيز ده أكبر كدبة أنت مصدقها.. لو مستني 'نفسك تتفتح' عشان تذاكر أو تتمرن، يبقى هتفضل مكانك طول عمرك!",
+          "أول ساعة في يومك هي اللي بتحدد مصير الـ 23 ساعة الباقيين.. لو مسكت الموبايل أول ما تصحى، يومك باظ رسمياً!",
+          "قراية 50 كتاب في السنة مش إنجاز.. دي 'منظرة'! لو بتقرأ ومبتطبقش، أنت زيك زي اللي مبيعرفش يقرأ بالظبط.",
+          "عارف اللحظة اللي بتفكر فيها تقوم تعمل حاجة وبعدين تكسل؟.. اللحظة دي هي اللي بتفرق بين الناجح والفاشل، والحل في 5 ثواني بس!",
+          "أنت متوسط الخمس أشخاص اللي بتقعد معاهم.. لو شلتك كلها مفلسين وبيشتكوا، مبروك أنت هتبقى سادسهم قريب جداً!"
+        ]
+      },
+      "restaurants": {
+        "name": "المطاعم",
+        "hooks": [
+          "ليه ساندوتش البرجر في الإعلان شكله يجنن ولما تشتريه بيطلع 'مفعوص'؟.. الحقيقة إن اللي بتشوفه في التليفزيون ده مش أكل أصلاً!",
+          "قبل ما تطلب الأكل في أي مطعم جديد.. ادخل الحمام الأول! الحركة دي ممكن تنقذك من تسمم غذائي وأنت مش دريان.",
+          "إزاي تاكل في البوفيه المفتوح من غير ما المطعم يضحك عليك؟.. البوفيه مصمم هندسياً عشان يشبعك بأرخص أكل عندهم!",
+          "ليه دايماً أحلى أكل بتدوقه بيكون في مطعم صغير في حارة مش في الفنادق الـ 5 نجوم؟.. السر مش في النظافة، السر في 'التخصص'!",
+          "ليه البطاطس المقلية بتاعة ماكدونالدز طعمها مختلف عن البيت وبتدمنها؟.. دي مش شطارة طباخ، دي كيمياء ومعامل!"
+        ]
+      },
+      "fashion": {
+        "name": "الفاشون",
+        "hooks": [
+          "مش محتاج تلبس 'براندات' عشان تبان غني.. أغنى ناس في العالم بيلبسوا تيشيرتات سادة بـ 10 دولار، والسر كله في 'المقاس'!",
+          "قبل ما تشتري أي هدوم بص على التيكيت الداخلي.. لو لقيت كلمة 'Polyester' بنسبة 100% سيبها واجري لأنك بتلبس كيس بلاستيك!",
+          "إزاي تلبس ألوان تخليك تبان أطول وأرفع من غير ما تخس كيلو واحد؟.. السر كله في العين والخدع البصرية!",
+          "عايز ترفع مستوى شياكتك 10 درجات فوراً من غير ما تصرف مليم؟.. اهتم بحاجة واحدة بس في طقمك، وهي جزمتك!",
+          "ليه لما بتلبس طقم بتحس إنه 'مهرجان' ألوان ولما تشوف موديل لابس نفس الألوان بيبان شيك؟.. السر في النسبة الذهبية للألوان!"
+        ]
+      }
+    }
+  },
+  "gulf": {
+    "universal_hooks": [
+      "اللي يوصلك عن {topic} تراه نص الحقيقة بس... النص الثاني هو السر اللي ما يبونك تعرفه!",
+      "لو تحسب إن اللي صاير في {topic} مجرد صدفة... راجع حساباتك! السيناريو هذا مرتب لسبب واحد.",
+      "انتبه تاخذ خطوة في {topic} قبل ما تسمع هالكلام... لأن الغلطة هنا تمنها غالي بالحيل!",
+      "أتحداك تكون منتبه لهالتفصيل في {topic}... لأن 99% من الناس تمر عليهم وما يفهمون معناها!",
+      "رقم واحد بس في {topic} قلب الموازين كلها... الرقم هذا مو للزينة، هذا جرس إنذار!"
+    ],
+    "hooks_by_category": {
+      "general": {
+        "name": "عام",
+        "hooks": [
+          "لو تقوم من النوم جسمك مكسر حتى لو شبعان نوم.. تراك قاعد تسوي كارثة في حق نفسك وأنت ما تدري!",
+          "حركة وحدة بس بالعين لو سواها اللي يكلمك.. اعرف فوراً إنه يكذب عليك حتى لو حلف لك أيمان مغلظة!",
+          "انتبه تضغط 'موافق على الكل' في أي موقع تدخله.. هالكسل هو السبب إن بياناتك وصورك تنباع بالمزاد الحين!",
+          "الناس تحسب إن 'الحظ' صدفة وتوافيق بس.. لكن العلم أثبت إن الحظ له 'معادلة' لو طبقتها بتصير مغناطيس فرص!",
+          "أخطر خدعة عقلك يسويها فيك هي جملة 'ببدأ بكرة'.. الجملة هذي هي المقبرة اللي اندفنت فيها أحلام ملايين البشر!"
+        ]
+      },
+      "real_estate": {
+        "name": "العقارات",
+        "hooks": [
+          "قرار واحد غلط وأنت تشتري بيت العمر ممكن يورطك ويدينك للبنك 20 سنة قدام وأنت مو حاس!",
+          "لو لسه مصدق كذبة 'الاستثمار في العقار ما يخسر أبداً'.. شكلك نسيت اللي صار بالأزمات الماضية وممكن يتكرر!",
+          "انتبه توقع العقد النهائي لأي وحدة سكنية قبل ما تتأكد من البند رقم 4.. هالبند هو اللي يضيع حقك في البيع بعدين!",
+          "السمسار الشاطر ما يقولك 'وين تشتري'.. السمسار الشاطر يقولك وين 'ما تشتري'، والفرق بين الكلمتين ملايين!",
+          "الكل يركض يشتري في الأماكن 'الترند'.. بس الهوامير والحيتان يبيعون هناك ويشترون في مكان ثاني محد منتبه له!"
+        ]
+      },
+      "business": {
+        "name": "البيزنس",
+        "hooks": [
+          "لو خايف تقول فكرة مشروعك لأحد لا يسرقها.. تراك لسه مبتدئ وما فهمت اللعبة، لأن الفكرة لحالها قيمتها صفر!",
+          "انتبه تسوي خصم 50% عشان تبيع أكثر.. الحركة هذي ممكن تمشي البضاعة اليوم، بس بكرة بتقفل محلك بالشمع الأحمر!",
+          "ليش فشار السينما الوسط سعره قريب مرة من الكبير؟.. هذي مو غلطة تسعير، هذي مصيدة معمولة عشانك مخصوص!",
+          "تبي تفتح شركة برمجيات أو تصميم وأنت ما تعرف كود ولا رسم؟.. مبروك، أنت معك أهم مؤهل لبزنس المستقبل!",
+          "ليش شركات الاتصالات تعطيك شريحة ونت ببلاش في البداية؟.. هم أغبياء ويخسرون؟.. بالعكس، هذولا أشطر منك بالحساب!"
+        ]
+      },
+      "technology": {
+        "name": "التكنولوجيا",
+        "hooks": [
+          "لو تظن خدمات 'قوقل' ببلاش عشان يحبونك.. تراك عايش في وهم، لأنك في المعادلة هذي مو العميل، أنت المنتج اللي ينباع!",
+          "انتبه تشحن جوالك طول الليل وأنت نايم.. العادة هذي هي السبب إن بطاريتك تودع بعد سنة وحدة بس!",
+          "خايف الذكاء الاصطناعي ياخذ وظيفتك؟.. تطمن، الروبوت ما راح ياخذ مكانك، اللي بياخذه هو واحد يعرف يستخدم الـ AI أحسن منك!",
+          "ليش لما تفتح تيك توك دقيقة تلقى نفسك سرحت ساعتين؟.. هذي مو قلة إرادة منك، هذا مخدر رقمي مصمم بمليارات الدولارات!",
+          "لا تشتري الآيفون الجديد الحين.. ترى أبل تحاول تبيع لك نفس الجوال القديم بسعر أغلى 1000 ريال!"
+        ]
+      },
+      "content_creation": {
+        "name": "صناعة المحتوى",
+        "hooks": [
+          "لو تحسب إن المليون مشاهدة هي اللي بتخليك مليونير.. تراك تطرد سراب وبتنصدم لما تشوف أرباحك الحقيقية!",
+          "أكبر جريمة ممكن تسويها في حق حسابك إنك تشتري متابعين.. الحركة هذي هي رصاصة الرحمة اللي تقتل فيها الوصول للأبد!",
+          "السر اللي مشاهير التيك توك مخبينه عنك.. إن المقطع ما ينجح عشان 'محتواه حلو'، ينجح عشان طبقوا قاعدة الـ 3 ثواني!",
+          "مو لازم تكون موديل ولا دمك خفيف عشان تقبض بالدولار.. فيه شغلة جديدة اسمها UGC تطلع لك ذهب وأنت ببيجامة البيت!",
+          "تتعب على فيديو واحد كل أسبوع، ولا تنزل فيديو 'أي كلام' كل يوم؟.. إجابة الخوارزمية بتصدمك وتغير خطتك تماماً!"
+        ]
+      },
+      "self_development": {
+        "name": "تطوير الذات",
+        "hooks": [
+          "التحفيز هذا أكبر كذبة أنت مصدقها.. لو تنتظر 'نفسيتك تزين' عشان تنجز، بتموت وأنت بمكانك ما تحركت!",
+          "أول ساعة في يومك تحدد مصير الـ 23 ساعة الباقية.. لو مسكت الجوال أول ما تفتح عينك، يومك تدمر رسمياً!",
+          "قراءة 50 كتاب بالسنة مو إنجاز.. هذي 'مهايط'! لو تقرأ وما تطبق، أنت والشخص الأمي سوا.",
+          "تعرف اللحظة اللي تفكر تقوم تسوي شي وتكسل؟.. اللحظة هذي هي اللي تفرق بين الناجح والفاشل، والحل في 5 ثواني بس!",
+          "أنت متوسط الخمسة أشخاص اللي تجلس معهم.. لو ربعك كلهم مفلسين ويتحلطمون، مبروك أنت بتصير سادسهم قريب!"
+        ]
+      },
+      "restaurants": {
+        "name": "المطاعم",
+        "hooks": [
+          "ليش برجر الإعلانات شكله يجنن ولما تطلبه يطلع 'مفعوص'؟.. الحقيقة إن اللي تشوفه بالتلفزيون هذا مو أكل أصلاً، هذا مكياج!",
+          "قبل ما تطلب الأكل بأي مطعم جديد.. ادخل الحمام أول! الحركة هذي ممكن تنقذك من تسمم غذائي وأنت ما تدري.",
+          "كيف تاكل في البوفيه المفتوح بدون ما المطعم يضحك عليك؟.. البوفيه مصمم هندسياً عشان يشبعك بأرخص أكل عندهم!",
+          "ليش دائماً ألذ أكل تذوقه يكون في مطعم صغير بحارة مو في الفنادق الـ 5 نجوم؟.. السر مو بالنظافة، السر في 'التخصص'!",
+          "ليش بطاطس ماكدونالدز طعمها مختلف عن البيت وتدمن عليها؟.. هذي مو شطارة طباخ، هذي كيمياء ومعامل!"
+        ]
+      },
+      "fashion": {
+        "name": "الفاشون",
+        "hooks": [
+          "مو لازم تلبس 'ماركات' عشان تبان غني.. أغنى ناس بالعالم يلبسون تيشيرتات سادة، والسر كله في 'المقاس'!",
+          "قبل ما تشتري أي قطعة ملابس شيك على التاغ الداخلي.. لو لقيت كلمة 'Polyester' اهرب، لأنك بتلبس كيس بلاستيك!",
+          "كيف تلبس ألوان تخليك تبان أطول وأنحف بدون ما تخسر كيلو واحد؟.. السر كله في العين والخدع البصرية!",
+          "تبي ترفع مستوى كشختك 10 درجات فوراً بدون ما تصرف ريال؟.. اهتم بحاجة وحدة بس في لبسك، وهي جزمتك (وأنتم بكرامة)!",
+          "ليش لما تلبس طقم تحس إنه 'حوسة' ولما تشوف موديل لابس نفس الألوان يطلع كشخة؟.. السر في النسبة الذهبية للألوان!"
+        ]
+      }
+    }
+  },
+  "french": {
+    "universal_hooks": [
+      "Ce que je vais vous dire sur {topic} n'est que la moitié de l'histoire... l'autre moitié est un secret bien gardé.",
+      "Si vous pensez que ce qui arrive dans {topic} est une coïncidence... détrompez-vous ! Tout est calculé.",
+      "Ne faites pas un seul pas dans {topic} avant d'entendre ça... une erreur ici pourrait vous coûter une fortune.",
+      "Je parie que vous n'avez pas remarqué ce détail dans {topic}... 99% des gens passent devant sans comprendre !",
+      "Un seul chiffre dans {topic} a changé toute la donne... Ce chiffre n'est pas un hasard, c'est un signal d'alarme."
+    ],
+    "hooks_by_category": {
+      "general": {
+        "name": "Général",
+        "hooks": [
+          "Si vous vous réveillez fatigué même après 10 heures de sommeil... vous commettez un crime contre votre corps sans le savoir !",
+          "Un seul mouvement des yeux peut trahir un menteur instantanément, même s'il jure sur sa vie !",
+          "Arrêtez de cliquer sur 'Tout Accepter' sur chaque site web... Cette paresse est la raison pour laquelle vos données sont vendues aux enchères.",
+          "Les gens pensent que la 'Chance' est un hasard... mais la science prouve qu'il existe une équation mathématique pour la provoquer.",
+          "Le piège le plus dangereux de votre cerveau est la phrase 'Je le ferai demain'... C'est le cimetière de 90% des rêves humains."
+        ]
+      },
+      "real_estate": {
+        "name": "Immobilier",
+        "hooks": [
+          "Une seule mauvaise décision lors de l'achat d'un appartement peut vous piéger dans les dettes pour 20 ans !",
+          "Si vous croyez encore que 'L'immobilier ne baisse jamais'... vous avez clairement oublié la crise de 2008 !",
+          "Ne signez jamais un compromis de vente sans vérifier la clause n°4... C'est cette ligne qui tue votre valeur de revente.",
+          "Un bon agent immobilier ne vous dit pas où acheter... Il vous dit où NE PAS acheter. La différence vaut des millions.",
+          "Tout le monde se précipite pour acheter dans les quartiers 'à la mode'... mais les vrais investisseurs vendent là-bas et achètent ailleurs !"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "hooks": [
+          "Peur de partager votre idée de business ? Vous êtes un amateur. Sur le marché, une idée seule vaut zéro euro !",
+          "Ne faites jamais -50% juste pour vendre plus... Ça peut faire du cash aujourd'hui, mais ça tuera votre marque demain !",
+          "Pourquoi le pop-corn moyen coûte presque le même prix que le grand ? Ce n'est pas une erreur, c'est un piège psychologique conçu pour vous.",
+          "Vous voulez lancer une agence tech mais vous ne savez pas coder ? Félicitations, vous avez la qualification la plus importante pour réussir !",
+          "Pourquoi les opérateurs téléphoniques vous offrent-ils la carte SIM ? Sont-ils stupides ? Non, ils sont juste meilleurs en maths que vous !"
+        ]
+      },
+      "technology": {
+        "name": "Technologie",
+        "hooks": [
+          "Si vous pensez que Google est gratuit parce qu'ils sont gentils... vous vous trompez. Vous n'êtes pas le client, vous êtes le produit !",
+          "Arrêtez de charger votre téléphone toute la nuit... Cette habitude est la raison n°1 pour laquelle votre batterie meurt en un an !",
+          "Peur que l'IA vole votre travail ? Détendez-vous. Un robot ne vous remplacera pas ; un humain qui utilise l'IA le fera !",
+          "Pourquoi ouvrez-vous TikTok pour une minute et perdez deux heures ? Ce n'est pas un manque de volonté, c'est une drogue numérique !",
+          "N'achetez pas le nouvel iPhone maintenant... Apple essaie de vous revendre le même vieux téléphone pour 300€ de plus !"
+        ]
+      },
+      "content_creation": {
+        "name": "Création de contenu",
+        "hooks": [
+          "Vous pensez qu'avoir 1 million de vues fera de vous un millionnaire ? C'est le plus gros mensonge des influenceurs.",
+          "Le pire crime contre votre page est d'acheter des abonnés... C'est la balle qui tue votre portée (reach) pour toujours.",
+          "Le secret que les stars de TikTok vous cachent... Les vidéos ne buzzent pas par 'talent', elles buzzent grâce à la règle des 3 secondes !",
+          "Pas besoin d'être mannequin ou drôle pour gagner en dollars... Il existe un nouveau métier appelé UGC qui vous paie en pyjama !",
+          "Faut-il poster une vidéo parfaite par semaine ou une moyenne chaque jour ? La réponse de l'algorithme va changer toute votre stratégie !"
+        ]
+      },
+      "self_development": {
+        "name": "Développement personnel",
+        "hooks": [
+          "La motivation est un mensonge. Si vous attendez d'avoir 'envie' pour aller au sport, vous resterez bloqué pour toujours.",
+          "La première heure de votre journée décide des 23 autres. Si vous prenez votre téléphone au réveil, votre journée est officiellement gâchée.",
+          "Lire 50 livres par an n'est pas un exploit... c'est de la 'Vanité' ! Si vous lisez sans appliquer, vous ne faites que vous divertir.",
+          "Vous connaissez ce moment où vous hésitez à faire quelque chose ? Ce moment définit votre succès, et la solution tient en 5 secondes.",
+          "Vous êtes la moyenne des 5 personnes que vous fréquentez... Si vos amis sont fauchés et négatifs, félicitations, vous êtes le prochain !"
+        ]
+      },
+      "restaurants": {
+        "name": "Restaurants",
+        "hooks": [
+          "Pourquoi le burger de la pub est parfait alors que le vôtre est écrasé ? La vérité, c'est que ce que vous voyez à la télé n'est même pas de la nourriture !",
+          "Avant de commander dans un nouveau resto... allez d'abord aux toilettes ! Ce geste pourrait vous sauver d'une intoxication alimentaire.",
+          "Comment manger au buffet à volonté sans se faire arnaquer ? Le buffet est conçu pour vous gaver avec les aliments les moins chers !",
+          "Pourquoi la meilleure nourriture se trouve toujours dans les petits bouis-bouis et pas dans les hôtels 5 étoiles ? Le secret n'est pas l'hygiène, c'est la 'Spécialisation' !",
+          "Pourquoi les frites du McDo ont un goût différent de celles de la maison ? Ce n'est pas de la cuisine, c'est de la chimie !"
+        ]
+      },
+      "fashion": {
+        "name": "Mode",
+        "hooks": [
+          "Pas besoin de porter des logos de luxe pour faire riche... Les vrais milliardaires portent des t-shirts à 10€. Le secret, c'est la coupe !",
+          "Avant d'acheter un vêtement, regardez l'étiquette. Si vous voyez '100% Polyester', fuyez. Vous allez littéralement porter un sac plastique.",
+          "Comment porter des couleurs qui vous font paraître plus grand et plus mince instantanément ? Le secret réside dans l'illusion d'optique.",
+          "Vous voulez augmenter votre niveau d'élégance de 10 points gratuitement ? Concentrez-vous sur une seule chose : vos chaussures !",
+          "Pourquoi votre tenue fait 'brouillon' alors qu'un mannequin portant les mêmes couleurs a l'air chic ? Le secret est le Nombre d'Or des couleurs !"
+        ]
+      }
+    }
+  },
+  "english": {
+    "universal_hooks": [
+      "What I'm about to tell you about {topic} is only half the truth... the other half is the secret they don't want you to know.",
+      "If you think what's happening in {topic} is a coincidence... think again! This scenario is rigged for one reason only.",
+      "Don't take a single step in {topic} before hearing this... because a mistake here will cost you a fortune.",
+      "I bet you didn't notice this detail in {topic}... 99% of people see it everyday but have no idea what it means!",
+      "Just one number in {topic} changed the whole game... This number isn't random, it's a warning bell!"
+    ],
+    "hooks_by_category": {
+      "general": {
+        "name": "General",
+        "hooks": [
+          "If you wake up feeling tired even after 10 hours of sleep... you are committing a crime against your body without knowing it!",
+          "One tiny eye movement during a conversation can reveal a liar instantly, even if they swear on their life!",
+          "Stop clicking 'Accept All' on every website... This laziness is why your data and photos are being sold at auctions right now!",
+          "People think 'Luck' is random... but science proves Luck has a 'mathematical formula'. Apply it, and you become a magnet for opportunities.",
+          "The most dangerous trick your brain plays on you is 'I'll do it tomorrow'... That sentence is the graveyard of 90% of human dreams."
+        ]
+      },
+      "real_estate": {
+        "name": "Real Estate",
+        "hooks": [
+          "One wrong decision when buying an apartment could trap you in debt for 20 years without you realizing it!",
+          "If you still believe 'Real Estate never loses'... then you clearly forgot what happened in 2008!",
+          "Never sign a final contract for any unit before checking Clause #4... This clause is what kills your resale value!",
+          "A smart broker won't tell you where to buy... A smart broker tells you where NOT to buy. The difference is millions.",
+          "Everyone is rushing to buy in the 'Trendy' spots... but the big whales are selling there and buying somewhere else entirely!"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "hooks": [
+          "Scared to share your business idea? You're a rookie. Ideas alone are worth zero in the market!",
+          "Never offer a 50% discount to sell more... That move might move stock today, but it will bankrupt your brand tomorrow!",
+          "Why is the Medium popcorn priced so close to the Large? It's not a mistake; it's a trap designed specifically for you.",
+          "Want to start a software or design agency but can't code? Congratulations, you have the most important qualification for future business!",
+          "Why do telecom companies give you a SIM card for free? Are they stupid? No, they are just better at math than you!"
+        ]
+      },
+      "technology": {
+        "name": "Technology",
+        "hooks": [
+          "If you think Google is free because they like you... you are missing the point. You are not the customer; you are the product!",
+          "Stop charging your phone overnight... This habit is why your battery dies after just one year!",
+          "Scared AI will take your job? Relax. A robot won't replace you; a human using AI better than you will!",
+          "Why do you open TikTok for a minute and lose two hours? It's not lack of willpower; it's a digital drug designed by billionaires.",
+          "Don't buy the new iPhone right now... Apple is trying to sell you the same old phone for $300 more!"
+        ]
+      },
+      "content_creation": {
+        "name": "Content Creation",
+        "hooks": [
+          "If you think 1 Million views will make you a millionaire... you are chasing a mirage. The real profits will shock you.",
+          "The biggest crime against your page is buying followers... This move is the bullet that kills your reach forever.",
+          "The secret top TikTokers are hiding... Videos don't go viral because they are 'good', they go viral because of the 3-Second Rule!",
+          "You don't need to be a model or funny to earn in dollars... There is a new gig called UGC that pays you while you're in your pajamas!",
+          "Should you make one perfect video a week, or a mediocre one every day? The algorithm's answer will change your entire plan!"
+        ]
+      },
+      "self_development": {
+        "name": "Self Development",
+        "hooks": [
+          "Motivation is the biggest lie you believe. If you wait to 'feel like it' to work out, you'll stay stuck forever.",
+          "The first hour of your day determines the fate of the other 23. If you grab your phone first thing, your day is officially ruined.",
+          "Reading 50 books a year isn't an achievement... it's 'Vanity'! If you read without applying, you are just entertaining yourself.",
+          "You know that moment you think about doing something then hesitate? That moment defines your success, and the solution is 5 seconds away.",
+          "You are the average of the 5 people you hang out with... If your friends are broke and complaining, congratulations, you're next!"
+        ]
+      },
+      "restaurants": {
+        "name": "Restaurants",
+        "hooks": [
+          "Why does the burger in the ad look amazing but real life gives you a flat mess? Truth is, what you see on TV isn't even food!",
+          "Before ordering at a new restaurant... check the bathroom first! This move could save you from food poisoning.",
+          "How to eat at an All-You-Can-Eat buffet without being scammed? The buffet is engineered to fill you up with the cheapest food first!",
+          "Why is the best food always found in tiny hole-in-the-wall spots, not 5-star hotels? The secret isn't hygiene; it's 'Specialization'!",
+          "Why do McDonald's fries taste different than homemade and get you addicted? It's not cooking skills; it's chemistry!"
+        ]
+      },
+      "fashion": {
+        "name": "Fashion",
+        "hooks": [
+          "You don't need 'Brand Logos' to look rich... The wealthiest people wear $10 plain t-shirts. The secret is the 'Fit'!",
+          "Before buying clothes, check the inner tag. If you see '100% Polyester', run away. You are basically wearing a plastic bag.",
+          "How to wear colors that make you look taller and slimmer instantly? The secret lies in optical illusions.",
+          "Want to upgrade your style score by 10 points instantly for free? Focus on one thing in your outfit: your shoes!",
+          "Why does your outfit look messy while a model wearing the same colors looks chic? The secret is the Golden Ratio of colors!"
+        ]
+      }
+    }
+  }
 }
