@@ -78,15 +78,23 @@ function getUniversalHooks() {
   return NICHE_EXAMPLES.universal_hooks || [];
 }
 
+function getNicheHooks(niche) {
+  const key = getNicheKey(niche);
+  const category = NICHE_EXAMPLES.hooks_by_category?.[key];
+  if (category && category.hooks) return category.hooks;
+  // Fallback to general hooks
+  return NICHE_EXAMPLES.hooks_by_category?.general?.hooks || getUniversalHooks();
+}
+
 function getDurationConfig(duration) {
   const durationInt = parseInt(duration) || 60;
   // Gemini 3 Pro uses ~500-800 tokens for "thinking" before writing
-  // So we need extra tokens for the actual output
+  // Increased tokens to ensure complete scripts
   const configs = {
-    15: { words: 80, maxTokens: 1500 },
-    30: { words: 150, maxTokens: 2000 },
-    60: { words: 200, maxTokens: 3000 },
-    90: { words: 300, maxTokens: 4000 },
+    15: { words: 80, maxTokens: 2000 },
+    30: { words: 150, maxTokens: 2500 },
+    60: { words: 250, maxTokens: 4000 },  // Increased from 200 words
+    90: { words: 350, maxTokens: 5000 },
   };
   return configs[durationInt] || configs[60];
 }
@@ -220,14 +228,11 @@ async function research(topic, retries = 3) {
 async function generateHooks(topic, researchData, niche) {
   console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
-  const examples = getNicheExamples(niche);
+  // Get niche-specific hooks (5 per niche)
+  const nicheHooks = getNicheHooks(niche);
   const universalHooks = getUniversalHooks();
   
-  // Extract hooks from examples (first line of each script)
-  const exampleHooks = examples.map(ex => {
-    const firstLine = ex.script.split('\n')[0];
-    return firstLine;
-  }).slice(0, 5); // Use up to 5 hook examples
+  console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks`);
 
   // FIX #1: Use full research instead of truncated
   const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
@@ -237,8 +242,8 @@ async function generateHooks(topic, researchData, niche) {
 البحث الكامل:
 ${researchData}
 
-=== أمثلة Hooks من نفس المجال (قلّد الأسلوب) ===
-${exampleHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+=== أمثلة Hooks من مجال "${niche}" (قلّد الأسلوب بالظبط!) ===
+${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
 === أنماط Hooks عامة (للإلهام) ===
 ${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
