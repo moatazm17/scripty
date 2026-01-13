@@ -20,7 +20,7 @@ const CONFIG = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
-  GEMINI_MODEL: 'gemini-2.5-flash',
+  GEMINI_MODEL: 'gemini-3-pro',
 };
 
 // ============================================
@@ -212,11 +212,11 @@ async function research(topic, retries = 3) {
 }
 
 // ============================================
-// 🎣 STAGE 2: GENERATE HOOKS (n8n Style)
+// 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
 async function generateHooks(topic, researchData, niche) {
-  console.log('   🎣 Generating hooks...');
+  console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
   const examples = getNicheExamples(niche);
   const universalHooks = getUniversalHooks();
@@ -227,7 +227,7 @@ async function generateHooks(topic, researchData, niche) {
     return firstLine;
   }).slice(0, 3);
 
-  const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
+  const prompt = `أنت كاتب Hooks viral. اكتب 3 Hooks مثيرة للفضول.
 
 الموضوع: ${topic}
 البحث: ${researchData.substring(0, 800)}
@@ -249,24 +249,25 @@ JSON فقط:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
 
   const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
+    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 1000,
-      system: 'أنت كاتب Hooks viral. Output: JSON فقط.',
-      messages: [{ role: 'user', content: prompt }],
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.8,
+      }
     },
     {
       headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
     }
   );
   
   try {
-    const text = response.data.content[0].text;
+    const text = response.data.candidates[0].content.parts[0].text;
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
@@ -285,11 +286,11 @@ JSON فقط:
 }
 
 // ============================================
-// ✍️ STAGE 3: WRITE SCRIPT (Gemini Flash 2.0)
+// ✍️ STAGE 3: WRITE SCRIPT (Gemini 3 Pro)
 // ============================================
 
 async function writeScript(topic, researchData, niche, selectedHook, duration) {
-  console.log('   ✍️ Writing script (Gemini Flash)...');
+  console.log('   ✍️ Writing script (Gemini 3 Pro)...');
   
   const durationConfig = getDurationConfig(duration);
   const examples = getNicheExamples(niche);
@@ -326,7 +327,7 @@ ${researchData}
 اكتب السكربت بالعامية المصرية فقط (بدون مقدمات):`;
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
       contents: [{
         parts: [{ text: prompt }]
