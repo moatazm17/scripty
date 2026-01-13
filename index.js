@@ -265,7 +265,7 @@ JSON فقط:
       {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 2000,
+          maxOutputTokens: 4000,  // Gemini 3 Pro needs ~2000 for thinking + ~500 for hooks
           temperature: 0.8,
         }
       },
