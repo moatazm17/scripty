@@ -117,6 +117,61 @@ function getDurationConfig(duration) {
 }
 
 // ============================================
+// 💰 COST TRACKING
+// ============================================
+
+const PRICING = {
+  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },      // Claude Sonnet 4
+  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },   // sonar-pro
+  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },      // Gemini 3 Pro
+  dalle: { perImage: 0.04 },                                            // DALL-E 3 1024x1024
+};
+
+function createCostTracker() {
+  return {
+    claude: { input: 0, output: 0, cost: 0 },
+    perplexity: { input: 0, output: 0, cost: 0 },
+    gemini: { input: 0, output: 0, cost: 0 },
+    dalle: { images: 0, cost: 0 },
+    total: 0,
+  };
+}
+
+function trackCost(tracker, provider, inputTokens, outputTokens) {
+  const pricing = PRICING[provider];
+  if (!pricing) return;
+  
+  const cost = (inputTokens * pricing.input) + (outputTokens * pricing.output);
+  tracker[provider].input += inputTokens;
+  tracker[provider].output += outputTokens;
+  tracker[provider].cost += cost;
+  tracker.total += cost;
+  
+  console.log(`   💰 ${provider}: ${inputTokens} in + ${outputTokens} out = $${cost.toFixed(4)}`);
+}
+
+function trackDalleCost(tracker) {
+  tracker.dalle.images += 1;
+  tracker.dalle.cost += PRICING.dalle.perImage;
+  tracker.total += PRICING.dalle.perImage;
+  console.log(`   💰 DALL-E: 1 image = $${PRICING.dalle.perImage.toFixed(4)}`);
+}
+
+function logTotalCost(tracker) {
+  console.log('═══════════════════════════════════════');
+  console.log('💰 COST BREAKDOWN:');
+  console.log(`   Claude:     ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
+  console.log(`   Perplexity: ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
+  console.log(`   Gemini:     ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
+  if (tracker.dalle.images > 0) {
+    console.log(`   DALL-E:     ${tracker.dalle.images} images = $${tracker.dalle.cost.toFixed(4)}`);
+  }
+  console.log(`   ────────────────────────────────────`);
+  console.log(`   💵 TOTAL: $${tracker.total.toFixed(4)}`);
+  console.log('═══════════════════════════════════════');
+}
+
+// ============================================
 // 🔧 STYLE GUIDE (n8n Style)
 // ============================================
 
@@ -137,7 +192,7 @@ const STYLE_GUIDE = `
 // 🧠 STAGE 0: TOPIC EXTRACTION (Understand User Intent)
 // ============================================
 
-async function extractTopic(rawInput) {
+async function extractTopic(rawInput, costTracker = null) {
   console.log('   🧠 Understanding topic...');
   
   const response = await axios.post(
@@ -168,6 +223,11 @@ JSON فقط:
     }
   );
   
+  // Track cost
+  if (costTracker && response.data.usage) {
+    trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+  }
+  
   try {
     const text = response.data.content[0].text;
     const match = text.match(/\{[\s\S]*\}/);
@@ -188,7 +248,7 @@ JSON فقط:
 // 🔍 STAGE 1: RESEARCH (Fast + Accurate)
 // ============================================
 
-async function research(topic, retries = 3) {
+async function research(topic, costTracker = null, retries = 3) {
   console.log('   📚 Researching...');
   
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -226,6 +286,11 @@ async function research(topic, retries = 3) {
         }
       );
       
+      // Track cost
+      if (costTracker && response.data.usage) {
+        trackCost(costTracker, 'perplexity', response.data.usage.prompt_tokens, response.data.usage.completion_tokens);
+      }
+      
       return response.data.choices[0].message.content;
     } catch (error) {
       console.log(`   ⚠️ Research attempt ${attempt}/${retries} failed: ${error.message}`);
@@ -242,7 +307,7 @@ async function research(topic, retries = 3) {
 // 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
-async function generateHooks(topic, researchData, niche) {
+async function generateHooks(topic, researchData, niche, costTracker = null) {
   console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
   // Get niche-specific hooks (5 per niche)
@@ -289,6 +354,12 @@ JSON فقط:
       { headers: { 'Content-Type': 'application/json' } }
     );
 
+    // Track cost
+    if (costTracker && response.data?.usageMetadata) {
+      const usage = response.data.usageMetadata;
+      trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+    }
+
     // Debug: log full response
     console.log('   📝 Gemini response:', JSON.stringify(response.data, null, 2).substring(0, 1000));
 
@@ -327,7 +398,7 @@ JSON فقط:
 // ✍️ STAGE 3: WRITE SCRIPT (Gemini 3 Pro)
 // ============================================
 
-async function writeScript(topic, researchData, niche, selectedHook, duration) {
+async function writeScript(topic, researchData, niche, selectedHook, duration, costTracker = null) {
   console.log('   ✍️ Writing script (Gemini 3 Pro)...');
   
   const durationConfig = getDurationConfig(duration);
@@ -409,6 +480,12 @@ ${researchData}
     }
   );
   
+  // Track cost
+  if (costTracker && response.data?.usageMetadata) {
+    const usage = response.data.usageMetadata;
+    trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+  }
+  
   let script = response.data.candidates[0].content.parts[0].text;
   
   // Clean markdown artifacts
@@ -437,7 +514,7 @@ ${researchData}
 // 📏 EXPAND SHORT SCRIPTS
 // ============================================
 
-async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30') {
+async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30', costTracker = null) {
   const examples = getNicheExamples(niche, duration);
   const examplesText = examples.slice(0, 2).map((ex, idx) => `
 --- مثال #${idx + 1} ---
@@ -482,6 +559,12 @@ ${examplesText}
       },
       { headers: { 'Content-Type': 'application/json' } }
     );
+    
+    // Track cost
+    if (costTracker && response.data?.usageMetadata) {
+      const usage = response.data.usageMetadata;
+      trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+    }
     
     let expanded = response.data.candidates[0].content.parts[0].text;
     expanded = expanded
@@ -541,7 +624,7 @@ function styleCleanup(script, selectedHook) {
 // 🖼️ GENERATE VISUAL PROMPTS
 // ============================================
 
-async function generateVisualPrompts(topic, script) {
+async function generateVisualPrompts(topic, script, costTracker = null) {
   console.log('   🖼️ Generating visual prompts...');
   
   const prompt = `Based on this script, create 3 image descriptions for a video storyboard.
@@ -590,6 +673,11 @@ JSON only:
         },
       }
     );
+    
+    // Track cost
+    if (costTracker && response.data.usage) {
+      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+    }
     
     const text = response.data.content[0].text;
     console.log('   📝 Visual API response received');
@@ -747,23 +835,24 @@ app.post('/api/generate-hooks', async (req, res) => {
   console.log('═══════════════════════════════════════');
   
   const startTime = Date.now();
+  const costTracker = createCostTracker();
   
   try {
     // Extract core topic
-    const extractedTopic = await extractTopic(topic);
+    const extractedTopic = await extractTopic(topic, costTracker);
     console.log(`   ✓ Topic: "${extractedTopic}"`);
     
     // Research
-    const researchData = await research(extractedTopic);
+    const researchData = await research(extractedTopic, costTracker);
     console.log('   ✓ Research done');
     
     // Generate 3 hooks
-    const hooks = await generateHooks(extractedTopic, researchData, niche);
+    const hooks = await generateHooks(extractedTopic, researchData, niche, costTracker);
     console.log(`   ✓ Generated ${hooks.length} hooks`);
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`✨ Step 1 Complete in ${elapsed}s`);
-    console.log('═══════════════════════════════════════');
+    logTotalCost(costTracker);
     
     res.json({
       success: true,
@@ -771,6 +860,7 @@ app.post('/api/generate-hooks', async (req, res) => {
       hooks: hooks,
       research: researchData,
       elapsed: `${elapsed}s`,
+      cost: costTracker.total.toFixed(4),
     });
     
   } catch (error) {
@@ -808,10 +898,11 @@ app.post('/api/write-script', async (req, res) => {
   console.log('═══════════════════════════════════════');
   
   const startTime = Date.now();
+  const costTracker = createCostTracker();
   
   try {
     // Write script with selected hook
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration);
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, costTracker);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Style cleanup
@@ -820,12 +911,12 @@ app.post('/api/write-script', async (req, res) => {
     console.log(`   ✓ Cleaned: ${wordCount} words`);
     
     // Visual prompts
-    const visualPrompts = await generateVisualPrompts(topic, script);
+    const visualPrompts = await generateVisualPrompts(topic, script, costTracker);
     console.log('   ✓ Visual prompts ready');
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log(`✨ Step 2 Complete in ${elapsed}s`);
-    console.log('═══════════════════════════════════════');
+    logTotalCost(costTracker);
     
     const durationConfig = getDurationConfig(duration);
     res.json({
@@ -836,6 +927,7 @@ app.post('/api/write-script', async (req, res) => {
       visualPrompts,
       durationRange: durationConfig.displayRange,  // "30-40 ثانية" or "45-60 ثانية"
       elapsed: `${elapsed}s`,
+      cost: costTracker.total.toFixed(4),
     });
     
   } catch (error) {
@@ -885,6 +977,7 @@ app.post('/api/trending-ideas', async (req, res) => {
   const { niche = 'general', language = 'egyptian', count = 5 } = req.body;
   
   console.log(`💡 Generating ${count} trending ideas for ${niche}...`);
+  const costTracker = createCostTracker();
   
   const nicheNames = {
     general: 'مواضيع عامة',
@@ -926,12 +1019,18 @@ JSON فقط:
       }
     );
     
+    // Track cost
+    if (response.data.usage) {
+      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+      console.log(`   💰 Ideas cost: $${costTracker.total.toFixed(4)}`);
+    }
+    
     const text = response.data.content[0].text;
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
       console.log(`   ✓ Generated ${parsed.ideas?.length || 0} ideas`);
-      res.json({ success: true, ideas: parsed.ideas || [] });
+      res.json({ success: true, ideas: parsed.ideas || [], cost: costTracker.total.toFixed(4) });
       return;
     }
   } catch (e) {
@@ -971,6 +1070,7 @@ app.post('/api/generate-image', async (req, res) => {
   const { prompt, size = '1024x1024', quality = 'standard' } = req.body;
   
   console.log('🖼️ Generating image...');
+  const costTracker = createCostTracker();
   
   try {
     const response = await axios.post(
@@ -990,9 +1090,12 @@ app.post('/api/generate-image', async (req, res) => {
       }
     );
     
+    // Track DALL-E cost
+    trackDalleCost(costTracker);
+    
     const imageUrl = response.data.data[0].url;
     console.log('   ✓ Image generated');
-    res.json({ success: true, imageUrl });
+    res.json({ success: true, imageUrl, cost: costTracker.total.toFixed(4) });
   } catch (e) {
     console.error('   ⚠️ Image generation error:', e.message);
     res.status(500).json({ success: false, error: 'Failed to generate image' });
