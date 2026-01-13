@@ -267,17 +267,27 @@ JSON فقط:
   );
   
   try {
-    const text = response.data.candidates[0].content.parts[0].text;
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      return parsed.hooks || [];
+    // Handle Gemini response structure
+    const candidates = response.data?.candidates;
+    if (candidates && candidates[0]?.content?.parts?.[0]?.text) {
+      const text = candidates[0].content.parts[0].text;
+      console.log('   📝 Gemini hooks response:', text.substring(0, 200));
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.hooks && parsed.hooks.length > 0) {
+          console.log(`   ✓ Parsed ${parsed.hooks.length} hooks`);
+          return parsed.hooks;
+        }
+      }
     }
   } catch (e) {
     console.error('   ⚠️ Hook parsing error:', e.message);
+    console.error('   Response:', JSON.stringify(response.data).substring(0, 500));
   }
   
   // Fallback
+  console.log('   ⚠️ Using fallback hooks');
   return [
     `اللي بيوصلك عن ${topic.substring(0, 30)} ده نص الحقيقة بس...`,
     `لو فاكر إن اللي بيحصل في ${topic.substring(0, 30)} ده صدفة... تبقى غلطان!`,
