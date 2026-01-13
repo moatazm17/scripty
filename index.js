@@ -111,27 +111,25 @@ const STYLE_GUIDE = `
 // ============================================
 
 async function extractTopic(rawInput) {
-  // If input is short (< 50 chars), it's already a clear topic
-  if (rawInput.length < 50) {
-    console.log('   🧠 Topic is clear (short input)');
-    return rawInput;
-  }
-  
-  console.log('   🧠 Extracting core topic...');
+  console.log('   🧠 Understanding topic...');
   
   const response = await axios.post(
     'https://api.anthropic.com/v1/messages',
     {
       model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 100,
-      system: 'استخرج الموضوع الأساسي من النص. جملة واحدة قصيرة فقط.',
+      max_tokens: 150,
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح.',
       messages: [{
         role: 'user',
-        content: `استخرج الموضوع الأساسي من النص ده في جملة قصيرة (أقل من 15 كلمة):
+        content: `افهم الموضوع ده واستخرج:
+1. الموضوع الأساسي (جملة واحدة واضحة)
+2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
 
+النص:
 "${rawInput}"
 
-الموضوع الأساسي:`
+JSON فقط:
+{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
       }],
     },
     {
@@ -143,9 +141,20 @@ async function extractTopic(rawInput) {
     }
   );
   
-  const extracted = response.data.content[0].text.trim();
-  console.log(`   🧠 Extracted: "${extracted}"`);
-  return extracted;
+  try {
+    const text = response.data.content[0].text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      const result = `${parsed.topic} - ${parsed.angle}`;
+      console.log(`   🧠 Understood: "${result}"`);
+      return result;
+    }
+  } catch (e) {
+    console.log('   ⚠️ Parse error, using raw input');
+  }
+  
+  return rawInput;
 }
 
 // ============================================
