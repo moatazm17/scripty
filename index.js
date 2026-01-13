@@ -285,11 +285,11 @@ JSON فقط:
 }
 
 // ============================================
-// ✍️ STAGE 3: WRITE SCRIPT (Zero Hallucination)
+// ✍️ STAGE 3: WRITE SCRIPT (Gemini Flash 2.0)
 // ============================================
 
 async function writeScript(topic, researchData, niche, selectedHook, duration) {
-  console.log('   ✍️ Writing script...');
+  console.log('   ✍️ Writing script (Gemini Flash)...');
   
   const durationConfig = getDurationConfig(duration);
   const examples = getNicheExamples(niche);
@@ -297,8 +297,7 @@ async function writeScript(topic, researchData, niche, selectedHook, duration) {
   // Get the BEST example as the golden template
   const goldenExample = examples[0]?.script || '';
 
-  // System prompt - STRICT!
-  const systemPrompt = `أنت كاتب سكربتات فيرال مصري. عامية بيضة 100%.
+  const prompt = `أنت كاتب سكربتات فيرال مصري. عامية بيضة 100%.
 
 ⚠️ قاعدة حديدية:
 - كل رقم/تاريخ/حقيقة لازم يكون موجود في البحث حرفياً
@@ -307,9 +306,7 @@ async function writeScript(topic, researchData, niche, selectedHook, duration) {
 - ❌ ممنوع: "يُعد"، "حيث"، "علاوة على ذلك"، "هل تعلم"، "تخيل كده"، "بص بقى"
 - ✅ اكتب فقط اللي متأكد منه من البحث
 
-Output: السكربت بالعامية المصرية فقط. بدون مقدمات.`;
-
-  const prompt = `=== GOLDEN EXAMPLE (قلّد الـ DNA بالظبط) ===
+=== GOLDEN EXAMPLE (قلّد الـ DNA بالظبط) ===
 ${goldenExample}
 
 === INPUT ===
@@ -326,26 +323,27 @@ ${researchData}
 ابدأ بالـ Hook بالظبط. قلّد الـ Golden Example.
 من البحث فقط - لو معلومة مش موجودة اتخطاها!
 
-اكتب السكربت:`;
+اكتب السكربت بالعامية المصرية فقط (بدون مقدمات):`;
 
   const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: durationConfig.maxTokens,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: prompt }],
+      contents: [{
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        maxOutputTokens: durationConfig.maxTokens,
+        temperature: 0.7,
+      }
     },
     {
       headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
     }
   );
   
-  let script = response.data.content[0].text;
+  let script = response.data.candidates[0].content.parts[0].text;
   
   // Clean markdown artifacts
   script = script
