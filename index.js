@@ -24,16 +24,30 @@ const CONFIG = {
 };
 
 // ============================================
-// 📚 LOAD NICHE EXAMPLES
+// 📚 LOAD NICHE EXAMPLES (Hooks + Scripts per Duration)
 // ============================================
 
-let NICHE_EXAMPLES = {};
+let NICHE_EXAMPLES = {};  // Hooks
+let SCRIPTS_30S = {};     // 30-second scripts
+let SCRIPTS_60S = {};     // 60-second scripts
+
 try {
+  // Load hooks from niche-examples.json
   const examplesPath = path.join(__dirname, 'examples', 'niche-examples.json');
   NICHE_EXAMPLES = JSON.parse(fs.readFileSync(examplesPath, 'utf8'));
-  console.log('✅ Loaded niche examples:', Object.keys(NICHE_EXAMPLES.categories || {}).join(', '));
+  console.log('✅ Loaded hooks:', Object.keys(NICHE_EXAMPLES.hooks_by_category || {}).join(', '));
+  
+  // Load 30s scripts
+  const scripts30Path = path.join(__dirname, 'examples', 'scripts-30s.json');
+  SCRIPTS_30S = JSON.parse(fs.readFileSync(scripts30Path, 'utf8'));
+  console.log('✅ Loaded 30s scripts:', Object.keys(SCRIPTS_30S.categories || {}).join(', '));
+  
+  // Load 60s scripts
+  const scripts60Path = path.join(__dirname, 'examples', 'scripts-60s.json');
+  SCRIPTS_60S = JSON.parse(fs.readFileSync(scripts60Path, 'utf8'));
+  console.log('✅ Loaded 60s scripts:', Object.keys(SCRIPTS_60S.categories || {}).join(', '));
 } catch (e) {
-  console.error('⚠️ Could not load niche-examples.json:', e.message);
+  console.error('⚠️ Could not load examples:', e.message);
 }
 
 // ============================================
@@ -67,11 +81,17 @@ function getNicheKey(niche) {
   return NICHE_MAP[normalized] || 'general';
 }
 
-function getNicheExamples(niche) {
+function getNicheExamples(niche, duration = '30') {
   const key = getNicheKey(niche);
-  const category = NICHE_EXAMPLES.categories?.[key];
+  
+  // Choose the right scripts file based on duration
+  const scriptsData = duration === '60' ? SCRIPTS_60S : SCRIPTS_30S;
+  
+  const category = scriptsData.categories?.[key];
   if (category && category.examples) return category.examples;
-  return NICHE_EXAMPLES.categories?.general?.examples || [];
+  
+  // Fallback to general
+  return scriptsData.categories?.general?.examples || [];
 }
 
 function getUniversalHooks() {
@@ -87,16 +107,13 @@ function getNicheHooks(niche) {
 }
 
 function getDurationConfig(duration) {
-  const durationInt = parseInt(duration) || 60;
-  // Word counts aligned with Golden Examples (85-110 words per script)
-  // 3 words/second = natural speaking pace for Arabic
+  const durationInt = parseInt(duration) || 30;  // Default to 30s
+  // Word counts aligned with Golden Examples per duration
   const configs = {
-    15: { words: 40, maxTokens: 2000 },
-    30: { words: 80, maxTokens: 2500 },
-    60: { words: 110, maxTokens: 4000 },  // Aligned with examples (~100 words)
-    90: { words: 160, maxTokens: 5000 },
+    30: { words: 100, maxTokens: 3000, displayRange: '30-40 ثانية' },   // ~100 words
+    60: { words: 200, maxTokens: 5000, displayRange: '45-60 ثانية' },   // ~180-200 words
   };
-  return configs[durationInt] || configs[60];
+  return configs[durationInt] || configs[30];  // Default to 30s
 }
 
 // ============================================
@@ -314,7 +331,7 @@ async function writeScript(topic, researchData, niche, selectedHook, duration) {
   console.log('   ✍️ Writing script (Gemini 3 Pro)...');
   
   const durationConfig = getDurationConfig(duration);
-  const examples = getNicheExamples(niche);
+  const examples = getNicheExamples(niche, duration);  // Get examples for this duration
   
   // FIX #2: Use 2-3 golden examples instead of just one
   const goldenExamples = examples.slice(0, Math.min(3, examples.length));
@@ -408,7 +425,7 @@ ${researchData}
   // If script is too short (less than 80% of target), expand it
   if (wordCount < targetWords * 0.8) {
     console.log(`   ⚠️ Script too short (${wordCount}/${targetWords}). Expanding...`);
-    script = await expandScript(script, researchData, selectedHook, targetWords, niche);
+    script = await expandScript(script, researchData, selectedHook, targetWords, niche, duration);
     wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Expanded to ${wordCount} words`);
   }
@@ -420,8 +437,8 @@ ${researchData}
 // 📏 EXPAND SHORT SCRIPTS
 // ============================================
 
-async function expandScript(shortScript, research, selectedHook, targetWords, niche) {
-  const examples = getNicheExamples(niche);
+async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30') {
+  const examples = getNicheExamples(niche, duration);
   const examplesText = examples.slice(0, 2).map((ex, idx) => `
 --- مثال #${idx + 1} ---
 ${ex.script}
@@ -772,7 +789,7 @@ app.post('/api/write-script', async (req, res) => {
     selectedHook,
     research: researchData,
     niche = 'general',
-    duration = '60',
+    duration = '30',  // Default to 30s
   } = req.body;
   
   if (!topic || !selectedHook || !researchData) {
@@ -810,12 +827,14 @@ app.post('/api/write-script', async (req, res) => {
     console.log(`✨ Step 2 Complete in ${elapsed}s`);
     console.log('═══════════════════════════════════════');
     
+    const durationConfig = getDurationConfig(duration);
     res.json({
       success: true,
       script,
       wordCount,
       hook: selectedHook,
       visualPrompts,
+      durationRange: durationConfig.displayRange,  // "30-40 ثانية" or "45-60 ثانية"
       elapsed: `${elapsed}s`,
     });
     
@@ -830,7 +849,7 @@ app.post('/api/generate', async (req, res) => {
     topic, 
     language = 'egyptian', 
     niche = 'general',
-    duration = '60' 
+    duration = '30'  // Default to 30s
   } = req.body;
   
   if (!topic) {
@@ -842,7 +861,7 @@ app.post('/api/generate', async (req, res) => {
       topic, 
       language, 
       niche,
-      parseInt(duration) || 60
+      parseInt(duration) || 30  // Default to 30s
     );
     
     res.json(result);
@@ -987,10 +1006,11 @@ app.post('/api/generate-image', async (req, res) => {
 app.get('/api/config', (req, res) => {
   res.json({
     success: true,
-    niches: Object.keys(NICHE_EXAMPLES.categories || {}),
-    durations: ['15', '30', '60', '90'],
+    niches: Object.keys(SCRIPTS_30S.categories || {}),
+    durations: ['30', '60'],  // Only 30s and 60s
+    defaultDuration: '30',
     languages: ['egyptian', 'arabic', 'english'],
-    styles: ['viral', 'educational', 'storytelling'],
+    // Removed styles - not needed
   });
 });
 
