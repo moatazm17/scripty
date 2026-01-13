@@ -569,18 +569,34 @@ JSON only:
     );
     
     const text = response.data.content[0].text;
+    console.log('   📝 Visual API response received');
+    
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
       if (parsed.hook && parsed.content && parsed.cta) {
+        console.log('   ✓ Visual prompts parsed successfully');
+        console.log(`   🎬 Hook: ${parsed.hook.prompt.substring(0, 50)}...`);
+        console.log(`   🎬 Content: ${parsed.content.prompt.substring(0, 50)}...`);
+        console.log(`   🎬 CTA: ${parsed.cta.prompt.substring(0, 50)}...`);
         return parsed;
+      } else {
+        console.log('   ⚠️ Parsed JSON missing required fields (hook/content/cta)');
+        console.log('   📝 Parsed:', JSON.stringify(parsed).substring(0, 200));
       }
+    } else {
+      console.log('   ⚠️ No JSON found in response');
+      console.log('   📝 Raw text:', text.substring(0, 200));
     }
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
+    if (e.response) {
+      console.error('   📝 API Error:', e.response.status, e.response.data);
+    }
   }
   
   // Fallback
+  console.log('   ⚠️ Using fallback visual prompts');
   return {
     hook: { prompt: `Photorealistic wide shot of ${topic}`, caption: 'مشهد البداية' },
     content: { prompt: `Photorealistic medium shot of ${topic}`, caption: 'مشهد المحتوى' },
