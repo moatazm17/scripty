@@ -212,19 +212,15 @@ const STYLE_GUIDE = `
 // 🧠 STAGE 0: TOPIC EXTRACTION (Understand User Intent)
 // ============================================
 
-async function extractTopic(rawInput, costTracker = null) {
+async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
   console.log('   🧠 Understanding topic...');
   
-  const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
-    {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 150,
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح.',
-      messages: [{
-        role: 'user',
-        content: `افهم الموضوع ده واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة)
+  // Language-specific prompts for topic extraction
+  const langPrompts = {
+    egyptian: {
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح بالعامية المصرية.',
+      prompt: `افهم الموضوع ده واستخرج:
+1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
 2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
 
 النص:
@@ -232,6 +228,68 @@ async function extractTopic(rawInput, costTracker = null) {
 
 JSON فقط:
 {"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+    },
+    gulf: {
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح باللهجة الخليجية.',
+      prompt: `افهم الموضوع هذا واستخرج:
+1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
+2. الزاوية أو الـ angle (وش اللي المستخدم يبي يركز عليه)
+
+النص:
+"${rawInput}"
+
+JSON فقط:
+{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+    },
+    french: {
+      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
+      prompt: `Analyse ce sujet et extrais:
+1. Le sujet principal (une phrase claire en Français)
+2. L'angle (sur quoi l'utilisateur veut se concentrer)
+
+Texte:
+"${rawInput}"
+
+JSON uniquement:
+{"topic": "Le sujet clair", "angle": "L'angle"}`
+    },
+    frensh: {
+      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
+      prompt: `Analyse ce sujet et extrais:
+1. Le sujet principal (une phrase claire en Français)
+2. L'angle (sur quoi l'utilisateur veut se concentrer)
+
+Texte:
+"${rawInput}"
+
+JSON uniquement:
+{"topic": "Le sujet clair", "angle": "L'angle"}`
+    },
+    english: {
+      system: 'You are a topic analyst. Understand the topic and define it clearly in English.',
+      prompt: `Understand this topic and extract:
+1. The main topic (one clear sentence in English)
+2. The angle (what the user wants to focus on)
+
+Text:
+"${rawInput}"
+
+JSON only:
+{"topic": "The clear topic", "angle": "The angle"}`
+    }
+  };
+  
+  const langConfig = langPrompts[language] || langPrompts['egyptian'];
+  
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 150,
+      system: langConfig.system,
+      messages: [{
+        role: 'user',
+        content: langConfig.prompt
       }],
     },
     {
@@ -336,29 +394,75 @@ async function generateHooks(topic, researchData, niche, language = 'egyptian', 
   
   console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks (${language})`);
 
-  // FIX #1: Use full research instead of truncated
-  const prompt = `اكتب 3 Hooks مثيرة للفضول زي الأمثلة دي بالظبط:
-
-الموضوع: ${topic}
-
-البحث الكامل:
-${researchData}
-
-=== أمثلة Hooks من مجال "${niche}" (قلّد الأسلوب بالظبط!) ===
-${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
-
-=== أنماط Hooks عامة (للإلهام) ===
-${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
-
-=== لاحظ الأسلوب ===
-• غموض يثير الفضول - متكشفش كل حاجة
+  // Language-specific hook generation prompts
+  const langHookPrompts = {
+    egyptian: {
+      instruction: 'اكتب 3 Hooks مثيرة للفضول بالعامية المصرية زي الأمثلة دي بالظبط',
+      tips: `• غموض يثير الفضول - متكشفش كل حاجة
 • سؤال أو تحدي أو صدمة
 • استخدم رقم أو حقيقة صادمة من البحث
 • ❌ ممنوع تكشف الموضوع بالكامل
 • ❌ ممنوع "هل تعلم" أو "تخيل كده"
-• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."، "الرقم ده..."
+• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."، "الرقم ده..."`
+    },
+    gulf: {
+      instruction: 'اكتب 3 Hooks مثيرة للفضول باللهجة الخليجية زي الأمثلة هذي بالضبط',
+      tips: `• غموض يثير الفضول - لا تكشف كل شي
+• سؤال أو تحدي أو صدمة
+• استخدم رقم أو حقيقة صادمة من البحث
+• ❌ ممنوع تكشف الموضوع كله
+• ❌ ممنوع "هل تعلم" أو "تخيل معي"
+• ✅ "لو تحسب إن..."، "ليش..."، "انتبه..."، "الرقم هذا..."`
+    },
+    french: {
+      instruction: 'Écris 3 Hooks intrigants en Français exactement comme ces exemples',
+      tips: `• Mystère qui attire la curiosité - ne révèle pas tout
+• Question, défi ou choc
+• Utilise un chiffre ou fait choquant de la recherche
+• ❌ Ne révèle pas tout le sujet
+• ❌ Pas de "Saviez-vous" ou "Imaginez"
+• ✅ "Si tu penses que...", "Pourquoi...", "Attention...", "Ce chiffre..."`
+    },
+    frensh: {
+      instruction: 'Écris 3 Hooks intrigants en Français exactement comme ces exemples',
+      tips: `• Mystère qui attire la curiosité - ne révèle pas tout
+• Question, défi ou choc
+• Utilise un chiffre ou fait choquant de la recherche
+• ❌ Ne révèle pas tout le sujet
+• ❌ Pas de "Saviez-vous" ou "Imaginez"
+• ✅ "Si tu penses que...", "Pourquoi...", "Attention...", "Ce chiffre..."`
+    },
+    english: {
+      instruction: 'Write 3 curiosity-inducing Hooks in English exactly like these examples',
+      tips: `• Mystery that sparks curiosity - don't reveal everything
+• Question, challenge, or shock
+• Use a shocking number or fact from the research
+• ❌ Don't reveal the whole topic
+• ❌ No "Did you know" or "Imagine this"
+• ✅ "If you think...", "Why...", "Watch out...", "This number..."`
+    }
+  };
+  
+  const hookConfig = langHookPrompts[language] || langHookPrompts['egyptian'];
+  
+  // FIX #1: Use full research instead of truncated
+  const prompt = `${hookConfig.instruction}:
 
-JSON فقط:
+Topic: ${topic}
+
+Full Research:
+${researchData}
+
+=== Example Hooks from "${niche}" (copy the style exactly!) ===
+${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+
+=== Universal Hook Patterns (for inspiration) ===
+${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+
+=== Style Tips ===
+${hookConfig.tips}
+
+JSON only:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
 
   try {
@@ -738,7 +842,7 @@ async function generateScript(rawTopic, language, niche, duration) {
   
   try {
     // Stage 0: Extract Core Topic (if input is long)
-    const topic = await extractTopic(rawTopic);
+    const topic = await extractTopic(rawTopic, language);
     console.log(`   ✓ Topic: "${topic}"`);
     
     // Stage 1: Research (Fast)
@@ -746,7 +850,7 @@ async function generateScript(rawTopic, language, niche, duration) {
     console.log('   ✓ Research done');
     
     // Stage 2: Generate Hooks
-    const hooks = await generateHooks(topic, researchData, niche);
+    const hooks = await generateHooks(topic, researchData, niche, language);
     console.log(`   ✓ Hooks: ${hooks.length}`);
     
     // Select first hook as main
@@ -830,8 +934,8 @@ app.post('/api/generate-hooks', async (req, res) => {
   const costTracker = createCostTracker();
   
   try {
-    // Extract core topic
-    const extractedTopic = await extractTopic(topic, costTracker);
+    // Extract core topic (in target language for better research results)
+    const extractedTopic = await extractTopic(topic, language, costTracker);
     console.log(`   ✓ Topic: "${extractedTopic}"`);
     
     // Research
