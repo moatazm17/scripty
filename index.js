@@ -20,7 +20,7 @@ const CONFIG = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
-  GEMINI_MODEL: 'gemini-3-pro',
+  GEMINI_MODEL: 'gemini-3-pro-preview',
 };
 
 // ============================================
