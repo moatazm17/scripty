@@ -261,19 +261,29 @@ JSON فقط:
       { headers: { 'Content-Type': 'application/json' } }
     );
 
-    const text = response.data.candidates[0].content.parts[0].text;
-    // Clean markdown if any
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const match = cleanText.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      if (parsed.hooks && parsed.hooks.length > 0) {
-        console.log(`   ✓ Got ${parsed.hooks.length} hooks`);
-        return parsed.hooks;
+    // Debug: log full response
+    console.log('   📝 Gemini response:', JSON.stringify(response.data, null, 2).substring(0, 1000));
+
+    if (response.data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      const text = response.data.candidates[0].content.parts[0].text;
+      // Clean markdown if any
+      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const match = cleanText.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.hooks && parsed.hooks.length > 0) {
+          console.log(`   ✓ Got ${parsed.hooks.length} hooks`);
+          return parsed.hooks;
+        }
       }
+    } else {
+      console.log('   ⚠️ No valid response from Gemini');
     }
   } catch (e) {
     console.error('   ⚠️ Gemini hooks error:', e.message);
+    if (e.response?.data) {
+      console.error('   API response:', JSON.stringify(e.response.data));
+    }
   }
   
   // Fallback
