@@ -1141,6 +1141,7 @@ app.get('/api/config', (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Scripty API running on port ${PORT}`);
-  console.log(`📚 Loaded niches: ${Object.keys(NICHE_EXAMPLES.categories || {}).join(', ')}`);
-  console.log(`🔥 Features: Zero Hallucination, Fast Research, 3-Stage Pipeline`);
+  console.log(`📚 Languages: ${SUPPORTED_LANGUAGES.join(', ')}`);
+  console.log(`⏱️ Durations: ${SUPPORTED_DURATIONS.map(d => d + 's').join(', ')}`);
+  console.log(`🔥 Features: Zero Hallucination, Multi-Language, 3-Stage Pipeline`);
 });
