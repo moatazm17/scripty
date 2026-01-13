@@ -29,6 +29,7 @@ const CONFIG = {
 
 let HOOKS = {};           // Hooks for all languages
 let SCRIPTS = {};         // Scripts for all languages and durations
+let PROMPTS = {};         // Writing prompts for all languages
 
 const SUPPORTED_LANGUAGES = ['egyptian', 'gulf', 'english', 'frensh'];
 const SUPPORTED_DURATIONS = ['30', '60'];
@@ -38,6 +39,11 @@ try {
   const hooksPath = path.join(__dirname, 'examples', 'hooks.json');
   HOOKS = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
   console.log('✅ Loaded hooks for:', Object.keys(HOOKS).filter(k => k !== 'metadata').join(', '));
+  
+  // Load writing prompts for all languages
+  const promptsPath = path.join(__dirname, 'examples', 'prompts.json');
+  PROMPTS = JSON.parse(fs.readFileSync(promptsPath, 'utf8'));
+  console.log('✅ Loaded prompts for:', Object.keys(PROMPTS).join(', '));
   
   // Load scripts for each language and duration
   for (const lang of SUPPORTED_LANGUAGES) {
@@ -421,60 +427,21 @@ async function writeScript(topic, researchData, niche, selectedHook, duration, l
   // FIX #2: Use 2-3 golden examples instead of just one
   const goldenExamples = examples.slice(0, Math.min(3, examples.length));
   const examplesText = goldenExamples.map((ex, idx) => `
---- مثال #${idx + 1}: ${ex.title || ''} ---
+--- Example #${idx + 1}: ${ex.title || ''} ---
 ${ex.script}
 `).join('\n');
 
-  // FIX #4: Clarify prompt priorities
-  const prompt = `أنت كاتب سكربتات فيرال مصري. عامية بيضة 100%.
-
-=== GOLDEN EXAMPLES (قلّد الـ DNA مش الموضوع) ===
-${examplesText}
-
-⚠️ لاحظ في الأمثلة:
-- الأسلوب: عامية طبيعية، بدون تكلف
-- البناء: hook → صدمة → تفاصيل → خاتمة قوية
-- الإيقاع: جمل قصيرة، سريعة، مباشرة
-- الطاقة: حماسي، مثير، فيه حركة
-
-=== قواعد الكتابة (مهمة جداً) ===
-
-الأولوية #1: DNA من الأمثلة
-- احتفظ بنفس الطاقة والأسلوب والإيقاع
-- جمل قصيرة، سريعة، مباشرة
-- عامية مصرية طبيعية 100%
-
-الأولوية #2: معلومات دقيقة فقط
-- كل رقم/تاريخ/حقيقة لازم يكون في البحث حرفياً
-- لو معلومة مش موجودة → اتجنب الجزء ده
-- ❌ ممنوع تقول "غير محدد" أو "مش معروف" أو "تقريباً"
-
-⚠️ لو البحث ناقص:
-✅ صح: "الاستثمارات الضخمة" بدل رقم محدد مش موجود
-✅ صح: "في السنوات الأخيرة" بدل تاريخ محدد مش موجود
-✅ صح: تجنب الجزء ده خالص وركز على اللي موجود
-❌ غلط: "الرقم غير محدد" أو "التاريخ مش معروف"
-
-❌ ممنوع: "يُعد"، "حيث"، "علاوة على ذلك"، "هل تعلم"، "تخيل كده"، "بص بقى"
-
-=== INPUT ===
-الموضوع: ${topic}
-
-الـ Hook (ابدأ بيه حرفياً!):
-"${selectedHook}"
-
-البحث الكامل (المصدر الوحيد):
-${researchData}
-
-=== المطلوب ===
-اكتب سكربت ~${durationConfig.words} كلمة بنفس DNA الأمثلة.
-
-⚠️ الأولويات:
-1. التزم بالـ DNA من الأمثلة (الأسلوب، الإيقاع، الطاقة)
-2. استخدم فقط المعلومات الموجودة في البحث
-3. احتفظ بالإيقاع السريع والطاقة العالية
-
-ابدأ بالـ Hook بالظبط، واكتب السكربت بالعامية المصرية:`;
+  // Get language-specific prompt from prompts.json
+  const langKey = language === 'frensh' ? 'french' : language;  // Handle typo in frensh
+  let promptTemplate = PROMPTS[langKey] || PROMPTS['egyptian'];  // Fallback to egyptian
+  
+  // Replace variables in the prompt template
+  const prompt = promptTemplate
+    .replace(/\$\{examplesText\}/g, examplesText)
+    .replace(/\$\{topic\}/g, topic)
+    .replace(/\$\{selectedHook\}/g, selectedHook)
+    .replace(/\$\{researchData\}/g, researchData)
+    .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
@@ -531,35 +498,45 @@ ${researchData}
 async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30', language = 'egyptian', costTracker = null) {
   const examples = getNicheExamples(niche, duration, language);
   const examplesText = examples.slice(0, 2).map((ex, idx) => `
---- مثال #${idx + 1} ---
+--- Example #${idx + 1} ---
 ${ex.script}
 `).join('\n');
 
   const currentWords = shortScript.split(/\s+/).filter(w => w.length > 0).length;
   
-  const prompt = `السكربت ده قصير جداً ومحتاج يتطوّل.
+  // Language-specific instructions
+  const langInstructions = {
+    egyptian: { name: 'العامية المصرية', instruction: 'اكتب السكربت الموسّع بالعامية المصرية' },
+    gulf: { name: 'اللهجة الخليجية', instruction: 'اكتب السكربت الموسّع باللهجة الخليجية' },
+    french: { name: 'French', instruction: 'Écris le script étendu en Français' },
+    frensh: { name: 'French', instruction: 'Écris le script étendu en Français' },
+    english: { name: 'English', instruction: 'Write the expanded script in English' },
+  };
+  const langConfig = langInstructions[language] || langInstructions['egyptian'];
+  
+  const prompt = `The script is too short and needs to be expanded.
 
-السكربت الحالي (${currentWords} كلمة):
+Current script (${currentWords} words):
 ${shortScript}
 
-المطلوب: ${targetWords} كلمة (±10%)
+Target: ${targetWords} words (±10%)
 
-البحث الكامل (استخدم معلومات إضافية منه):
+Full research (use additional info from here):
 ${research}
 
-الأمثلة المرجعية (للأسلوب):
+Reference examples (for style):
 ${examplesText}
 
-المطلوب:
-- طوّل السكربت لـ ${targetWords} كلمة
-- أضف تفاصيل، أمثلة، مقارنات من البحث
-- احتفظ بنفس الأسلوب السريع والمثير
-- ابدأ بنفس الـ Hook: "${selectedHook}"
-- ❌ متكررش معلومات موجودة
-- ✅ أضف معلومات جديدة من البحث
-- ❌ ممنوع "غير محدد" أو "مش معروف"
+Requirements:
+- Expand the script to ${targetWords} words
+- Add details, examples, comparisons from the research
+- Keep the same fast-paced, engaging style
+- Start with the same Hook: "${selectedHook}"
+- ❌ Don't repeat existing information
+- ✅ Add new information from the research
+- ❌ Never say "unspecified" or "unknown"
 
-اكتب السكربت الموسّع بالعامية المصرية:`;
+${langConfig.instruction}:`;
 
   try {
     const response = await axios.post(
