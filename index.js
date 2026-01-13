@@ -556,10 +556,124 @@ async function generateScript(rawTopic, language, niche, duration) {
 app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
-    message: 'Scripty API - Fast Pipeline V3',
+    message: 'Scripty API - Fast Pipeline V4 (2-Step)',
     niches: Object.keys(NICHE_EXAMPLES.categories || {}),
-    features: ['Zero Hallucination', 'Fast Research', 'Niche Examples'],
+    features: ['Zero Hallucination', 'Hook Selection', '2-Step Pipeline'],
   });
+});
+
+// ============================================
+// 🎣 STEP 1: GENERATE HOOKS (Research + 3 Hooks)
+// ============================================
+
+app.post('/api/generate-hooks', async (req, res) => {
+  const { topic, language = 'egyptian', niche = 'general' } = req.body;
+  
+  if (!topic) {
+    return res.status(400).json({ success: false, error: 'Topic is required' });
+  }
+  
+  console.log('');
+  console.log('═══════════════════════════════════════');
+  console.log('🎣 Step 1: Generate Hooks');
+  console.log(`📌 Topic: ${topic.substring(0, 80)}...`);
+  console.log(`🎯 Niche: ${niche}`);
+  console.log('═══════════════════════════════════════');
+  
+  const startTime = Date.now();
+  
+  try {
+    // Extract core topic
+    const extractedTopic = await extractTopic(topic);
+    console.log(`   ✓ Topic: "${extractedTopic}"`);
+    
+    // Research
+    const researchData = await research(extractedTopic);
+    console.log('   ✓ Research done');
+    
+    // Generate 3 hooks
+    const hooks = await generateHooks(extractedTopic, researchData, niche);
+    console.log(`   ✓ Generated ${hooks.length} hooks`);
+    
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✨ Step 1 Complete in ${elapsed}s`);
+    console.log('═══════════════════════════════════════');
+    
+    res.json({
+      success: true,
+      topic: extractedTopic,
+      hooks: hooks,
+      research: researchData,
+      elapsed: `${elapsed}s`,
+    });
+    
+  } catch (error) {
+    console.error('❌ Generate Hooks Error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================
+// ✍️ STEP 2: WRITE SCRIPT (With Selected Hook)
+// ============================================
+
+app.post('/api/write-script', async (req, res) => {
+  const { 
+    topic,
+    selectedHook,
+    research: researchData,
+    niche = 'general',
+    duration = '60',
+  } = req.body;
+  
+  if (!topic || !selectedHook || !researchData) {
+    return res.status(400).json({ 
+      success: false, 
+      error: 'topic, selectedHook, and research are required' 
+    });
+  }
+  
+  console.log('');
+  console.log('═══════════════════════════════════════');
+  console.log('✍️ Step 2: Write Script');
+  console.log(`📌 Topic: ${topic.substring(0, 50)}...`);
+  console.log(`🎣 Hook: ${selectedHook.substring(0, 50)}...`);
+  console.log(`⏱️ Duration: ${duration}s`);
+  console.log('═══════════════════════════════════════');
+  
+  const startTime = Date.now();
+  
+  try {
+    // Write script with selected hook
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration);
+    console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
+    
+    // Style cleanup
+    script = styleCleanup(script, selectedHook);
+    const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
+    console.log(`   ✓ Cleaned: ${wordCount} words`);
+    
+    // Visual prompts
+    const visualPrompts = await generateVisualPrompts(topic, script);
+    console.log('   ✓ Visual prompts ready');
+    
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✨ Step 2 Complete in ${elapsed}s`);
+    console.log('═══════════════════════════════════════');
+    
+    res.json({
+      success: true,
+      script,
+      wordCount,
+      hook: selectedHook,
+      visualPrompts,
+      elapsed: `${elapsed}s`,
+    });
+    
+  } catch (error) {
+    console.error('❌ Write Script Error:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
 app.post('/api/generate', async (req, res) => {
