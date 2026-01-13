@@ -107,6 +107,48 @@ const STYLE_GUIDE = `
 `;
 
 // ============================================
+// 🧠 STAGE 0: TOPIC EXTRACTION (Understand User Intent)
+// ============================================
+
+async function extractTopic(rawInput) {
+  // If input is short (< 50 chars), it's already a clear topic
+  if (rawInput.length < 50) {
+    console.log('   🧠 Topic is clear (short input)');
+    return rawInput;
+  }
+  
+  console.log('   🧠 Extracting core topic...');
+  
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 100,
+      system: 'استخرج الموضوع الأساسي من النص. جملة واحدة قصيرة فقط.',
+      messages: [{
+        role: 'user',
+        content: `استخرج الموضوع الأساسي من النص ده في جملة قصيرة (أقل من 15 كلمة):
+
+"${rawInput}"
+
+الموضوع الأساسي:`
+      }],
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  
+  const extracted = response.data.content[0].text.trim();
+  console.log(`   🧠 Extracted: "${extracted}"`);
+  return extracted;
+}
+
+// ============================================
 // 🔍 STAGE 1: RESEARCH (Fast + Accurate)
 // ============================================
 
@@ -418,11 +460,11 @@ JSON only:
 // 🚀 MAIN PIPELINE (Fast & Accurate)
 // ============================================
 
-async function generateScript(topic, language, niche, duration) {
+async function generateScript(rawTopic, language, niche, duration) {
   console.log('');
   console.log('═══════════════════════════════════════');
   console.log('🚀 Fast Pipeline Started');
-  console.log(`📌 Topic: ${topic}`);
+  console.log(`📌 Raw Input: ${rawTopic.substring(0, 100)}...`);
   console.log(`🎯 Niche: ${niche} → ${getNicheKey(niche)}`);
   console.log(`⏱️ Duration: ${duration}s`);
   console.log('═══════════════════════════════════════');
@@ -430,6 +472,10 @@ async function generateScript(topic, language, niche, duration) {
   const startTime = Date.now();
   
   try {
+    // Stage 0: Extract Core Topic (if input is long)
+    const topic = await extractTopic(rawTopic);
+    console.log(`   ✓ Topic: "${topic}"`);
+    
     // Stage 1: Research (Fast)
     const researchData = await research(topic);
     console.log('   ✓ Research done');
@@ -464,6 +510,7 @@ async function generateScript(topic, language, niche, duration) {
       success: true,
       script,
       wordCount,
+      topic, // The extracted core topic
       hook: selectedHook,
       alternativeHooks: {
         shock: hooks[1] || '',
@@ -472,7 +519,7 @@ async function generateScript(topic, language, niche, duration) {
       },
       visualPrompts,
       research: researchData.substring(0, 500),
-      pipeline: 'fast-v3',
+      pipeline: 'fast-v4',
       elapsed: `${elapsed}s`,
     };
     
