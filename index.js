@@ -534,8 +534,14 @@ Script: ${script.substring(0, 1000)}
 
 Create 3 different scenes:
 1. Hook scene (opening - grab attention)
-2. Content scene (main information)
+2. Content scene (main information)  
 3. CTA scene (closing - call to action)
+
+For EACH scene provide:
+- prompt: Full detailed prompt for DALL-E (English, technical, 20-30 words)
+- description_ar: Short Arabic description for user (5-10 words, عامية مصرية)
+- description_en: Short English description for user (5-10 words)
+- caption: Scene title
 
 Rules:
 - Photorealistic documentary style
@@ -545,9 +551,9 @@ Rules:
 
 JSON only:
 {
-  "hook": {"prompt": "...", "caption": "مشهد البداية"},
-  "content": {"prompt": "...", "caption": "مشهد المحتوى"},
-  "cta": {"prompt": "...", "caption": "مشهد النهاية"}
+  "hook": {"prompt": "Photorealistic...", "description_ar": "وصف قصير", "description_en": "Short desc", "caption": "مشهد البداية"},
+  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "مشهد المحتوى"},
+  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "مشهد النهاية"}
 }`;
 
   try {
@@ -598,9 +604,24 @@ JSON only:
   // Fallback
   console.log('   ⚠️ Using fallback visual prompts');
   return {
-    hook: { prompt: `Photorealistic wide shot of ${topic}`, caption: 'مشهد البداية' },
-    content: { prompt: `Photorealistic medium shot of ${topic}`, caption: 'مشهد المحتوى' },
-    cta: { prompt: `Photorealistic close-up of ${topic}`, caption: 'مشهد النهاية' }
+    hook: { 
+      prompt: `Photorealistic wide shot of ${topic}, cinematic lighting, documentary style`,
+      description_ar: 'منظر واسع للموضوع',
+      description_en: 'Wide shot overview',
+      caption: 'مشهد البداية'
+    },
+    content: { 
+      prompt: `Photorealistic medium shot of ${topic}, detailed view, professional photography`,
+      description_ar: 'لقطة متوسطة للتفاصيل',
+      description_en: 'Medium shot details',
+      caption: 'مشهد المحتوى'
+    },
+    cta: { 
+      prompt: `Photorealistic close-up of ${topic}, dramatic lighting, hopeful atmosphere`,
+      description_ar: 'لقطة قريبة للختام',
+      description_en: 'Close-up finale',
+      caption: 'مشهد النهاية'
+    }
   };
 }
 
