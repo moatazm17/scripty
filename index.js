@@ -80,11 +80,13 @@ function getUniversalHooks() {
 
 function getDurationConfig(duration) {
   const durationInt = parseInt(duration) || 60;
+  // Gemini 3 Pro uses ~500-800 tokens for "thinking" before writing
+  // So we need extra tokens for the actual output
   const configs = {
-    15: { words: 80, maxTokens: 600 },
-    30: { words: 150, maxTokens: 1200 },
-    60: { words: 200, maxTokens: 2000 },
-    90: { words: 300, maxTokens: 2500 },
+    15: { words: 80, maxTokens: 1500 },
+    30: { words: 150, maxTokens: 2000 },
+    60: { words: 200, maxTokens: 3000 },
+    90: { words: 300, maxTokens: 4000 },
   };
   return configs[durationInt] || configs[60];
 }
