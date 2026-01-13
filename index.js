@@ -88,13 +88,13 @@ function getNicheHooks(niche) {
 
 function getDurationConfig(duration) {
   const durationInt = parseInt(duration) || 60;
-  // Gemini 3 Pro uses ~500-800 tokens for "thinking" before writing
-  // Increased tokens to ensure complete scripts
+  // Word counts aligned with Golden Examples (85-110 words per script)
+  // 3 words/second = natural speaking pace for Arabic
   const configs = {
-    15: { words: 80, maxTokens: 2000 },
-    30: { words: 150, maxTokens: 2500 },
-    60: { words: 250, maxTokens: 4000 },  // Increased from 200 words
-    90: { words: 350, maxTokens: 5000 },
+    15: { words: 40, maxTokens: 2000 },
+    30: { words: 80, maxTokens: 2500 },
+    60: { words: 110, maxTokens: 4000 },  // Aligned with examples (~100 words)
+    90: { words: 160, maxTokens: 5000 },
   };
   return configs[durationInt] || configs[60];
 }
