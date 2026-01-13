@@ -822,6 +822,142 @@ app.get('/health', (req, res) => {
 });
 
 // ============================================
+// 💡 TRENDING IDEAS (Inspiration)
+// ============================================
+
+app.post('/api/trending-ideas', async (req, res) => {
+  const { niche = 'general', language = 'egyptian', count = 5 } = req.body;
+  
+  console.log(`💡 Generating ${count} trending ideas for ${niche}...`);
+  
+  const nicheNames = {
+    general: 'مواضيع عامة',
+    real_estate: 'العقارات',
+    content_creation: 'صناعة المحتوى',
+    business: 'البيزنس',
+    technology: 'التكنولوجيا',
+    self_development: 'تطوير الذات',
+    restaurants: 'المطاعم',
+    fashion: 'الفاشون',
+  };
+  
+  const prompt = `اقترح ${count} أفكار فيديوهات فيرال في مجال "${nicheNames[niche] || niche}" للسوشيال ميديا.
+
+المطلوب:
+- أفكار جذابة ومثيرة للجدل
+- مناسبة للجمهور المصري والعربي
+- قابلة للتنفيذ في فيديو قصير (60 ثانية)
+- كل فكرة في سطر واحد بدون ترقيم
+
+JSON فقط:
+{"ideas": ["فكرة 1", "فكرة 2", ...]}`;
+
+  try {
+    const response = await axios.post(
+      'https://api.anthropic.com/v1/messages',
+      {
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: 500,
+        system: 'أنت خبير محتوى. اقترح أفكار فيرال. JSON فقط.',
+        messages: [{ role: 'user', content: prompt }],
+      },
+      {
+        headers: {
+          'x-api-key': CONFIG.CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const text = response.data.content[0].text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      console.log(`   ✓ Generated ${parsed.ideas?.length || 0} ideas`);
+      res.json({ success: true, ideas: parsed.ideas || [] });
+      return;
+    }
+  } catch (e) {
+    console.error('   ⚠️ Trending ideas error:', e.message);
+  }
+  
+  // Fallback ideas
+  const fallbackIdeas = {
+    general: [
+      'أخطاء شائعة الناس بتعملها كل يوم',
+      'حقائق صادمة محدش بيقولهالك',
+      'ليه الأغنياء بيفكروا بطريقة مختلفة',
+    ],
+    real_estate: [
+      'أخطاء لازم تتجنبها قبل ما تشتري شقة',
+      'ليه الإيجار أحسن من التمليك أحياناً',
+      'أسرار المطورين العقاريين',
+    ],
+    business: [
+      'أفكار مشاريع بأقل رأس مال',
+      'أخطاء بتقفل الشركات في أول سنة',
+      'ليه الخصومات بتدمر البيزنس',
+    ],
+  };
+  
+  res.json({ 
+    success: true, 
+    ideas: fallbackIdeas[niche] || fallbackIdeas.general 
+  });
+});
+
+// ============================================
+// 🖼️ GENERATE IMAGE (DALL-E)
+// ============================================
+
+app.post('/api/generate-image', async (req, res) => {
+  const { prompt, size = '1024x1024', quality = 'standard' } = req.body;
+  
+  console.log('🖼️ Generating image...');
+  
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/images/generations',
+      {
+        model: 'dall-e-3',
+        prompt: prompt,
+        n: 1,
+        size: size,
+        quality: quality,
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${CONFIG.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    
+    const imageUrl = response.data.data[0].url;
+    console.log('   ✓ Image generated');
+    res.json({ success: true, imageUrl });
+  } catch (e) {
+    console.error('   ⚠️ Image generation error:', e.message);
+    res.status(500).json({ success: false, error: 'Failed to generate image' });
+  }
+});
+
+// ============================================
+// ⚙️ CONFIG ENDPOINT
+// ============================================
+
+app.get('/api/config', (req, res) => {
+  res.json({
+    success: true,
+    niches: Object.keys(NICHE_EXAMPLES.categories || {}),
+    durations: ['15', '30', '60', '90'],
+    languages: ['egyptian', 'arabic', 'english'],
+    styles: ['viral', 'educational', 'storytelling'],
+  });
+});
+
+// ============================================
 // 🚀 START SERVER
 // ============================================
 
