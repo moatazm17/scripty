@@ -1074,30 +1074,112 @@ app.get('/health', (req, res) => {
 app.post('/api/trending-ideas', async (req, res) => {
   const { niche = 'general', language = 'egyptian', count = 5 } = req.body;
   
-  console.log(`💡 Generating ${count} trending ideas for ${niche}...`);
+  console.log(`💡 Generating ${count} trending ideas for ${niche} in ${language}...`);
   const costTracker = createCostTracker();
   
-  const nicheNames = {
-    general: 'مواضيع عامة',
-    real_estate: 'العقارات',
-    content_creation: 'صناعة المحتوى',
-    business: 'البيزنس',
-    technology: 'التكنولوجيا',
-    self_development: 'تطوير الذات',
-    restaurants: 'المطاعم',
-    fashion: 'الفاشون',
+  // Niche names per language
+  const nicheNamesPerLang = {
+    egyptian: {
+      general: 'مواضيع عامة',
+      real_estate: 'العقارات',
+      content_creation: 'صناعة المحتوى',
+      business: 'البيزنس',
+      technology: 'التكنولوجيا',
+      self_development: 'تطوير الذات',
+      restaurants: 'المطاعم',
+      fashion: 'الفاشون',
+    },
+    gulf: {
+      general: 'مواضيع عامة',
+      real_estate: 'العقارات',
+      content_creation: 'صناعة المحتوى',
+      business: 'الأعمال',
+      technology: 'التقنية',
+      self_development: 'تطوير الذات',
+      restaurants: 'المطاعم',
+      fashion: 'الأزياء',
+    },
+    english: {
+      general: 'General Topics',
+      real_estate: 'Real Estate',
+      content_creation: 'Content Creation',
+      business: 'Business',
+      technology: 'Technology',
+      self_development: 'Self Development',
+      restaurants: 'Restaurants',
+      fashion: 'Fashion',
+    },
+    french: {
+      general: 'Sujets généraux',
+      real_estate: 'Immobilier',
+      content_creation: 'Création de contenu',
+      business: 'Business',
+      technology: 'Technologie',
+      self_development: 'Développement personnel',
+      restaurants: 'Restaurants',
+      fashion: 'Mode',
+    },
   };
   
-  const prompt = `اقترح ${count} أفكار فيديوهات فيرال في مجال "${nicheNames[niche] || niche}" للسوشيال ميديا.
+  const nicheNames = nicheNamesPerLang[language] || nicheNamesPerLang.egyptian;
+  const nicheName = nicheNames[niche] || niche;
+  
+  // Build prompt based on language
+  let prompt, systemPrompt;
+  
+  if (language === 'egyptian') {
+    prompt = `اقترح ${count} أفكار فيديوهات فيرال في مجال "${nicheName}" للسوشيال ميديا.
 
 المطلوب:
 - أفكار جذابة ومثيرة للجدل
-- مناسبة للجمهور المصري والعربي
+- مناسبة للجمهور المصري
 - قابلة للتنفيذ في فيديو قصير (60 ثانية)
-- كل فكرة في سطر واحد بدون ترقيم
+- اكتب بالعامية المصرية
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
+    systemPrompt = 'أنت خبير محتوى مصري. اقترح أفكار فيرال بالعامية المصرية. JSON فقط.';
+    
+  } else if (language === 'gulf') {
+    prompt = `اقترح ${count} أفكار فيديوهات فايرال في مجال "${nicheName}" للسوشيال ميديا.
+
+المطلوب:
+- أفكار جذابة ومثيرة للاهتمام
+- مناسبة للجمهور الخليجي والسعودي
+- قابلة للتنفيذ في فيديو قصير (60 ثانية)
+- اكتب باللهجة الخليجية
+
+JSON فقط:
+{"ideas": ["فكرة 1", "فكرة 2", ...]}`;
+    systemPrompt = 'أنت خبير محتوى خليجي. اقترح أفكار فايرال باللهجة الخليجية. JSON فقط.';
+    
+  } else if (language === 'french') {
+    prompt = `Suggère ${count} idées de vidéos virales dans le domaine "${nicheName}" pour les réseaux sociaux.
+
+Critères:
+- Idées accrocheuses et engageantes
+- Adaptées au public francophone
+- Réalisables en vidéo courte (60 secondes)
+- Écris en français
+
+JSON uniquement:
+{"ideas": ["idée 1", "idée 2", ...]}`;
+    systemPrompt = 'Tu es un expert en contenu français. Suggère des idées virales en français. JSON uniquement.';
+    
+  } else {
+    // English (default)
+    prompt = `Suggest ${count} viral video ideas in the "${nicheName}" niche for social media.
+
+Requirements:
+- Catchy and engaging ideas
+- Suitable for English-speaking audience
+- Executable in a short video (60 seconds)
+- Write in English
+
+JSON only:
+{"ideas": ["idea 1", "idea 2", ...]}`;
+    systemPrompt = 'You are a content expert. Suggest viral ideas in English. JSON only.';
+  }
 
   try {
     const response = await axios.post(
@@ -1105,7 +1187,7 @@ JSON فقط:
       {
         model: CONFIG.CLAUDE_MODEL,
         max_tokens: 500,
-        system: 'أنت خبير محتوى. اقترح أفكار فيرال. JSON فقط.',
+        system: systemPrompt,
         messages: [{ role: 'user', content: prompt }],
       },
       {
@@ -1135,24 +1217,79 @@ JSON فقط:
     console.error('   ⚠️ Trending ideas error:', e.message);
   }
   
-  // Fallback ideas
-  const fallbackIdeas = {
-    general: [
-      'أخطاء شائعة الناس بتعملها كل يوم',
-      'حقائق صادمة محدش بيقولهالك',
-      'ليه الأغنياء بيفكروا بطريقة مختلفة',
-    ],
-    real_estate: [
-      'أخطاء لازم تتجنبها قبل ما تشتري شقة',
-      'ليه الإيجار أحسن من التمليك أحياناً',
-      'أسرار المطورين العقاريين',
-    ],
-    business: [
-      'أفكار مشاريع بأقل رأس مال',
-      'أخطاء بتقفل الشركات في أول سنة',
-      'ليه الخصومات بتدمر البيزنس',
-    ],
+  // Fallback ideas per language
+  const fallbackIdeasPerLang = {
+    egyptian: {
+      general: [
+        'أخطاء شائعة الناس بتعملها كل يوم',
+        'حقائق صادمة محدش بيقولهالك',
+        'ليه الأغنياء بيفكروا بطريقة مختلفة',
+      ],
+      real_estate: [
+        'أخطاء لازم تتجنبها قبل ما تشتري شقة',
+        'ليه الإيجار أحسن من التمليك أحياناً',
+        'أسرار المطورين العقاريين',
+      ],
+      business: [
+        'أفكار مشاريع بأقل رأس مال',
+        'أخطاء بتقفل الشركات في أول سنة',
+        'ليه الخصومات بتدمر البيزنس',
+      ],
+    },
+    gulf: {
+      general: [
+        'أخطاء شائعة الناس تسويها كل يوم',
+        'حقائق صادمة ما حد يقولك عنها',
+        'ليش الأثرياء يفكرون بطريقة مختلفة',
+      ],
+      real_estate: [
+        'أخطاء لازم تتجنبها قبل ما تشتري شقة',
+        'ليش الإيجار أحسن من التمليك أحياناً',
+        'أسرار المطورين العقاريين',
+      ],
+      business: [
+        'أفكار مشاريع بأقل رأس مال',
+        'أخطاء تخلي الشركات تقفل في أول سنة',
+        'ليش الخصومات تدمر البيزنس',
+      ],
+    },
+    english: {
+      general: [
+        'Common mistakes people make every day',
+        'Shocking facts nobody tells you',
+        'Why rich people think differently',
+      ],
+      real_estate: [
+        'Mistakes to avoid before buying a house',
+        'Why renting is sometimes better than owning',
+        'Real estate developer secrets',
+      ],
+      business: [
+        'Business ideas with minimal capital',
+        'Mistakes that close companies in the first year',
+        'Why discounts can destroy your business',
+      ],
+    },
+    french: {
+      general: [
+        'Erreurs courantes que les gens font chaque jour',
+        'Faits choquants que personne ne te dit',
+        'Pourquoi les riches pensent différemment',
+      ],
+      real_estate: [
+        'Erreurs à éviter avant d\'acheter un bien',
+        'Pourquoi la location est parfois meilleure que l\'achat',
+        'Les secrets des promoteurs immobiliers',
+      ],
+      business: [
+        'Idées de business avec un capital minimal',
+        'Erreurs qui font fermer les entreprises la première année',
+        'Pourquoi les réductions peuvent détruire ton business',
+      ],
+    },
   };
+  
+  const fallbackIdeas = fallbackIdeasPerLang[language] || fallbackIdeasPerLang.egyptian;
   
   res.json({ 
     success: true, 
