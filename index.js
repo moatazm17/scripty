@@ -1312,12 +1312,14 @@ app.post('/api/generate-image', async (req, res) => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Create prediction
+      // Create prediction with random seed for variety
+      const randomSeed = Math.floor(Math.random() * 2147483647);
       const createResponse = await axios.post(
         'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions',
         {
           input: {
             prompt: prompt,
+            seed: randomSeed,
           },
         },
         {
