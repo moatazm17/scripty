@@ -17,7 +17,7 @@ const CONFIG = {
   PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
   CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
   PERPLEXITY_MODEL: 'sonar-pro',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
   GEMINI_MODEL: 'gemini-3-pro-preview',
@@ -144,7 +144,7 @@ const PRICING = {
   claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },      // Claude Sonnet 4
   perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },   // sonar-pro
   gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },      // Gemini 3 Pro
-  dalle: { perImage: 0.04 },                                            // DALL-E 3 1024x1024
+  flux: { perImage: 0.003 },                                            // Flux Schnell $3/1000 images
 };
 
 function createCostTracker() {
@@ -152,7 +152,7 @@ function createCostTracker() {
     claude: { input: 0, output: 0, cost: 0 },
     perplexity: { input: 0, output: 0, cost: 0 },
     gemini: { input: 0, output: 0, cost: 0 },
-    dalle: { images: 0, cost: 0 },
+    flux: { images: 0, cost: 0 },
     total: 0,
   };
 }
@@ -170,11 +170,11 @@ function trackCost(tracker, provider, inputTokens, outputTokens) {
   console.log(`   💰 ${provider}: ${inputTokens} in + ${outputTokens} out = $${cost.toFixed(4)}`);
 }
 
-function trackDalleCost(tracker) {
-  tracker.dalle.images += 1;
-  tracker.dalle.cost += PRICING.dalle.perImage;
-  tracker.total += PRICING.dalle.perImage;
-  console.log(`   💰 DALL-E: 1 image = $${PRICING.dalle.perImage.toFixed(4)}`);
+function trackFluxCost(tracker) {
+  tracker.flux.images += 1;
+  tracker.flux.cost += PRICING.flux.perImage;
+  tracker.total += PRICING.flux.perImage;
+  console.log(`   💰 Flux: 1 image = $${PRICING.flux.perImage.toFixed(4)}`);
 }
 
 function logTotalCost(tracker) {
@@ -183,8 +183,8 @@ function logTotalCost(tracker) {
   console.log(`   Claude:     ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
   console.log(`   Perplexity: ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
   console.log(`   Gemini:     ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
-  if (tracker.dalle.images > 0) {
-    console.log(`   DALL-E:     ${tracker.dalle.images} images = $${tracker.dalle.cost.toFixed(4)}`);
+  if (tracker.flux.images > 0) {
+    console.log(`   Flux:       ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
   }
   console.log(`   ────────────────────────────────────`);
   console.log(`   💵 TOTAL: $${tracker.total.toFixed(4)}`);
@@ -1298,37 +1298,40 @@ JSON only:
 });
 
 // ============================================
-// 🖼️ GENERATE IMAGE (DALL-E)
+// 🖼️ GENERATE IMAGE (Flux Schnell)
 // ============================================
 
 app.post('/api/generate-image', async (req, res) => {
-  const { prompt, size = '1024x1024', quality = 'standard' } = req.body;
+  const { prompt } = req.body;
   
-  console.log('🖼️ Generating image...');
+  console.log('🖼️ Generating image with Flux Schnell...');
   const costTracker = createCostTracker();
   
   try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/images/generations',
+    // Create prediction
+    const createResponse = await axios.post(
+      'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions',
       {
-        model: 'dall-e-3',
-        prompt: prompt,
-        n: 1,
-        size: size,
-        quality: quality,
+        input: {
+          prompt: prompt,
+        },
       },
       {
         headers: {
-          'Authorization': `Bearer ${CONFIG.OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${CONFIG.REPLICATE_API_TOKEN}`,
           'Content-Type': 'application/json',
+          'Prefer': 'wait',
         },
       }
     );
     
-    // Track DALL-E cost
-    trackDalleCost(costTracker);
+    // Track Flux cost
+    trackFluxCost(costTracker);
     
-    const imageUrl = response.data.data[0].url;
+    // Get image URL from output
+    const output = createResponse.data.output;
+    const imageUrl = Array.isArray(output) ? output[0] : output;
+    
     console.log('   ✓ Image generated');
     res.json({ success: true, imageUrl, cost: costTracker.total.toFixed(4) });
   } catch (e) {
