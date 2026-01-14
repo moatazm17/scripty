@@ -720,35 +720,40 @@ function styleCleanup(script, selectedHook) {
 // ============================================
 
 async function generateVisualPrompts(topic, script, costTracker = null) {
-  console.log('   🖼️ Generating visual prompts...');
+  console.log('   🖼️ Generating visual prompts optimized for FLUX...');
   
-  const prompt = `Based on this script, create 3 image descriptions for a video storyboard.
+  const prompt = `Act as an expert AI Art Director specializing in "Black Forest Labs Flux" prompting.
+  
+Analyze the script and generate 3 Highly Detailed visual descriptions.
 
 Topic: ${topic}
-Script: ${script.substring(0, 1000)}
+Script Context: ${script.substring(0, 1000)}
 
-Create 3 different scenes:
-1. Hook scene (opening - grab attention)
-2. Content scene (main information)  
-3. CTA scene (closing - call to action)
+Create 3 distinct scenes:
+1. Hook scene (High impact, controversial or shocking visual)
+2. Content scene (Educational, clear, engaging)  
+3. CTA scene (Direct, emotional connection)
 
-For EACH scene provide:
-- prompt: Full detailed prompt for DALL-E (English, technical, 20-30 words)
-- description_ar: Short Arabic description for user (5-10 words, عامية مصرية)
-- description_en: Short English description for user (5-10 words)
-- caption: Scene title
+For EACH scene, the "prompt" field must follow this FLUX Structure:
+"[Medium/Style] of [Subject Description] doing [Action] in [Environment]. [Lighting Description]. [Camera/Mood Details]."
 
-Rules:
-- Photorealistic documentary style
-- No text, watermarks, or logos
-- Professional photography
-- Each scene different angle/mood
+CRITICAL RULES for the "prompt" field:
+- DO NOT use generic tags (e.g., "4k", "best quality"). Use Natural English sentences.
+- LENGTH: Must be 40-60 words per prompt (Descriptive & Rich).
+- LIGHTING: You MUST specify lighting to fix flatness (e.g., "volumetric lighting", "dramatic rim light", "soft cinematic shading").
+- STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of..." depending on the topic.
+- NO TEXT: Do not include text inside the image unless necessary.
 
-JSON only:
+Output Schema (JSON Only):
 {
-  "hook": {"prompt": "Photorealistic...", "description_ar": "وصف قصير", "description_en": "Short desc", "caption": "مشهد البداية"},
-  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "مشهد المحتوى"},
-  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "مشهد النهاية"}
+  "hook": {
+    "prompt": "A cinematic hyper-realistic shot of... (full detailed flux prompt)", 
+    "description_ar": "وصف قصير عامي", 
+    "description_en": "Short desc", 
+    "caption": "Scene Title"
+  },
+  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "..."},
+  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "..."}
 }`;
 
   try {
@@ -756,8 +761,8 @@ JSON only:
       'https://api.anthropic.com/v1/messages',
       {
         model: CONFIG.CLAUDE_MODEL,
-        max_tokens: 1000,
-        system: 'Create image prompts. Output: JSON only.',
+        max_tokens: 1500,
+        system: 'You are a JSON generator. Output valid JSON only. No markdown.',
         messages: [{ role: 'user', content: prompt }],
       },
       {
@@ -801,26 +806,26 @@ JSON only:
     }
   }
   
-  // Fallback
+  // Fallback with Flux-optimized prompts
   console.log('   ⚠️ Using fallback visual prompts');
   return {
     hook: { 
-      prompt: `Photorealistic wide shot of ${topic}, cinematic lighting, documentary style`,
+      prompt: `A cinematic hyper-realistic wide shot of ${topic} captured in dramatic composition. Volumetric lighting creates depth with golden hour rays streaming through. Shot on professional cinema camera with shallow depth of field creating atmospheric mood.`,
       description_ar: 'منظر واسع للموضوع',
       description_en: 'Wide shot overview',
-      caption: 'مشهد البداية'
+      caption: 'Hook Scene'
     },
     content: { 
-      prompt: `Photorealistic medium shot of ${topic}, detailed view, professional photography`,
+      prompt: `A detailed hyper-realistic medium shot showcasing ${topic} with clear educational focus. Soft cinematic shading highlights key details while maintaining visual clarity. Professional documentary style with balanced composition and natural color grading.`,
       description_ar: 'لقطة متوسطة للتفاصيل',
       description_en: 'Medium shot details',
-      caption: 'مشهد المحتوى'
+      caption: 'Content Scene'
     },
     cta: { 
-      prompt: `Photorealistic close-up of ${topic}, dramatic lighting, hopeful atmosphere`,
+      prompt: `A cinematic hyper-realistic close-up of ${topic} with emotional impact and hopeful atmosphere. Dramatic rim lighting creates powerful silhouette effect. Warm color palette with soft bokeh background evoking inspiration and connection.`,
       description_ar: 'لقطة قريبة للختام',
       description_en: 'Close-up finale',
-      caption: 'مشهد النهاية'
+      caption: 'CTA Scene'
     }
   };
 }
