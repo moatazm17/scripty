@@ -719,8 +719,18 @@ function styleCleanup(script, selectedHook) {
 // 🖼️ GENERATE VISUAL PROMPTS
 // ============================================
 
-async function generateVisualPrompts(topic, script, costTracker = null) {
-  console.log('   🖼️ Generating visual prompts optimized for FLUX...');
+async function generateVisualPrompts(topic, script, language = 'egyptian', costTracker = null) {
+  console.log(`   🖼️ Generating visual prompts optimized for FLUX (${language})...`);
+  
+  // Cultural context based on script language
+  const culturalContexts = {
+    egyptian: 'Characters MUST be Egyptian with Egyptian features and modern Egyptian clothing. Environment should be Egyptian (Cairo streets, Egyptian homes, Egyptian landmarks). Include Egyptian cultural elements.',
+    gulf: 'Characters MUST be Gulf Arab wearing traditional thobe/kandura and ghutra/shemagh for men, or modest Gulf fashion for women. Environment should be Gulf/Saudi/UAE (modern Gulf cities, desert landscapes, traditional markets). Include Gulf cultural elements.',
+    english: 'Characters should be diverse Western/international. Environment should be modern international settings (offices, cities, homes). Professional and globally appealing aesthetic.',
+    french: 'Characters should be French/Francophone European. Environment should be European/Parisian (cafes, elegant streets, French architecture). Include French cultural elements and aesthetic.',
+  };
+  
+  const culturalContext = culturalContexts[language] || culturalContexts.egyptian;
   
   const prompt = `Act as an expert AI Art Director specializing in "Black Forest Labs Flux" prompting.
   
@@ -728,14 +738,19 @@ Analyze the script and generate 3 Highly Detailed visual descriptions.
 
 Topic: ${topic}
 Script Context: ${script.substring(0, 1000)}
+Target Culture: ${language.toUpperCase()}
 
 Create 3 distinct scenes:
 1. Hook scene (High impact, controversial or shocking visual)
 2. Content scene (Educational, clear, engaging)  
 3. CTA scene (Direct, emotional connection)
 
+🚨 CULTURAL CONTEXT (CRITICAL - MUST FOLLOW):
+${culturalContext}
+ALL people, clothing, settings, and environments MUST reflect this specific culture. This is mandatory.
+
 For EACH scene, the "prompt" field must follow this FLUX Structure:
-"[Medium/Style] of [Subject Description] doing [Action] in [Environment]. [Lighting Description]. [Camera/Mood Details]."
+"[Medium/Style] of [Subject Description with cultural appearance] doing [Action] in [Cultural Environment]. [Lighting Description]. [Camera/Mood Details]."
 
 CRITICAL RULES for the "prompt" field:
 - DO NOT use generic tags (e.g., "4k", "best quality"). Use Natural English sentences.
@@ -743,17 +758,19 @@ CRITICAL RULES for the "prompt" field:
 - LIGHTING: You MUST specify lighting to fix flatness (e.g., "volumetric lighting", "dramatic rim light", "soft cinematic shading").
 - STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of..." depending on the topic.
 - NO TEXT: Do not include text inside the image unless necessary.
+- CULTURAL ACCURACY: Characters and settings MUST match the target culture specified above.
 
 Output Schema (JSON Only):
 {
   "hook": {
-    "prompt": "A cinematic hyper-realistic shot of... (full detailed flux prompt)", 
-    "description_ar": "وصف قصير عامي", 
-    "description_en": "Short desc", 
+    "prompt": "A cinematic hyper-realistic shot of... (full detailed flux prompt with cultural elements)", 
+    "description_ar": "وصف قصير بالعربي", 
+    "description_en": "Short English description",
+    "description_fr": "Courte description en français",
     "caption": "Scene Title"
   },
-  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "..."},
-  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "caption": "..."}
+  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "description_fr": "...", "caption": "..."},
+  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "description_fr": "...", "caption": "..."}
 }`;
 
   try {
@@ -813,18 +830,21 @@ Output Schema (JSON Only):
       prompt: `A cinematic hyper-realistic wide shot of ${topic} captured in dramatic composition. Volumetric lighting creates depth with golden hour rays streaming through. Shot on professional cinema camera with shallow depth of field creating atmospheric mood.`,
       description_ar: 'منظر واسع للموضوع',
       description_en: 'Wide shot overview',
+      description_fr: 'Vue large du sujet',
       caption: 'Hook Scene'
     },
     content: { 
       prompt: `A detailed hyper-realistic medium shot showcasing ${topic} with clear educational focus. Soft cinematic shading highlights key details while maintaining visual clarity. Professional documentary style with balanced composition and natural color grading.`,
       description_ar: 'لقطة متوسطة للتفاصيل',
       description_en: 'Medium shot details',
+      description_fr: 'Plan moyen détaillé',
       caption: 'Content Scene'
     },
     cta: { 
       prompt: `A cinematic hyper-realistic close-up of ${topic} with emotional impact and hopeful atmosphere. Dramatic rim lighting creates powerful silhouette effect. Warm color palette with soft bokeh background evoking inspiration and connection.`,
       description_ar: 'لقطة قريبة للختام',
       description_en: 'Close-up finale',
+      description_fr: 'Gros plan final',
       caption: 'CTA Scene'
     }
   };
@@ -870,8 +890,8 @@ async function generateScript(rawTopic, language, niche, duration) {
     const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Cleaned: ${wordCount} words`);
     
-    // Stage 5: Visual Prompts
-    const visualPrompts = await generateVisualPrompts(topic, script);
+    // Stage 5: Visual Prompts (with cultural context)
+    const visualPrompts = await generateVisualPrompts(topic, script, language);
     console.log('   ✓ Visual prompts ready');
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -1013,8 +1033,8 @@ app.post('/api/write-script', async (req, res) => {
     const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Cleaned: ${wordCount} words`);
     
-    // Visual prompts
-    const visualPrompts = await generateVisualPrompts(topic, script, costTracker);
+    // Visual prompts (with cultural context)
+    const visualPrompts = await generateVisualPrompts(topic, script, language, costTracker);
     console.log('   ✓ Visual prompts ready');
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
