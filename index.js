@@ -1307,37 +1307,53 @@ app.post('/api/generate-image', async (req, res) => {
   console.log('🖼️ Generating image with Flux Schnell...');
   const costTracker = createCostTracker();
   
-  try {
-    // Create prediction
-    const createResponse = await axios.post(
-      'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions',
-      {
-        input: {
-          prompt: prompt,
+  const maxRetries = 3;
+  let lastError = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // Create prediction
+      const createResponse = await axios.post(
+        'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions',
+        {
+          input: {
+            prompt: prompt,
+          },
         },
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${CONFIG.REPLICATE_API_TOKEN}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'wait',
-        },
+        {
+          headers: {
+            'Authorization': `Bearer ${CONFIG.REPLICATE_API_TOKEN}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'wait',
+          },
+        }
+      );
+      
+      // Track Flux cost
+      trackFluxCost(costTracker);
+      
+      // Get image URL from output
+      const output = createResponse.data.output;
+      const imageUrl = Array.isArray(output) ? output[0] : output;
+      
+      console.log('   ✓ Image generated');
+      res.json({ success: true, imageUrl, cost: costTracker.total.toFixed(4) });
+      return;
+    } catch (e) {
+      lastError = e;
+      // Rate limit (429) - wait and retry
+      if (e.response?.status === 429 && attempt < maxRetries) {
+        const waitTime = attempt * 2000; // 2s, 4s, 6s
+        console.log(`   ⏳ Rate limited, waiting ${waitTime/1000}s before retry ${attempt + 1}/${maxRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
       }
-    );
-    
-    // Track Flux cost
-    trackFluxCost(costTracker);
-    
-    // Get image URL from output
-    const output = createResponse.data.output;
-    const imageUrl = Array.isArray(output) ? output[0] : output;
-    
-    console.log('   ✓ Image generated');
-    res.json({ success: true, imageUrl, cost: costTracker.total.toFixed(4) });
-  } catch (e) {
-    console.error('   ⚠️ Image generation error:', e.message);
-    res.status(500).json({ success: false, error: 'Failed to generate image' });
+      break;
+    }
   }
+  
+  console.error('   ⚠️ Image generation error:', lastError?.message);
+  res.status(500).json({ success: false, error: 'Failed to generate image' });
 });
 
 // ============================================
