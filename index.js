@@ -1469,9 +1469,9 @@ app.post('/api/chat', async (req, res) => {
       ...contents
     ];
     
-    // Call Gemini API
+    // Call Gemini API (use same model as script generation)
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: fullContents,
         generationConfig: {
