@@ -1469,9 +1469,9 @@ app.post('/api/chat', async (req, res) => {
       ...contents
     ];
     
-    // Call Gemini API (use gemini-3-flash for chat - faster responses)
+    // Call Gemini API (use same model as scripts - gemini-3-pro-preview)
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: fullContents,
         generationConfig: {
