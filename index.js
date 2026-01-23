@@ -1462,14 +1462,19 @@ app.post('/api/chat', async (req, res) => {
     // Add current message
     contents.push({ role: 'user', parts: [{ text: message }] });
     
-    // Call Gemini API
+    // Prepend system instruction to the first user message
+    if (contents.length > 0 && contents[0].role === 'user') {
+      contents[0].parts[0].text = CHAT_SYSTEM_INSTRUCTION + '\n\n---\n\nUser message:\n' + contents[0].parts[0].text;
+    } else {
+      // If no history, add system instruction to current message
+      contents[contents.length - 1].parts[0].text = CHAT_SYSTEM_INSTRUCTION + '\n\n---\n\nUser message:\n' + contents[contents.length - 1].parts[0].text;
+    }
+    
+    // Call Gemini API using the same model as script generation
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: contents,
-        systemInstruction: {
-          parts: [{ text: CHAT_SYSTEM_INSTRUCTION }]
-        },
         generationConfig: {
           temperature: 0.9,
           topK: 40,
