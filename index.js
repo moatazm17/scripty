@@ -1462,19 +1462,18 @@ app.post('/api/chat', async (req, res) => {
     // Add current message
     contents.push({ role: 'user', parts: [{ text: message }] });
     
-    // Prepend system instruction to the first user message
-    if (contents.length > 0 && contents[0].role === 'user') {
-      contents[0].parts[0].text = CHAT_SYSTEM_INSTRUCTION + '\n\n---\n\nUser message:\n' + contents[0].parts[0].text;
-    } else {
-      // If no history, add system instruction to current message
-      contents[contents.length - 1].parts[0].text = CHAT_SYSTEM_INSTRUCTION + '\n\n---\n\nUser message:\n' + contents[contents.length - 1].parts[0].text;
-    }
+    // Build the full prompt with system instruction
+    const fullContents = [
+      { role: 'user', parts: [{ text: CHAT_SYSTEM_INSTRUCTION }] },
+      { role: 'model', parts: [{ text: 'Understood! I am your Viral Content Expert. How can I help you create amazing content today?' }] },
+      ...contents
+    ];
     
-    // Call Gemini API using the same model as script generation
+    // Call Gemini API
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
-        contents: contents,
+        contents: fullContents,
         generationConfig: {
           temperature: 0.9,
           topK: 40,
