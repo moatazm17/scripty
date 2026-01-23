@@ -1508,6 +1508,7 @@ app.post('/api/chat', async (req, res) => {
     
   } catch (error) {
     console.error('   ⚠️ Chat error:', error.message);
+    console.error('   ⚠️ Full error:', error.response?.data || error);
     
     // Handle specific errors
     if (error.response?.status === 429) {
@@ -1520,13 +1521,13 @@ app.post('/api/chat', async (req, res) => {
     if (error.response?.status === 400) {
       return res.status(400).json({ 
         success: false, 
-        error: 'Invalid request format' 
+        error: 'Invalid request format: ' + (error.response?.data?.error?.message || error.message)
       });
     }
     
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to get AI response. Please try again.' 
+      error: 'Failed to get AI response: ' + (error.response?.data?.error?.message || error.message)
     });
   }
 });
