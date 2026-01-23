@@ -1399,6 +1399,135 @@ app.get('/api/config', (req, res) => {
 });
 
 // ============================================
+// 🤖 AI CHAT ENDPOINT (Gemini)
+// ============================================
+
+const CHAT_SYSTEM_INSTRUCTION = `
+You are a **Viral Content Expert** specializing in TikTok, Instagram Reels, and YouTube Shorts.
+
+Your expertise includes:
+- Creating attention-grabbing hooks that stop the scroll
+- Writing scripts that maximize watch time and engagement
+- Understanding trends across different niches (tech, business, lifestyle, food, fashion, real estate, etc.)
+- Crafting content for different regional audiences (Arabic dialects, French, English)
+
+**Your Behavior:**
+1. Be conversational, friendly, and encouraging
+2. Give actionable advice with specific examples
+3. When suggesting video ideas, be specific and creative
+4. Understand the user's niche and tailor advice accordingly
+5. Auto-detect and respond in the same language the user writes in
+
+**IMPORTANT RULE:**
+When you suggest a specific video topic or script idea that the user seems interested in or asks you to develop further, you MUST append this hidden action tag at the very end of your message (on a new line):
+
+[ACTION:GENERATE_SCRIPT|TOPIC:The exact topic/idea here]
+
+This tag should only appear when you're suggesting a concrete, actionable video idea that could be turned into a script. Do not mention this tag in your regular text or explain it to the user.
+
+Examples of when to include the tag:
+- "Here's a great idea for your next video about productivity tips..." → Include tag
+- "You could make a video about '5 Morning Habits That Changed My Life'" → Include tag
+- "What niche are you interested in?" → Do NOT include tag
+- "Here are some general tips for going viral..." → Do NOT include tag
+
+Be helpful, creative, and inspiring!
+`;
+
+app.post('/api/chat', async (req, res) => {
+  const { message, history = [] } = req.body;
+  
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ success: false, error: 'Message is required' });
+  }
+  
+  console.log('\n🤖 ═══════════════════════════════════════');
+  console.log('   AI Chat Request');
+  console.log(`   Message: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+  console.log(`   History: ${history.length} messages`);
+  
+  try {
+    // Build conversation for Gemini
+    const contents = [];
+    
+    // Add history
+    for (const msg of history) {
+      if (msg.role === 'user') {
+        contents.push({ role: 'user', parts: [{ text: msg.content }] });
+      } else {
+        contents.push({ role: 'model', parts: [{ text: msg.content }] });
+      }
+    }
+    
+    // Add current message
+    contents.push({ role: 'user', parts: [{ text: message }] });
+    
+    // Call Gemini API
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      {
+        contents: contents,
+        systemInstruction: {
+          parts: [{ text: CHAT_SYSTEM_INSTRUCTION }]
+        },
+        generationConfig: {
+          temperature: 0.9,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 60000
+      }
+    );
+    
+    // Extract response text
+    const candidates = response.data.candidates;
+    if (!candidates || candidates.length === 0) {
+      throw new Error('No response from AI');
+    }
+    
+    const aiResponse = candidates[0].content?.parts?.[0]?.text || '';
+    
+    if (!aiResponse) {
+      throw new Error('Empty response from AI');
+    }
+    
+    console.log(`   ✓ Response: ${aiResponse.substring(0, 50)}...`);
+    
+    res.json({ 
+      success: true, 
+      response: aiResponse 
+    });
+    
+  } catch (error) {
+    console.error('   ⚠️ Chat error:', error.message);
+    
+    // Handle specific errors
+    if (error.response?.status === 429) {
+      return res.status(429).json({ 
+        success: false, 
+        error: 'Too many requests. Please wait a moment.' 
+      });
+    }
+    
+    if (error.response?.status === 400) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid request format' 
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get AI response. Please try again.' 
+    });
+  }
+});
+
+// ============================================
 // 🚀 START SERVER
 // ============================================
 
