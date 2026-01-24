@@ -1742,15 +1742,21 @@ app.post('/api/chat', async (req, res) => {
   
   const startTime = Date.now();
   
+  // 💡 Limit history to last 15 messages (cost optimization)
+  const MAX_HISTORY = 15;
+  const trimmedHistory = history.length > MAX_HISTORY 
+    ? history.slice(-MAX_HISTORY) 
+    : history;
+  
   console.log('\n🤖 ═══════════════════════════════════════');
   console.log('   AI Chat Request');
   console.log(`   Message: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
-  console.log(`   History: ${history.length} messages`);
+  console.log(`   History: ${history.length} messages${history.length > MAX_HISTORY ? ` (trimmed to ${MAX_HISTORY})` : ''}`);
   
   try {
     const contents = [];
     
-    for (const msg of history) {
+    for (const msg of trimmedHistory) {
       if (msg.role === 'user') {
         contents.push({ role: 'user', parts: [{ text: msg.content }] });
       } else {
