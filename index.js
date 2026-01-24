@@ -144,6 +144,7 @@ const PRICING = {
   claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },      // Claude Sonnet 4
   perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },   // sonar-pro
   gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },      // Gemini 3 Pro
+  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 }, // Gemini 2.5 Flash Lite (chat)
   flux: { perImage: 0.003 },                                            // Flux Schnell $3/1000 images
 };
 
@@ -152,6 +153,7 @@ function createCostTracker() {
     claude: { input: 0, output: 0, cost: 0 },
     perplexity: { input: 0, output: 0, cost: 0 },
     gemini: { input: 0, output: 0, cost: 0 },
+    gemini_chat: { input: 0, output: 0, cost: 0 },
     flux: { images: 0, cost: 0 },
     total: 0,
   };
@@ -183,6 +185,9 @@ function logTotalCost(tracker) {
   console.log(`   Claude:     ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
   console.log(`   Perplexity: ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
   console.log(`   Gemini:     ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
+  if (tracker.gemini_chat && tracker.gemini_chat.cost > 0) {
+    console.log(`   Gemini Chat:${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
+  }
   if (tracker.flux.images > 0) {
     console.log(`   Flux:       ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
   }
@@ -1735,6 +1740,8 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Message is required' });
   }
   
+  const startTime = Date.now();
+  
   console.log('\n🤖 ═══════════════════════════════════════');
   console.log('   AI Chat Request');
   console.log(`   Message: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
@@ -1787,11 +1794,26 @@ app.post('/api/chat', async (req, res) => {
       throw new Error('Empty response from AI');
     }
     
+    // 💰 Track Chat Cost
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+    let chatCost = 0;
+    if (response.data?.usageMetadata) {
+      const usage = response.data.usageMetadata;
+      const inputTokens = usage.promptTokenCount || 0;
+      const outputTokens = usage.candidatesTokenCount || 0;
+      chatCost = (inputTokens * PRICING.gemini_chat.input) + (outputTokens * PRICING.gemini_chat.output);
+      console.log(`   💰 Chat Cost: ${inputTokens} in + ${outputTokens} out = $${chatCost.toFixed(6)}`);
+    }
+    
     console.log(`   ✓ Response: ${aiResponse.substring(0, 50)}...`);
+    console.log(`   ⏱️ Time: ${elapsed}s`);
+    console.log('🤖 ═══════════════════════════════════════\n');
     
     res.json({ 
       success: true, 
-      response: aiResponse 
+      response: aiResponse,
+      cost: chatCost.toFixed(6),
+      elapsed: `${elapsed}s`,
     });
     
   } catch (error) {
