@@ -366,8 +366,42 @@ JSON only:
 // 🔍 STAGE 1: RESEARCH (Fast + Accurate)
 // ============================================
 
-async function research(topic, costTracker = null, retries = 3) {
+async function research(rawInput, extractedTopic, costTracker = null, retries = 3) {
   console.log('   📚 Researching...');
+  
+  // Check if user provided specific angles/points
+  const hasUserAngles = rawInput.length > extractedTopic.length + 20;
+  
+  // Build smart research prompt
+  let researchPrompt;
+  if (hasUserAngles) {
+    // User provided specific angles - prioritize them
+    researchPrompt = `الموضوع: ${extractedTopic}
+
+طلب المستخدم بالتفصيل:
+"${rawInput}"
+
+=== المطلوب ===
+🥇 أولوية قصوى: ابحث عن كل النقاط اللي المستخدم ذكرها بالتحديد
+🥈 ثانياً: لو لقيت معلومات مفاجئة أو مثيرة إضافية، ضيفها
+
+لكل نقطة جيب:
+- أرقام وتواريخ محددة
+- تفاصيل مفاجئة أو غير معروفة
+- المصادر
+
+مختصر ودقيق.`;
+  } else {
+    // Short topic - do general research
+    researchPrompt = `${extractedTopic}
+
+المطلوب:
+1. أرقام وتواريخ محددة
+2. تفاصيل مفاجئة أو غير معروفة
+3. المصادر
+
+مختصر ودقيق.`;
+  }
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -378,18 +412,11 @@ async function research(topic, costTracker = null, retries = 3) {
           messages: [
             {
               role: 'system',
-              content: 'باحث محترف. أرقام دقيقة، تواريخ، تفاصيل. اذكر المصادر.'
+              content: 'باحث محترف. أرقام دقيقة، تواريخ، تفاصيل. اذكر المصادر. ركّز على النقاط اللي المستخدم طلبها.'
             },
             {
               role: 'user',
-              content: `${topic}
-
-المطلوب:
-1. أرقام وتواريخ محددة
-2. تفاصيل مفاجئة أو غير معروفة
-3. المصادر
-
-مختصر ودقيق.`
+              content: researchPrompt
             }
           ],
           max_tokens: 2000,
@@ -1054,7 +1081,7 @@ async function generateScript(rawTopic, language, niche, duration) {
       console.log('   ⏭️ Skipping research (Refine Mode - using user content)');
       researchData = user_instructions; // Use user's draft as the "research"
     } else {
-      researchData = await research(topic);
+      researchData = await research(rawTopic, topic); // Pass both raw input and extracted topic
       console.log('   ✓ Research done');
     }
     
@@ -1158,7 +1185,7 @@ app.post('/api/generate-hooks', async (req, res) => {
       console.log('   ⏭️ Skipping research (Refine Mode)');
       researchData = user_instructions;
     } else {
-      researchData = await research(extractedTopic, costTracker);
+      researchData = await research(topic, extractedTopic, costTracker); // Pass both raw input and extracted topic
       console.log('   ✓ Research done');
     }
     
