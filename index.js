@@ -213,69 +213,133 @@ const STYLE_GUIDE = `
 // ============================================
 
 async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
-  console.log('   🧠 Understanding topic...');
+  console.log('   🧠 Understanding topic & detecting intent...');
   
-  // Language-specific prompts for topic extraction
+  // Language-specific prompts for topic extraction with intent detection
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح بالعامية المصرية.',
-      prompt: `افهم الموضوع ده واستخرج:
+      system: 'أنت محلل مواضيع ذكي. افهم نية المستخدم وحدد نوع الطلب.',
+      prompt: `حلل المدخل ده وحدد:
 1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
+2. نوع الطلب (action_type):
+   - "refine" = لو المستخدم كاتب مسودة، أو outline، أو نقاط محددة، أو تعليمات تفصيلية عايز يتحولوا لسكريبت
+   - "research" = لو المستخدم كاتب عنوان عام أو موضوع محتاج بحث
+3. تعليمات المستخدم (user_instructions): النص الأصلي اللي المستخدم كتبه لو كان refine، أو فاضي لو research
+
+علامات إن الطلب "refine":
+- نص طويل (أكتر من 50 كلمة)
+- نقاط مرقمة أو bullet points
+- تفاصيل محددة وأرقام
+- كلمات زي: "حول ده لسكريبت"، "اكتب ده بأسلوب"، "عدل على"
+
+علامات إن الطلب "research":
+- عنوان قصير (أقل من 20 كلمة)
+- موضوع عام من غير تفاصيل
+- سؤال أو فكرة محتاجة بحث
 
 النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+{"topic": "الموضوع الواضح", "action_type": "research أو refine", "user_instructions": "النص الأصلي لو refine أو فاضي"}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح باللهجة الخليجية.',
-      prompt: `افهم الموضوع هذا واستخرج:
+      system: 'أنت محلل مواضيع ذكي. افهم نية المستخدم وحدد نوع الطلب.',
+      prompt: `حلل المدخل هذا وحدد:
 1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. الزاوية أو الـ angle (وش اللي المستخدم يبي يركز عليه)
+2. نوع الطلب (action_type):
+   - "refine" = لو المستخدم كاتب مسودة، أو outline، أو نقاط محددة
+   - "research" = لو المستخدم كاتب عنوان عام يحتاج بحث
+3. تعليمات المستخدم (user_instructions): النص الأصلي لو كان refine، أو فاضي لو research
+
+علامات إن الطلب "refine":
+- نص طويل (أكثر من 50 كلمة)
+- نقاط مرقمة أو bullet points
+- تفاصيل محددة وأرقام
+
+علامات إن الطلب "research":
+- عنوان قصير (أقل من 20 كلمة)
+- موضوع عام بدون تفاصيل
 
 النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+{"topic": "الموضوع الواضح", "action_type": "research أو refine", "user_instructions": "النص الأصلي لو refine أو فاضي"}`
     },
     french: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
-      prompt: `Analyse ce sujet et extrais:
-1. Le sujet principal (une phrase claire en Français)
-2. L'angle (sur quoi l'utilisateur veut se concentrer)
+      system: 'Tu es un analyste intelligent. Comprends l\'intention de l\'utilisateur.',
+      prompt: `Analyse cette entrée et détermine:
+1. Le sujet principal (une phrase claire)
+2. Le type d'action (action_type):
+   - "refine" = si l'utilisateur a écrit un brouillon, outline, ou instructions détaillées
+   - "research" = si l'utilisateur a écrit un titre général qui nécessite une recherche
+3. Instructions utilisateur (user_instructions): le texte original si refine, sinon vide
+
+Signes de "refine":
+- Texte long (plus de 50 mots)
+- Points numérotés ou bullet points
+- Détails spécifiques et chiffres
+
+Signes de "research":
+- Titre court (moins de 20 mots)
+- Sujet général sans détails
 
 Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "angle": "L'angle"}`
+{"topic": "Le sujet clair", "action_type": "research ou refine", "user_instructions": "texte original si refine ou vide"}`
     },
     frensh: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
-      prompt: `Analyse ce sujet et extrais:
-1. Le sujet principal (une phrase claire en Français)
-2. L'angle (sur quoi l'utilisateur veut se concentrer)
+      system: 'Tu es un analyste intelligent. Comprends l\'intention de l\'utilisateur.',
+      prompt: `Analyse cette entrée et détermine:
+1. Le sujet principal (une phrase claire)
+2. Le type d'action (action_type):
+   - "refine" = si l'utilisateur a écrit un brouillon, outline, ou instructions détaillées
+   - "research" = si l'utilisateur a écrit un titre général qui nécessite une recherche
+3. Instructions utilisateur (user_instructions): le texte original si refine, sinon vide
+
+Signes de "refine":
+- Texte long (plus de 50 mots)
+- Points numérotés ou bullet points
+- Détails spécifiques et chiffres
+
+Signes de "research":
+- Titre court (moins de 20 mots)
+- Sujet général sans détails
 
 Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "angle": "L'angle"}`
+{"topic": "Le sujet clair", "action_type": "research ou refine", "user_instructions": "texte original si refine ou vide"}`
     },
     english: {
-      system: 'You are a topic analyst. Understand the topic and define it clearly in English.',
-      prompt: `Understand this topic and extract:
-1. The main topic (one clear sentence in English)
-2. The angle (what the user wants to focus on)
+      system: 'You are an intelligent topic analyst. Understand user intent and detect request type.',
+      prompt: `Analyze this input and determine:
+1. The main topic (one clear sentence)
+2. Action type (action_type):
+   - "refine" = if user provided a draft, outline, bullet points, or detailed instructions to convert to script
+   - "research" = if user provided a general title/topic that needs research
+3. User instructions (user_instructions): the original text if refine, or empty if research
+
+Signs of "refine":
+- Long text (more than 50 words)
+- Numbered points or bullet points
+- Specific details and numbers
+- Words like: "turn this into a script", "rewrite this", "edit this"
+
+Signs of "research":
+- Short title (less than 20 words)
+- General topic without details
+- Question or idea that needs research
 
 Text:
 "${rawInput}"
 
 JSON only:
-{"topic": "The clear topic", "angle": "The angle"}`
+{"topic": "The clear topic", "action_type": "research or refine", "user_instructions": "original text if refine or empty"}`
     }
   };
   
@@ -285,7 +349,7 @@ JSON only:
     'https://api.anthropic.com/v1/messages',
     {
       model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 150,
+      max_tokens: 500,
       system: langConfig.system,
       messages: [{
         role: 'user',
@@ -311,15 +375,25 @@ JSON only:
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      const result = `${parsed.topic} - ${parsed.angle}`;
-      console.log(`   🧠 Understood: "${result}"`);
+      const result = {
+        topic: parsed.topic || rawInput.substring(0, 100),
+        action_type: parsed.action_type === 'refine' ? 'refine' : 'research',
+        user_instructions: parsed.user_instructions || ''
+      };
+      console.log(`   🧠 Topic: "${result.topic}"`);
+      console.log(`   🎯 Action Type: ${result.action_type.toUpperCase()}`);
       return result;
     }
   } catch (e) {
-    console.log('   ⚠️ Parse error, using raw input');
+    console.log('   ⚠️ Parse error, defaulting to research mode');
   }
   
-  return rawInput;
+  // Default fallback: treat as research
+  return {
+    topic: rawInput.substring(0, 100),
+    action_type: 'research',
+    user_instructions: ''
+  };
 }
 
 // ============================================
@@ -385,14 +459,15 @@ async function research(topic, costTracker = null, retries = 3) {
 // 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
-async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null) {
+async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
   console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
-  // Get niche-specific hooks for this language
+  // Get niche-specific hooks for this language (used as style reference for both modes)
   const nicheHooks = getNicheHooks(niche, language);
   const universalHooks = getUniversalHooks(language);
   
   console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks (${language})`);
+  console.log(`   🎯 Mode: ${actionType.toUpperCase()}`);
 
   // Language-specific hook generation prompts
   const langHookPrompts = {
@@ -445,15 +520,25 @@ async function generateHooks(topic, researchData, niche, language = 'egyptian', 
   
   const hookConfig = langHookPrompts[language] || langHookPrompts['egyptian'];
   
-  // FIX #1: Use full research instead of truncated
+  // Build prompt based on action type
+  let contentSource;
+  if (actionType === 'refine') {
+    // For refine mode: use user instructions as the content source
+    contentSource = `User's Draft/Instructions (extract key points for hooks):
+${userInstructions}`;
+  } else {
+    // For research mode: use research data
+    contentSource = `Full Research:
+${researchData}`;
+  }
+  
   const prompt = `${hookConfig.instruction}:
 
 Topic: ${topic}
 
-Full Research:
-${researchData}
+${contentSource}
 
-=== Example Hooks from "${niche}" (copy the style exactly!) ===
+=== Example Hooks from "${niche}" (copy the STYLE exactly!) ===
 ${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
 === Universal Hook Patterns (for inspiration) ===
@@ -461,6 +546,8 @@ ${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
 === Style Tips ===
 ${hookConfig.tips}
+
+${actionType === 'refine' ? '⚠️ IMPORTANT: The hooks must relate to the USER\'S CONTENT above, not external information.' : ''}
 
 JSON only:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
@@ -471,7 +558,7 @@ JSON only:
       {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: 4000,  // Gemini 3 Pro needs ~2000 for thinking + ~500 for hooks
+          maxOutputTokens: 4000,
           temperature: 0.8,
         }
       },
@@ -522,30 +609,165 @@ JSON only:
 // ✍️ STAGE 3: WRITE SCRIPT (Gemini 3 Pro)
 // ============================================
 
-async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null) {
-  console.log('   ✍️ Writing script (Gemini 3 Pro)...');
+async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
+  console.log(`   ✍️ Writing script (Gemini 3 Pro) - Mode: ${actionType.toUpperCase()}...`);
   
   const durationConfig = getDurationConfig(duration);
-  const examples = getNicheExamples(niche, duration, language);  // Get examples for this language & duration
+  const examples = getNicheExamples(niche, duration, language);
   
-  // FIX #2: Use 2-3 golden examples instead of just one
+  // Get 2-3 golden examples
   const goldenExamples = examples.slice(0, Math.min(3, examples.length));
   const examplesText = goldenExamples.map((ex, idx) => `
 --- Example #${idx + 1}: ${ex.title || ''} ---
 ${ex.script}
 `).join('\n');
 
-  // Get language-specific prompt from prompts.json
-  const langKey = language === 'frensh' ? 'french' : language;  // Handle typo in frensh
-  let promptTemplate = PROMPTS[langKey] || PROMPTS['egyptian'];  // Fallback to egyptian
+  let prompt;
   
-  // Replace variables in the prompt template
-  const prompt = promptTemplate
-    .replace(/\$\{examplesText\}/g, examplesText)
-    .replace(/\$\{topic\}/g, topic)
-    .replace(/\$\{selectedHook\}/g, selectedHook)
-    .replace(/\$\{researchData\}/g, researchData)
-    .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
+  if (actionType === 'refine') {
+    // ============================================
+    // 🔄 REFINE MODE: Strict Viral Editor
+    // ============================================
+    console.log('   🔄 Using REFINE mode (Strict Viral Editor)');
+    
+    const refinePrompts = {
+      egyptian: `أنت محرر سكريبتات فيروسية صارم. مهمتك تحويل مسودة المستخدم لسكريبت فيروسي مع الحفاظ على كل المعلومات.
+
+=== قواعد صارمة ===
+1. ✅ استخدم فقط المعلومات الموجودة في مسودة المستخدم
+2. ✅ حافظ على نفس الترتيب والهيكل (النقاط بنفس الترتيب)
+3. ✅ أعد صياغة كل جملة بأسلوب فيروسي زي الأمثلة
+4. ❌ ممنوع إضافة معلومات جديدة أو أرقام من عندك
+5. ❌ ممنوع حذف أي نقطة من نقاط المستخدم
+6. ❌ ممنوع التأليف أو الاختراع
+
+=== أمثلة الأسلوب المطلوب (قلد الـ tone بالظبط) ===
+${examplesText}
+
+=== مسودة المستخدم (المصدر الوحيد للمعلومات) ===
+${userInstructions}
+
+=== المطلوب ===
+- Hook: "${selectedHook}"
+- الطول: ${durationConfig.words} كلمة تقريباً
+- اكتب بالعامية المصرية
+- حول كل نقطة لجملة فيروسية بنفس الترتيب
+- ابدأ بالـ Hook ثم النقاط ثم CTA
+
+اكتب السكريبت مباشرة (بدون JSON أو markdown):`,
+
+      gulf: `أنت محرر سكريبتات فايرال صارم. مهمتك تحويل مسودة المستخدم لسكريبت فايرال مع الحفاظ على كل المعلومات.
+
+=== قواعد صارمة ===
+1. ✅ استخدم فقط المعلومات الموجودة في مسودة المستخدم
+2. ✅ حافظ على نفس الترتيب والهيكل
+3. ✅ أعد صياغة كل جملة بأسلوب فايرال زي الأمثلة
+4. ❌ ممنوع إضافة معلومات جديدة
+5. ❌ ممنوع حذف أي نقطة
+6. ❌ ممنوع التأليف
+
+=== أمثلة الأسلوب المطلوب ===
+${examplesText}
+
+=== مسودة المستخدم ===
+${userInstructions}
+
+=== المطلوب ===
+- Hook: "${selectedHook}"
+- الطول: ${durationConfig.words} كلمة تقريباً
+- اكتب باللهجة الخليجية
+
+اكتب السكريبت مباشرة:`,
+
+      english: `You are a STRICT Viral Script Editor. Your job is to transform the user's draft into a viral script while preserving ALL information.
+
+=== STRICT RULES ===
+1. ✅ Use ONLY information from the user's draft
+2. ✅ Keep the SAME order and structure (points in same sequence)
+3. ✅ Rewrite each sentence in viral style like the examples
+4. ❌ DO NOT add new information or numbers
+5. ❌ DO NOT remove any of the user's points
+6. ❌ DO NOT make up or hallucinate anything
+
+=== STYLE EXAMPLES (copy this tone exactly) ===
+${examplesText}
+
+=== USER'S DRAFT (your ONLY source of information) ===
+${userInstructions}
+
+=== REQUIREMENTS ===
+- Hook: "${selectedHook}"
+- Length: ~${durationConfig.words} words
+- Transform each point into a viral sentence in the same order
+- Start with Hook, then points, then CTA
+
+Write the script directly (no JSON or markdown):`,
+
+      french: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
+
+=== RÈGLES STRICTES ===
+1. ✅ Utilise UNIQUEMENT les informations du brouillon
+2. ✅ Garde le MÊME ordre et structure
+3. ✅ Réécris chaque phrase en style viral comme les exemples
+4. ❌ N'ajoute PAS de nouvelles informations
+5. ❌ Ne supprime AUCUN point de l'utilisateur
+6. ❌ N'invente RIEN
+
+=== EXEMPLES DE STYLE ===
+${examplesText}
+
+=== BROUILLON DE L'UTILISATEUR ===
+${userInstructions}
+
+=== REQUIS ===
+- Hook: "${selectedHook}"
+- Longueur: ~${durationConfig.words} mots
+
+Écris le script directement:`,
+
+      frensh: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
+
+=== RÈGLES STRICTES ===
+1. ✅ Utilise UNIQUEMENT les informations du brouillon
+2. ✅ Garde le MÊME ordre et structure
+3. ✅ Réécris chaque phrase en style viral comme les exemples
+4. ❌ N'ajoute PAS de nouvelles informations
+5. ❌ Ne supprime AUCUN point de l'utilisateur
+6. ❌ N'invente RIEN
+
+=== EXEMPLES DE STYLE ===
+${examplesText}
+
+=== BROUILLON DE L'UTILISATEUR ===
+${userInstructions}
+
+=== REQUIS ===
+- Hook: "${selectedHook}"
+- Longueur: ~${durationConfig.words} mots
+
+Écris le script directement:`
+    };
+    
+    prompt = refinePrompts[language] || refinePrompts['egyptian'];
+    
+  } else {
+    // ============================================
+    // 🔍 RESEARCH MODE: Creative Writer (Original)
+    // ============================================
+    console.log('   🔍 Using RESEARCH mode (Creative Writer)');
+    
+    // Get language-specific prompt from prompts.json
+    const langKey = language === 'frensh' ? 'french' : language;
+    let promptTemplate = PROMPTS[langKey] || PROMPTS['egyptian'];
+    
+    // Replace variables in the prompt template
+    prompt = promptTemplate
+      .replace(/\$\{examplesText\}/g, examplesText)
+      .replace(/\$\{topic\}/g, topic)
+      .replace(/\$\{selectedHook\}/g, selectedHook)
+      .replace(/\$\{researchData\}/g, researchData)
+      .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
+  }
 
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
@@ -555,7 +777,7 @@ ${ex.script}
       }],
       generationConfig: {
         maxOutputTokens: durationConfig.maxTokens,
-        temperature: 0.7,
+        temperature: actionType === 'refine' ? 0.5 : 0.7, // Lower temp for refine mode
       }
     },
     {
@@ -580,14 +802,14 @@ ${ex.script}
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .trim();
   
-  // FIX #3: Word count validation
+  // Word count validation
   let wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
   const targetWords = durationConfig.words;
   
   // If script is too short (less than 80% of target), expand it
   if (wordCount < targetWords * 0.8) {
     console.log(`   ⚠️ Script too short (${wordCount}/${targetWords}). Expanding...`);
-    script = await expandScript(script, researchData, selectedHook, targetWords, niche, duration, language, costTracker);
+    script = await expandScript(script, researchData, selectedHook, targetWords, niche, duration, language, costTracker, actionType, userInstructions);
     wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Expanded to ${wordCount} words`);
   }
@@ -599,7 +821,7 @@ ${ex.script}
 // 📏 EXPAND SHORT SCRIPTS
 // ============================================
 
-async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30', language = 'egyptian', costTracker = null) {
+async function expandScript(shortScript, research, selectedHook, targetWords, niche, duration = '30', language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
   const examples = getNicheExamples(niche, duration, language);
   const examplesText = examples.slice(0, 2).map((ex, idx) => `
 --- Example #${idx + 1} ---
@@ -618,6 +840,13 @@ ${ex.script}
   };
   const langConfig = langInstructions[language] || langInstructions['egyptian'];
   
+  // Use appropriate source based on action type
+  const sourceContent = actionType === 'refine' 
+    ? `User's original draft (ONLY use information from here):
+${userInstructions}`
+    : `Full research (use additional info from here):
+${research}`;
+  
   const prompt = `The script is too short and needs to be expanded.
 
 Current script (${currentWords} words):
@@ -625,19 +854,18 @@ ${shortScript}
 
 Target: ${targetWords} words (±10%)
 
-Full research (use additional info from here):
-${research}
+${sourceContent}
 
 Reference examples (for style):
 ${examplesText}
 
 Requirements:
 - Expand the script to ${targetWords} words
-- Add details, examples, comparisons from the research
+- ${actionType === 'refine' ? 'Add more detail from the user\'s draft ONLY' : 'Add details, examples, comparisons from the research'}
 - Keep the same fast-paced, engaging style
 - Start with the same Hook: "${selectedHook}"
 - ❌ Don't repeat existing information
-- ✅ Add new information from the research
+- ${actionType === 'refine' ? '❌ DO NOT add information not in the user\'s draft' : '✅ Add new information from the research'}
 - ❌ Never say "unspecified" or "unknown"
 
 ${langConfig.instruction}:`;
@@ -648,8 +876,8 @@ ${langConfig.instruction}:`;
       {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          maxOutputTokens: targetWords * 8, // More tokens for longer script
-          temperature: 0.7,
+          maxOutputTokens: targetWords * 8,
+          temperature: actionType === 'refine' ? 0.5 : 0.7,
         }
       },
       { headers: { 'Content-Type': 'application/json' } }
@@ -671,14 +899,9 @@ ${langConfig.instruction}:`;
     return expanded;
   } catch (e) {
     console.error('   ⚠️ Expand error:', e.message);
-    return shortScript; // Return original if expansion fails
+    return shortScript;
   }
 }
-
-// ============================================
-// ❌ REMOVED: Fact-Check & Fix (Now in writeScript)
-// ============================================
-// الكاتب بقى صارم ومبيألفش - مش محتاجين Fact-Check منفصل
 
 // ============================================
 // 🧹 STAGE 6: STYLE CHECK & CLEANUP
@@ -689,7 +912,6 @@ function styleCleanup(script, selectedHook) {
   
   // Ensure hook is at the start
   if (!cleaned.startsWith(selectedHook)) {
-    // Try to find and replace wrong hook
     const firstLine = cleaned.split('\n')[0];
     if (firstLine.length < 200) {
       cleaned = cleaned.replace(firstLine, selectedHook);
@@ -708,7 +930,7 @@ function styleCleanup(script, selectedHook) {
     .replace(/[━═─—–_]{3,}/g, '')
     .replace(/^Caption:.*$/gim, '')
     .replace(/^#.*$/gim, '')
-    .replace(/🇪🇬/g, '') // Remove flag unless topic is national
+    .replace(/🇪🇬/g, '')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   
@@ -722,7 +944,6 @@ function styleCleanup(script, selectedHook) {
 async function generateVisualPrompts(topic, script, language = 'egyptian', costTracker = null) {
   console.log(`   🖼️ Generating visual prompts optimized for FLUX (${language})...`);
   
-  // Cultural context based on script language
   const culturalContexts = {
     egyptian: 'Characters MUST be Egyptian with Egyptian features and modern Egyptian clothing. Environment should be Egyptian (Cairo streets, Egyptian homes, Egyptian landmarks). Include Egyptian cultural elements.',
     gulf: 'Characters MUST be Gulf Arab wearing traditional thobe/kandura and ghutra/shemagh for men, or modest Gulf fashion for women. Environment should be Gulf/Saudi/UAE (modern Gulf cities, desert landscapes, traditional markets). Include Gulf cultural elements.',
@@ -791,7 +1012,6 @@ Output Schema (JSON Only):
       }
     );
     
-    // Track cost
     if (costTracker && response.data.usage) {
       trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
     }
@@ -804,26 +1024,14 @@ Output Schema (JSON Only):
       const parsed = JSON.parse(match[0]);
       if (parsed.hook && parsed.content && parsed.cta) {
         console.log('   ✓ Visual prompts parsed successfully');
-        console.log(`   🎬 Hook: ${parsed.hook.prompt.substring(0, 50)}...`);
-        console.log(`   🎬 Content: ${parsed.content.prompt.substring(0, 50)}...`);
-        console.log(`   🎬 CTA: ${parsed.cta.prompt.substring(0, 50)}...`);
         return parsed;
-      } else {
-        console.log('   ⚠️ Parsed JSON missing required fields (hook/content/cta)');
-        console.log('   📝 Parsed:', JSON.stringify(parsed).substring(0, 200));
       }
-    } else {
-      console.log('   ⚠️ No JSON found in response');
-      console.log('   📝 Raw text:', text.substring(0, 200));
     }
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
-    if (e.response) {
-      console.error('   📝 API Error:', e.response.status, e.response.data);
-    }
   }
   
-  // Fallback with Flux-optimized prompts
+  // Fallback
   console.log('   ⚠️ Using fallback visual prompts');
   return {
     hook: { 
@@ -866,23 +1074,31 @@ async function generateScript(rawTopic, language, niche, duration) {
   const startTime = Date.now();
   
   try {
-    // Stage 0: Extract Core Topic (if input is long)
-    const topic = await extractTopic(rawTopic, language);
+    // Stage 0: Extract Core Topic & Detect Intent
+    const extracted = await extractTopic(rawTopic, language);
+    const { topic, action_type, user_instructions } = extracted;
     console.log(`   ✓ Topic: "${topic}"`);
+    console.log(`   ✓ Mode: ${action_type.toUpperCase()}`);
     
-    // Stage 1: Research (Fast)
-    const researchData = await research(topic);
-    console.log('   ✓ Research done');
+    // Stage 1: Research (SKIP if refine mode)
+    let researchData;
+    if (action_type === 'refine') {
+      console.log('   ⏭️ Skipping research (Refine Mode - using user content)');
+      researchData = user_instructions; // Use user's draft as the "research"
+    } else {
+      researchData = await research(topic);
+      console.log('   ✓ Research done');
+    }
     
-    // Stage 2: Generate Hooks
-    const hooks = await generateHooks(topic, researchData, niche, language);
+    // Stage 2: Generate Hooks (with action_type)
+    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions);
     console.log(`   ✓ Hooks: ${hooks.length}`);
     
     // Select first hook as main
     const selectedHook = hooks[0] || topic;
     
-    // Stage 3: Write Script (Zero Hallucination - No Fact-Check needed!)
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration);
+    // Stage 3: Write Script (with action_type)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Stage 4: Style Cleanup
@@ -890,7 +1106,7 @@ async function generateScript(rawTopic, language, niche, duration) {
     const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Cleaned: ${wordCount} words`);
     
-    // Stage 5: Visual Prompts (with cultural context)
+    // Stage 5: Visual Prompts
     const visualPrompts = await generateVisualPrompts(topic, script, language);
     console.log('   ✓ Visual prompts ready');
     
@@ -904,7 +1120,7 @@ async function generateScript(rawTopic, language, niche, duration) {
       success: true,
       script,
       wordCount,
-      topic, // The extracted core topic
+      topic,
       hook: selectedHook,
       alternativeHooks: {
         shock: hooks[1] || '',
@@ -914,6 +1130,7 @@ async function generateScript(rawTopic, language, niche, duration) {
       visualPrompts,
       research: researchData.substring(0, 500),
       pipeline: 'fast-v4',
+      mode: action_type, // Include mode in response
       elapsed: `${elapsed}s`,
     };
     
@@ -931,8 +1148,8 @@ app.get('/', (req, res) => {
   res.json({ 
     status: 'ok', 
     message: 'Scripty API - Fast Pipeline V4 (2-Step)',
-    niches: Object.keys(NICHE_EXAMPLES.categories || {}),
-    features: ['Zero Hallucination', 'Hook Selection', '2-Step Pipeline'],
+    niches: Object.keys(SCRIPTS['egyptian']?.['30']?.categories || {}),
+    features: ['Zero Hallucination', 'Hook Selection', '2-Step Pipeline', 'Refine Mode'],
   });
 });
 
@@ -959,16 +1176,24 @@ app.post('/api/generate-hooks', async (req, res) => {
   const costTracker = createCostTracker();
   
   try {
-    // Extract core topic (in target language for better research results)
-    const extractedTopic = await extractTopic(topic, language, costTracker);
+    // Extract core topic & detect intent
+    const extracted = await extractTopic(topic, language, costTracker);
+    const { topic: extractedTopic, action_type, user_instructions } = extracted;
     console.log(`   ✓ Topic: "${extractedTopic}"`);
+    console.log(`   ✓ Mode: ${action_type.toUpperCase()}`);
     
-    // Research
-    const researchData = await research(extractedTopic, costTracker);
-    console.log('   ✓ Research done');
+    // Research (SKIP if refine mode)
+    let researchData;
+    if (action_type === 'refine') {
+      console.log('   ⏭️ Skipping research (Refine Mode)');
+      researchData = user_instructions;
+    } else {
+      researchData = await research(extractedTopic, costTracker);
+      console.log('   ✓ Research done');
+    }
     
-    // Generate 3 hooks (with language)
-    const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker);
+    // Generate 3 hooks (with action_type)
+    const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions);
     console.log(`   ✓ Generated ${hooks.length} hooks`);
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -980,6 +1205,8 @@ app.post('/api/generate-hooks', async (req, res) => {
       topic: extractedTopic,
       hooks: hooks,
       research: researchData,
+      mode: action_type, // Include mode in response
+      user_instructions: user_instructions, // Pass through for Step 2
       elapsed: `${elapsed}s`,
       cost: costTracker.total.toFixed(4),
     });
@@ -1000,8 +1227,10 @@ app.post('/api/write-script', async (req, res) => {
     selectedHook,
     research: researchData,
     niche = 'general',
-    duration = '30',  // Default to 30s
+    duration = '30',
     language = 'egyptian',
+    mode = 'research', // NEW: Accept mode from Step 1
+    user_instructions = '', // NEW: Accept user_instructions from Step 1
   } = req.body;
   
   if (!topic || !selectedHook || !researchData) {
@@ -1018,14 +1247,15 @@ app.post('/api/write-script', async (req, res) => {
   console.log(`🎣 Hook: ${selectedHook.substring(0, 50)}...`);
   console.log(`⏱️ Duration: ${duration}s`);
   console.log(`🌍 Language: ${language}`);
+  console.log(`🎯 Mode: ${mode.toUpperCase()}`);
   console.log('═══════════════════════════════════════');
   
   const startTime = Date.now();
   const costTracker = createCostTracker();
   
   try {
-    // Write script with selected hook (with language)
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker);
+    // Write script with selected hook (with mode)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker, mode, user_instructions);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Style cleanup
@@ -1033,7 +1263,7 @@ app.post('/api/write-script', async (req, res) => {
     const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Cleaned: ${wordCount} words`);
     
-    // Visual prompts (with cultural context)
+    // Visual prompts
     const visualPrompts = await generateVisualPrompts(topic, script, language, costTracker);
     console.log('   ✓ Visual prompts ready');
     
@@ -1048,7 +1278,8 @@ app.post('/api/write-script', async (req, res) => {
       wordCount,
       hook: selectedHook,
       visualPrompts,
-      durationRange: durationConfig.displayRange,  // "30-40 ثانية" or "45-60 ثانية"
+      durationRange: durationConfig.displayRange,
+      mode: mode, // Include mode in response
       elapsed: `${elapsed}s`,
       cost: costTracker.total.toFixed(4),
     });
@@ -1064,7 +1295,7 @@ app.post('/api/generate', async (req, res) => {
     topic, 
     language = 'egyptian', 
     niche = 'general',
-    duration = '30'  // Default to 30s
+    duration = '30'
   } = req.body;
   
   if (!topic) {
@@ -1076,7 +1307,7 @@ app.post('/api/generate', async (req, res) => {
       topic, 
       language, 
       niche,
-      parseInt(duration) || 30  // Default to 30s
+      parseInt(duration) || 30
     );
     
     res.json(result);
@@ -1102,7 +1333,6 @@ app.post('/api/trending-ideas', async (req, res) => {
   console.log(`💡 Generating ${count} trending ideas for ${niche} in ${language}...`);
   const costTracker = createCostTracker();
   
-  // Niche names per language
   const nicheNamesPerLang = {
     egyptian: {
       general: 'مواضيع عامة',
@@ -1149,7 +1379,6 @@ app.post('/api/trending-ideas', async (req, res) => {
   const nicheNames = nicheNamesPerLang[language] || nicheNamesPerLang.egyptian;
   const nicheName = nicheNames[niche] || niche;
   
-  // Build prompt based on language
   let prompt, systemPrompt;
   
   if (language === 'egyptian') {
@@ -1192,7 +1421,6 @@ JSON uniquement:
     systemPrompt = 'Tu es un expert en contenu français. Suggère des idées virales en français. JSON uniquement.';
     
   } else {
-    // English (default)
     prompt = `Suggest ${count} viral video ideas in the "${nicheName}" niche for social media.
 
 Requirements:
@@ -1224,7 +1452,6 @@ JSON only:
       }
     );
     
-    // Track cost
     if (response.data.usage) {
       trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
       console.log(`   💰 Ideas cost: $${costTracker.total.toFixed(4)}`);
@@ -1242,7 +1469,6 @@ JSON only:
     console.error('   ⚠️ Trending ideas error:', e.message);
   }
   
-  // Fallback ideas per language
   const fallbackIdeasPerLang = {
     egyptian: {
       general: [
@@ -1337,7 +1563,6 @@ app.post('/api/generate-image', async (req, res) => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // Create prediction with random seed for variety
       const randomSeed = Math.floor(Math.random() * 2147483647);
       const createResponse = await axios.post(
         'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions',
@@ -1356,10 +1581,8 @@ app.post('/api/generate-image', async (req, res) => {
         }
       );
       
-      // Track Flux cost
       trackFluxCost(costTracker);
       
-      // Get image URL from output
       const output = createResponse.data.output;
       const imageUrl = Array.isArray(output) ? output[0] : output;
       
@@ -1368,9 +1591,8 @@ app.post('/api/generate-image', async (req, res) => {
       return;
     } catch (e) {
       lastError = e;
-      // Rate limit (429) - wait and retry
       if (e.response?.status === 429 && attempt < maxRetries) {
-        const waitTime = attempt * 2000; // 2s, 4s, 6s
+        const waitTime = attempt * 2000;
         console.log(`   ⏳ Rate limited, waiting ${waitTime/1000}s before retry ${attempt + 1}/${maxRetries}...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
         continue;
@@ -1395,6 +1617,7 @@ app.get('/api/config', (req, res) => {
     defaultDuration: '30',
     languages: SUPPORTED_LANGUAGES,
     defaultLanguage: 'egyptian',
+    modes: ['research', 'refine'], // NEW: Include supported modes
   });
 });
 
@@ -1497,10 +1720,8 @@ app.post('/api/chat', async (req, res) => {
   console.log(`   History: ${history.length} messages`);
   
   try {
-    // Build conversation for Gemini
     const contents = [];
     
-    // Add history
     for (const msg of history) {
       if (msg.role === 'user') {
         contents.push({ role: 'user', parts: [{ text: msg.content }] });
@@ -1509,17 +1730,14 @@ app.post('/api/chat', async (req, res) => {
       }
     }
     
-    // Add current message
     contents.push({ role: 'user', parts: [{ text: message }] });
     
-    // Build the full prompt with system instruction
     const fullContents = [
       { role: 'user', parts: [{ text: CHAT_SYSTEM_INSTRUCTION }] },
       { role: 'model', parts: [{ text: 'Understood! I am your Viral Content Expert. How can I help you create amazing content today?' }] },
       ...contents
     ];
     
-    // Call Gemini API (use gemini-2.5-flash-lite for chat - faster responses)
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
@@ -1537,7 +1755,6 @@ app.post('/api/chat', async (req, res) => {
       }
     );
     
-    // Extract response text
     const candidates = response.data.candidates;
     if (!candidates || candidates.length === 0) {
       throw new Error('No response from AI');
@@ -1560,7 +1777,6 @@ app.post('/api/chat', async (req, res) => {
     console.error('   ⚠️ Chat error:', error.message);
     console.error('   ⚠️ Full error:', error.response?.data || error);
     
-    // Handle specific errors
     if (error.response?.status === 429) {
       return res.status(429).json({ 
         success: false, 
@@ -1591,5 +1807,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Scripty API running on port ${PORT}`);
   console.log(`📚 Languages: ${SUPPORTED_LANGUAGES.join(', ')}`);
   console.log(`⏱️ Durations: ${SUPPORTED_DURATIONS.map(d => d + 's').join(', ')}`);
-  console.log(`🔥 Features: Zero Hallucination, Multi-Language, 3-Stage Pipeline`);
+  console.log(`🔥 Features: Zero Hallucination, Multi-Language, 3-Stage Pipeline, Refine Mode`);
 });
