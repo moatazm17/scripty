@@ -1153,40 +1153,64 @@ app.get('/', (req, res) => {
 // ============================================
 
 app.post('/api/generate-hooks', async (req, res) => {
-  const { topic, language = 'egyptian', niche = 'general' } = req.body;
+  const { 
+    topic, 
+    language = 'egyptian', 
+    niche = 'general',
+    // Optional params for regenerating hooks (skip research)
+    existingResearch = null,
+    existingTopic = null,
+    existingMode = null,
+    existingUserInstructions = null,
+  } = req.body;
   
   if (!topic) {
     return res.status(400).json({ success: false, error: 'Topic is required' });
   }
   
+  // Check if this is a regenerate-only request (has existing research)
+  const isRegenerateOnly = existingResearch && existingTopic;
+  
   console.log('');
   console.log('═══════════════════════════════════════');
-  console.log('🎣 Step 1: Generate Hooks');
+  console.log(isRegenerateOnly ? '🔄 Regenerate Hooks Only' : '🎣 Step 1: Generate Hooks');
   console.log(`📌 Topic: ${topic.substring(0, 80)}...`);
   console.log(`🎯 Niche: ${niche}`);
   console.log(`🌍 Language: ${language}`);
+  if (isRegenerateOnly) console.log('⚡ Skipping research (using existing data)');
   console.log('═══════════════════════════════════════');
   
   const startTime = Date.now();
   const costTracker = createCostTracker();
   
   try {
-    // Stage 0A: Detect Mode (simple code-based, no AI)
-    const action_type = detectMode(topic);
-    const user_instructions = action_type === 'refine' ? topic : '';
+    let extractedTopic, researchData, action_type, user_instructions;
     
-    // Stage 0B: Extract Core Topic (simple - just topic & angle)
-    const extractedTopic = await extractTopic(topic, language, costTracker);
-    console.log(`   ✓ Topic: "${extractedTopic}"`);
-    
-    // Research (SKIP if refine mode)
-    let researchData;
-    if (action_type === 'refine') {
-      console.log('   ⏭️ Skipping research (Refine Mode)');
-      researchData = user_instructions;
+    if (isRegenerateOnly) {
+      // Use existing data (regenerate hooks only)
+      extractedTopic = existingTopic;
+      researchData = existingResearch;
+      action_type = existingMode || 'research';
+      user_instructions = existingUserInstructions || '';
+      console.log('   ⏭️ Using existing research data');
     } else {
-      researchData = await research(topic, extractedTopic, costTracker); // Pass both raw input and extracted topic
-      console.log('   ✓ Research done');
+      // Full flow: detect mode, extract topic, research
+      // Stage 0A: Detect Mode (simple code-based, no AI)
+      action_type = detectMode(topic);
+      user_instructions = action_type === 'refine' ? topic : '';
+      
+      // Stage 0B: Extract Core Topic (simple - just topic & angle)
+      extractedTopic = await extractTopic(topic, language, costTracker);
+      console.log(`   ✓ Topic: "${extractedTopic}"`);
+      
+      // Research (SKIP if refine mode)
+      if (action_type === 'refine') {
+        console.log('   ⏭️ Skipping research (Refine Mode)');
+        researchData = user_instructions;
+      } else {
+        researchData = await research(topic, extractedTopic, costTracker); // Pass both raw input and extracted topic
+        console.log('   ✓ Research done');
+      }
     }
     
     // Generate 3 hooks (with action_type)
@@ -1194,7 +1218,7 @@ app.post('/api/generate-hooks', async (req, res) => {
     console.log(`   ✓ Generated ${hooks.length} hooks`);
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`✨ Step 1 Complete in ${elapsed}s`);
+    console.log(`✨ ${isRegenerateOnly ? 'Regenerate' : 'Step 1'} Complete in ${elapsed}s`);
     logTotalCost(costTracker);
     
     res.json({
