@@ -1722,8 +1722,23 @@ Then output the action tag.
 - ✅ Guide to pick topic + angle
 
 # ACTION OUTPUT
-When user confirms, append:
-[ACTION:GENERATE_SCRIPT]{"topic":"TOPIC_WITH_ANGLE","lang":"LANGUAGE_ID"}
+When user confirms, append this tag with a **DETAILED topic** (30-50 words):
+
+[ACTION:GENERATE_SCRIPT]{"topic":"DETAILED_TOPIC_WITH_STRUCTURE","lang":"LANGUAGE_ID"}
+
+**The "topic" field MUST include:**
+1. The main subject
+2. The agreed angles/hooks (summarized)
+3. Key points in order
+
+**Example of GOOD topic:**
+❌ Bad: "المونوريل في مصر"
+✅ Good: "المونوريل في مصر - هوك: سرعة المستقبل، ثم خيال علمي أصبح حقيقة، ثم حل للزحمة بالمقارنة، ثم تجربة الركوب، ختام CTA"
+
+❌ Bad: "Real estate mistakes"
+✅ Good: "3 mistakes first-time buyers make - hook: she lost $50K, then the 3 mistakes with examples, then how to avoid them, CTA save this"
+
+**Why this matters:** The app uses this to research AND write the script. More detail = better script.
 
 "lang" values: "egyptian", "gulf", "english", "french"
 
@@ -1760,7 +1775,7 @@ Assistant: اختيار صح! 💡 الـ structure اللي بيشتغل:
 
 User: يلا
 Assistant: يلا بينا! 🚀
-[ACTION:GENERATE_SCRIPT]{"topic":"40% من الوظائف هتختفي بسبب AI - إزاي تحمي نفسك","lang":"egyptian"}
+[ACTION:GENERATE_SCRIPT]{"topic":"40% من الوظائف هتختفي بسبب AI - هوك بالرقم الصادم، ثم وظائف بالاسم (محاسبين وكتاب)، ثم 3 مهارات تحميك، ختام تابعني","lang":"egyptian"}
 
 **Example 3 (English - deep):**
 User: I want to make a video about real estate
@@ -1784,7 +1799,32 @@ Ready? Hit Generate!
 
 User: yes
 Assistant: Let's go! 🚀
-[ACTION:GENERATE_SCRIPT]{"topic":"How she lost $50K on her first home - avoid this mistake","lang":"english"}
+[ACTION:GENERATE_SCRIPT]{"topic":"She lost $50K on her first home - hook with the shocking loss, then the 3 mistakes she made, then how to protect yourself, CTA save this video","lang":"english"}
+
+**Example 4 (Arabic - detailed topic):**
+User: عايز أعمل فيديو عن المونوريل
+Assistant: المونوريل موضوع نار! 🚄 زوايا ممكن تشتغل:
+
+• **خيال علمي**: مصر بتدخل المستقبل بتقنية جديدة
+• **حل الزحمة**: مقارنة سرعة المونوريل vs الطريق العادي
+• **تجربة الركوب**: من جوه - السرعة والمنظر
+
+تحب تدمجهم ولا تركز على واحدة؟
+
+User: ادمجهم
+Assistant: اختيار ممتاز! 💡 الهيكل:
+
+• **Hook**: "مصر بتلحق المستقبل" + لقطة سريعة
+• **خيال علمي**: مشاهد من المونوريل الحديث
+• **حل الزحمة**: مقارنة زحمة الطريق vs المونوريل
+• **تجربة**: لقطات من الداخل - السرعة والراحة
+• **CTA**: جربه وشاركنا رأيك
+
+جاهز؟
+
+User: يلا
+Assistant: تمام! 🚀
+[ACTION:GENERATE_SCRIPT]{"topic":"المونوريل في مصر - هوك سرعة المستقبل، ثم خيال علمي بمشاهد حديثة، ثم مقارنة الزحمة، ثم تجربة الركوب من الداخل، ختام CTA جربه","lang":"egyptian"}
 `;
 
 app.post('/api/chat', async (req, res) => {
