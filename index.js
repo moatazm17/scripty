@@ -1706,23 +1706,32 @@ Just confirm + output the tag immediately:
 - ✅ Guide to pick topic + angle
 
 # ACTION OUTPUT
-When user confirms, append this tag with a **DETAILED topic** (30-50 words):
+When user confirms, append this tag with a **topic summary** (20-40 words):
 
-[ACTION:GENERATE_SCRIPT]{"topic":"DETAILED_TOPIC_WITH_STRUCTURE","lang":"LANGUAGE_ID"}
+[ACTION:GENERATE_SCRIPT]{"topic":"TOPIC_SUMMARY","lang":"LANGUAGE_ID"}
 
 **The "topic" field MUST include:**
 1. The main subject
-2. The agreed angles/hooks (summarized)
-3. Key points in order
+2. The chosen angle/approach
+3. Key points to cover (briefly)
 
-**Example of GOOD topic:**
-❌ Bad: "المونوريل في مصر"
-✅ Good: "المونوريل في مصر - هوك: سرعة المستقبل، ثم خيال علمي أصبح حقيقة، ثم حل للزحمة بالمقارنة، ثم تجربة الركوب، ختام CTA"
+**⚠️ DO NOT include in the topic:**
+- ❌ Specific songs or music names
+- ❌ Visual/camera instructions (like "لقطة سريعة")
+- ❌ Exact hook wording (the script system writes hooks)
+- ❌ Detailed script structure with CTAs
 
-❌ Bad: "Real estate mistakes"
-✅ Good: "3 mistakes first-time buyers make - hook: she lost $50K, then the 3 mistakes with examples, then how to avoid them, CTA save this"
+The script generation system will handle hooks, visuals, and structure automatically.
 
-**Why this matters:** The app uses this to research AND write the script. More detail = better script.
+**Examples:**
+❌ Bad: "رقص بلدي - هوك الحنين للزمن الجميل (أغنية قديمة), لقطة سريعة للحركة..."
+✅ Good: "الرقص البلدي - الفرق بين الأصيل والحديث، أشهر الحركات، أخطاء شائعة"
+
+❌ Bad: "المونوريل - هوك: سرعة المستقبل + لقطة سريعة، ثم خيال علمي، ثم مقارنة، ختام CTA"
+✅ Good: "المونوريل في مصر - زاوية المستقبل والخيال العلمي، مقارنة بالمواصلات العادية، تجربة الركوب"
+
+❌ Bad: "Real estate - hook: she lost $50K + crying face, then show documents..."
+✅ Good: "3 mistakes first-time home buyers make - shock angle with real money examples"
 
 "lang" values: "egyptian", "gulf", "english", "french"
 
@@ -1814,7 +1823,7 @@ Assistant: 🔥 AI موضوع واسع، خليني أضيّقلك على زاو
 User: الأولى
 Assistant: اختيار صح! 💡 دوس Generate وهيتكتبلك كامل 🚀
 
-[ACTION:GENERATE_SCRIPT]{"topic":"40% من الوظائف هتختفي بسبب AI - هوك بالرقم الصادم، ثم وظائف بالاسم (محاسبين وكتاب)، ثم 3 مهارات تحميك، ختام تابعني","lang":"egyptian"}
+[ACTION:GENERATE_SCRIPT]{"topic":"تأثير الذكاء الاصطناعي على الوظائف - زاوية صادمة بالأرقام، الوظائف المهددة، مهارات للحماية","lang":"egyptian"}
 
 **Example 3 (English - deep):**
 User: I want to make a video about real estate
@@ -1829,7 +1838,7 @@ Which feels right for your audience?
 User: the second one
 Assistant: Smart pick! 💡 Hit Generate and let's go! 🚀
 
-[ACTION:GENERATE_SCRIPT]{"topic":"She lost $50K on her first home - hook with the shocking loss, then the 3 mistakes she made, then how to protect yourself, CTA save this video","lang":"english"}
+[ACTION:GENERATE_SCRIPT]{"topic":"First-time home buyer mistakes - horror story angle, real money loss example, 3 common mistakes, how to protect yourself","lang":"english"}
 
 **Example 4 (Arabic - detailed topic):**
 User: عايز أعمل فيديو عن المونوريل
@@ -1843,7 +1852,8 @@ Assistant: المونوريل موضوع نار! 🚄 زوايا ممكن تشت
 
 User: ادمجهم
 Assistant: اختيار ممتاز! 💡 دوس Generate وهيتكتب كامل 🚀
-[ACTION:GENERATE_SCRIPT]{"topic":"المونوريل في مصر - هوك سرعة المستقبل، ثم خيال علمي بمشاهد حديثة، ثم مقارنة الزحمة، ثم تجربة الركوب من الداخل، ختام CTA جربه","lang":"egyptian"}
+
+[ACTION:GENERATE_SCRIPT]{"topic":"المونوريل في مصر - زاوية المستقبل والخيال العلمي، مقارنة بالمواصلات العادية، تجربة الركوب","lang":"egyptian"}
 `;
 
 app.post('/api/chat', async (req, res) => {
