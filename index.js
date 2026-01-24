@@ -209,137 +209,113 @@ const STYLE_GUIDE = `
 `;
 
 // ============================================
-// 🧠 STAGE 0: TOPIC EXTRACTION (Understand User Intent)
+// 🎯 STAGE 0A: MODE DETECTION (Simple Code-Based)
+// ============================================
+
+function detectMode(rawInput) {
+  const text = rawInput.trim();
+  const wordCount = text.split(/\s+/).length;
+  
+  // Check for bullet points or numbered lists
+  const hasBullets = /[-•●★]\s/.test(text);
+  const hasNumberedList = /^\d+[.)]\s/m.test(text);
+  
+  // Check for explicit refine keywords
+  const refineKeywords = [
+    'حول ده', 'اكتبلي', 'عدل على', 'حوله', 'اعمله سكريبت',
+    'turn this', 'rewrite', 'convert this', 'make this a script',
+    'transforme', 'réécris', 'converti'
+  ];
+  const hasRefineKeyword = refineKeywords.some(kw => text.toLowerCase().includes(kw.toLowerCase()));
+  
+  // Decision logic
+  if (wordCount > 60) {
+    console.log(`   🎯 Mode: REFINE (${wordCount} words > 60)`);
+    return 'refine';
+  }
+  
+  if (hasBullets || hasNumberedList) {
+    console.log(`   🎯 Mode: REFINE (has bullets/numbered list)`);
+    return 'refine';
+  }
+  
+  if (hasRefineKeyword) {
+    console.log(`   🎯 Mode: REFINE (found refine keyword)`);
+    return 'refine';
+  }
+  
+  console.log(`   🎯 Mode: RESEARCH (${wordCount} words, no refine indicators)`);
+  return 'research';
+}
+
+// ============================================
+// 🧠 STAGE 0B: TOPIC EXTRACTION (Simple - Just Topic & Angle)
 // ============================================
 
 async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
-  console.log('   🧠 Understanding topic & detecting intent...');
+  console.log('   🧠 Understanding topic...');
   
-  // Language-specific prompts for topic extraction with intent detection
+  // Language-specific prompts for topic extraction (SIMPLE - no mode detection)
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع ذكي. افهم نية المستخدم وحدد نوع الطلب.',
-      prompt: `حلل المدخل ده وحدد:
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح بالعامية المصرية.',
+      prompt: `افهم الموضوع ده واستخرج:
 1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. نوع الطلب (action_type):
-   - "refine" = لو المستخدم كاتب مسودة، أو outline، أو نقاط محددة، أو تعليمات تفصيلية عايز يتحولوا لسكريبت
-   - "research" = لو المستخدم كاتب عنوان عام أو موضوع محتاج بحث
-3. تعليمات المستخدم (user_instructions): النص الأصلي اللي المستخدم كتبه لو كان refine، أو فاضي لو research
-
-علامات إن الطلب "refine":
-- نص طويل (أكتر من 50 كلمة)
-- نقاط مرقمة أو bullet points
-- تفاصيل محددة وأرقام
-- كلمات زي: "حول ده لسكريبت"، "اكتب ده بأسلوب"، "عدل على"
-
-علامات إن الطلب "research":
-- عنوان قصير (أقل من 20 كلمة)
-- موضوع عام من غير تفاصيل
-- سؤال أو فكرة محتاجة بحث
+2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
 
 النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "action_type": "research أو refine", "user_instructions": "النص الأصلي لو refine أو فاضي"}`
+{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع ذكي. افهم نية المستخدم وحدد نوع الطلب.',
-      prompt: `حلل المدخل هذا وحدد:
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح باللهجة الخليجية.',
+      prompt: `افهم الموضوع هذا واستخرج:
 1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. نوع الطلب (action_type):
-   - "refine" = لو المستخدم كاتب مسودة، أو outline، أو نقاط محددة
-   - "research" = لو المستخدم كاتب عنوان عام يحتاج بحث
-3. تعليمات المستخدم (user_instructions): النص الأصلي لو كان refine، أو فاضي لو research
-
-علامات إن الطلب "refine":
-- نص طويل (أكثر من 50 كلمة)
-- نقاط مرقمة أو bullet points
-- تفاصيل محددة وأرقام
-
-علامات إن الطلب "research":
-- عنوان قصير (أقل من 20 كلمة)
-- موضوع عام بدون تفاصيل
+2. الزاوية أو الـ angle (وش اللي المستخدم يبي يركز عليه)
 
 النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "action_type": "research أو refine", "user_instructions": "النص الأصلي لو refine أو فاضي"}`
+{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
     },
     french: {
-      system: 'Tu es un analyste intelligent. Comprends l\'intention de l\'utilisateur.',
-      prompt: `Analyse cette entrée et détermine:
-1. Le sujet principal (une phrase claire)
-2. Le type d'action (action_type):
-   - "refine" = si l'utilisateur a écrit un brouillon, outline, ou instructions détaillées
-   - "research" = si l'utilisateur a écrit un titre général qui nécessite une recherche
-3. Instructions utilisateur (user_instructions): le texte original si refine, sinon vide
-
-Signes de "refine":
-- Texte long (plus de 50 mots)
-- Points numérotés ou bullet points
-- Détails spécifiques et chiffres
-
-Signes de "research":
-- Titre court (moins de 20 mots)
-- Sujet général sans détails
+      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
+      prompt: `Analyse ce sujet et extrais:
+1. Le sujet principal (une phrase claire en Français)
+2. L'angle (sur quoi l'utilisateur veut se concentrer)
 
 Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "action_type": "research ou refine", "user_instructions": "texte original si refine ou vide"}`
+{"topic": "Le sujet clair", "angle": "L'angle"}`
     },
     frensh: {
-      system: 'Tu es un analyste intelligent. Comprends l\'intention de l\'utilisateur.',
-      prompt: `Analyse cette entrée et détermine:
-1. Le sujet principal (une phrase claire)
-2. Le type d'action (action_type):
-   - "refine" = si l'utilisateur a écrit un brouillon, outline, ou instructions détaillées
-   - "research" = si l'utilisateur a écrit un titre général qui nécessite une recherche
-3. Instructions utilisateur (user_instructions): le texte original si refine, sinon vide
-
-Signes de "refine":
-- Texte long (plus de 50 mots)
-- Points numérotés ou bullet points
-- Détails spécifiques et chiffres
-
-Signes de "research":
-- Titre court (moins de 20 mots)
-- Sujet général sans détails
+      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
+      prompt: `Analyse ce sujet et extrais:
+1. Le sujet principal (une phrase claire en Français)
+2. L'angle (sur quoi l'utilisateur veut se concentrer)
 
 Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "action_type": "research ou refine", "user_instructions": "texte original si refine ou vide"}`
+{"topic": "Le sujet clair", "angle": "L'angle"}`
     },
     english: {
-      system: 'You are an intelligent topic analyst. Understand user intent and detect request type.',
-      prompt: `Analyze this input and determine:
-1. The main topic (one clear sentence)
-2. Action type (action_type):
-   - "refine" = if user provided a draft, outline, bullet points, or detailed instructions to convert to script
-   - "research" = if user provided a general title/topic that needs research
-3. User instructions (user_instructions): the original text if refine, or empty if research
-
-Signs of "refine":
-- Long text (more than 50 words)
-- Numbered points or bullet points
-- Specific details and numbers
-- Words like: "turn this into a script", "rewrite this", "edit this"
-
-Signs of "research":
-- Short title (less than 20 words)
-- General topic without details
-- Question or idea that needs research
+      system: 'You are a topic analyst. Understand the topic and define it clearly in English.',
+      prompt: `Understand this topic and extract:
+1. The main topic (one clear sentence in English)
+2. The angle (what the user wants to focus on)
 
 Text:
 "${rawInput}"
 
 JSON only:
-{"topic": "The clear topic", "action_type": "research or refine", "user_instructions": "original text if refine or empty"}`
+{"topic": "The clear topic", "angle": "The angle"}`
     }
   };
   
@@ -349,7 +325,7 @@ JSON only:
     'https://api.anthropic.com/v1/messages',
     {
       model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 500,
+      max_tokens: 150,
       system: langConfig.system,
       messages: [{
         role: 'user',
@@ -375,25 +351,15 @@ JSON only:
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      const result = {
-        topic: parsed.topic || rawInput.substring(0, 100),
-        action_type: parsed.action_type === 'refine' ? 'refine' : 'research',
-        user_instructions: parsed.user_instructions || ''
-      };
-      console.log(`   🧠 Topic: "${result.topic}"`);
-      console.log(`   🎯 Action Type: ${result.action_type.toUpperCase()}`);
+      const result = `${parsed.topic} - ${parsed.angle}`;
+      console.log(`   🧠 Understood: "${result}"`);
       return result;
     }
   } catch (e) {
-    console.log('   ⚠️ Parse error, defaulting to research mode');
+    console.log('   ⚠️ Parse error, using raw input');
   }
   
-  // Default fallback: treat as research
-  return {
-    topic: rawInput.substring(0, 100),
-    action_type: 'research',
-    user_instructions: ''
-  };
+  return rawInput;
 }
 
 // ============================================
@@ -1074,11 +1040,13 @@ async function generateScript(rawTopic, language, niche, duration) {
   const startTime = Date.now();
   
   try {
-    // Stage 0: Extract Core Topic & Detect Intent
-    const extracted = await extractTopic(rawTopic, language);
-    const { topic, action_type, user_instructions } = extracted;
+    // Stage 0A: Detect Mode (simple code-based, no AI)
+    const action_type = detectMode(rawTopic);
+    const user_instructions = action_type === 'refine' ? rawTopic : '';
+    
+    // Stage 0B: Extract Core Topic (simple - just topic & angle)
+    const topic = await extractTopic(rawTopic, language);
     console.log(`   ✓ Topic: "${topic}"`);
-    console.log(`   ✓ Mode: ${action_type.toUpperCase()}`);
     
     // Stage 1: Research (SKIP if refine mode)
     let researchData;
@@ -1176,11 +1144,13 @@ app.post('/api/generate-hooks', async (req, res) => {
   const costTracker = createCostTracker();
   
   try {
-    // Extract core topic & detect intent
-    const extracted = await extractTopic(topic, language, costTracker);
-    const { topic: extractedTopic, action_type, user_instructions } = extracted;
+    // Stage 0A: Detect Mode (simple code-based, no AI)
+    const action_type = detectMode(topic);
+    const user_instructions = action_type === 'refine' ? topic : '';
+    
+    // Stage 0B: Extract Core Topic (simple - just topic & angle)
+    const extractedTopic = await extractTopic(topic, language, costTracker);
     console.log(`   ✓ Topic: "${extractedTopic}"`);
-    console.log(`   ✓ Mode: ${action_type.toUpperCase()}`);
     
     // Research (SKIP if refine mode)
     let researchData;
