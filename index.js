@@ -990,7 +990,7 @@ Output Schema (JSON Only):
   try {
     // Using Gemini 2.5 Flash for cost efficiency
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: [{
           role: 'user',
@@ -1462,7 +1462,7 @@ JSON only:
   try {
     // Using Gemini 2.5 Flash for cost efficiency
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: [{
           role: 'user',
