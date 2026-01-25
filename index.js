@@ -322,9 +322,9 @@ JSON only:
   
   const langConfig = langPrompts[language] || langPrompts['egyptian'];
   
-  // Using Gemini 2.5 Flash Lite for cost efficiency
+  // Using Gemini 1.5 Flash 8B for cost efficiency
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
       contents: [{
         role: 'user',
@@ -334,8 +334,7 @@ JSON only:
         parts: [{ text: langConfig.system }]
       },
       generationConfig: {
-        responseMimeType: 'application/json',
-        maxOutputTokens: 150,
+        maxOutputTokens: 200,
       }
     }
   );
@@ -348,12 +347,16 @@ JSON only:
   
   try {
     const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = JSON.parse(text);
-    const result = `${parsed.topic} - ${parsed.angle}`;
-    console.log(`   🧠 Understood: "${result}"`);
-    return result;
+    // Extract JSON from response
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      const result = `${parsed.topic} - ${parsed.angle}`;
+      console.log(`   🧠 Understood: "${result}"`);
+      return result;
+    }
   } catch (e) {
-    console.log('   ⚠️ Parse error, using raw input');
+    console.log('   ⚠️ Parse error, using raw input:', e.message);
   }
   
   return rawInput;
@@ -985,9 +988,9 @@ Output Schema (JSON Only):
 }`;
 
   try {
-    // Using Gemini 2.5 Flash for cost efficiency (biggest cost saver)
+    // Using Gemini 1.5 Flash for cost efficiency and stability
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: [{
           role: 'user',
@@ -997,7 +1000,6 @@ Output Schema (JSON Only):
           parts: [{ text: 'You are a JSON generator. Output valid JSON only. No markdown, no code blocks. Keep prompts concise (40-50 words each).' }]
         },
         generationConfig: {
-          responseMimeType: 'application/json',
           maxOutputTokens: 2500,
         }
       }
@@ -1008,28 +1010,20 @@ Output Schema (JSON Only):
       trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
     }
     
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log('   📝 Visual API response received, length:', text.length);
+    const candidate = response.data.candidates?.[0];
+    const text = candidate?.content?.parts?.[0]?.text || '';
+    console.log('   📝 Visual API response received, length:', text.length, 'finishReason:', candidate?.finishReason);
     
-    // Try direct JSON parse first
-    try {
-      const parsed = JSON.parse(text);
+    // Try to extract JSON with regex
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
       if (parsed.hook && parsed.content && parsed.cta) {
         console.log('   ✓ Visual prompts parsed successfully');
         return parsed;
       }
-    } catch (parseErr) {
-      // Try to extract JSON with regex if direct parse fails
-      console.log('   ⚠️ Direct parse failed, trying regex extraction...');
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (parsed.hook && parsed.content && parsed.cta) {
-          console.log('   ✓ Visual prompts parsed via regex');
-          return parsed;
-        }
-      }
     }
+    console.log('   ⚠️ No valid JSON found in visual response');
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
   }
@@ -1466,9 +1460,9 @@ JSON only:
   }
 
   try {
-    // Using Gemini 2.5 Flash for cost efficiency
+    // Using Gemini 1.5 Flash for cost efficiency and stability
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: [{
           role: 'user',
@@ -1478,7 +1472,6 @@ JSON only:
           parts: [{ text: systemPrompt }]
         },
         generationConfig: {
-          responseMimeType: 'application/json',
           maxOutputTokens: 1000,
         }
       }
@@ -1493,34 +1486,24 @@ JSON only:
     // Check for blocking or empty response
     const candidate = response.data.candidates?.[0];
     if (!candidate || candidate.finishReason === 'SAFETY') {
-      console.log('   ⚠️ Response blocked or empty, using fallback');
+      console.log('   ⚠️ Response blocked or empty, finishReason:', candidate?.finishReason);
       throw new Error('Response blocked');
     }
     
     const text = candidate.content?.parts?.[0]?.text || '';
-    console.log(`   📝 Ideas response length: ${text.length}`);
+    console.log(`   📝 Ideas response length: ${text.length}, finishReason: ${candidate.finishReason}`);
     
-    // Try to parse JSON
-    try {
-      const parsed = JSON.parse(text);
+    // Try to extract and parse JSON
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
       if (parsed.ideas && parsed.ideas.length > 0) {
         console.log(`   ✓ Generated ${parsed.ideas.length} ideas`);
         res.json({ success: true, ideas: parsed.ideas, cost: costTracker.total.toFixed(4) });
         return;
       }
-    } catch (parseErr) {
-      // Try regex extraction
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (parsed.ideas && parsed.ideas.length > 0) {
-          console.log(`   ✓ Generated ${parsed.ideas.length} ideas (via regex)`);
-          res.json({ success: true, ideas: parsed.ideas, cost: costTracker.total.toFixed(4) });
-          return;
-        }
-      }
-      console.log('   ⚠️ Failed to parse ideas JSON:', parseErr.message);
     }
+    console.log('   ⚠️ No valid JSON found in response');
   } catch (e) {
     console.error('   ⚠️ Trending ideas error:', e.message);
   }
@@ -1946,7 +1929,7 @@ app.post('/api/chat', async (req, res) => {
     ];
     
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: fullContents,
         generationConfig: {
