@@ -1414,6 +1414,9 @@ app.post('/api/trending-ideas', async (req, res) => {
 - مناسبة للجمهور المصري
 - قابلة للتنفيذ في فيديو قصير (60 ثانية)
 - اكتب بالعامية المصرية
+- الأفكار لازم تكون مناسبة للتصوير في البيت (Talking Head) أو تعليق صوتي (Voiceover)
+- تجنب تماماً أفكار الفلوجات الخارجية، تحديات الأكل، أو اللي محتاجة شراء منتجات غالية
+- ركز على: الأسرار، القصص الغريبة، تحليل المواقف، وتصحيح المفاهيم الخاطئة
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
@@ -1427,6 +1430,9 @@ JSON فقط:
 - مناسبة للجمهور الخليجي والسعودي
 - قابلة للتنفيذ في فيديو قصير (60 ثانية)
 - اكتب باللهجة الخليجية
+- الأفكار لازم تكون مناسبة للتصوير في البيت (Talking Head) أو تعليق صوتي (Voiceover)
+- تجنب تماماً أفكار الفلوجات الخارجية، تحديات الأكل، أو اللي محتاجة شراء منتجات غالية
+- ركز على: الأسرار، القصص الغريبة، تحليل المواقف، وتصحيح المفاهيم الخاطئة
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
@@ -1440,6 +1446,9 @@ Critères:
 - Adaptées au public francophone
 - Réalisables en vidéo courte (60 secondes)
 - Écris en français
+- Les idées doivent être adaptées au tournage à domicile (Face caméra / Talking Head) ou en Voix off
+- Évitez strictement les vlogs en extérieur, les défis culinaires, ou les idées nécessitant l'achat de produits coûteux
+- Concentrez-vous sur : les secrets, les histoires insolites, l'analyse de situations et la correction des idées reçues
 
 JSON uniquement:
 {"ideas": ["idée 1", "idée 2", ...]}`;
@@ -1453,6 +1462,9 @@ Requirements:
 - Suitable for English-speaking audience
 - Executable in a short video (60 seconds)
 - Write in English
+- Ideas must be suitable for home filming (Talking Head) or Voiceover style
+- Strictly avoid outdoor vlogs, food challenges, or ideas that require purchasing expensive products
+- Focus on: Secrets, bizarre stories, analyzing situations, and busting common myths
 
 JSON only:
 {"ideas": ["idea 1", "idea 2", ...]}`;
