@@ -141,11 +141,13 @@ function getDurationConfig(duration) {
 // ============================================
 
 const PRICING = {
-  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },      // Claude Sonnet 4
-  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },   // sonar-pro
-  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },      // Gemini 3 Pro
-  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 }, // Gemini 2.5 Flash Lite (chat)
-  flux: { perImage: 0.003 },                                            // Flux Schnell $3/1000 images
+  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },           // Claude Sonnet 4
+  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },        // sonar-pro
+  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },           // Gemini 3 Pro
+  gemini_flash: { input: 0.15 / 1_000_000, output: 0.60 / 1_000_000 },      // Gemini 2.5 Flash
+  gemini_flash_lite: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },// Gemini 2.5 Flash Lite
+  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },      // Gemini 2.5 Flash Lite (chat) - alias
+  flux: { perImage: 0.003 },                                                 // Flux Schnell $3/1000 images
 };
 
 function createCostTracker() {
@@ -153,6 +155,8 @@ function createCostTracker() {
     claude: { input: 0, output: 0, cost: 0 },
     perplexity: { input: 0, output: 0, cost: 0 },
     gemini: { input: 0, output: 0, cost: 0 },
+    gemini_flash: { input: 0, output: 0, cost: 0 },
+    gemini_flash_lite: { input: 0, output: 0, cost: 0 },
     gemini_chat: { input: 0, output: 0, cost: 0 },
     flux: { images: 0, cost: 0 },
     total: 0,
@@ -182,14 +186,26 @@ function trackFluxCost(tracker) {
 function logTotalCost(tracker) {
   console.log('═══════════════════════════════════════');
   console.log('💰 COST BREAKDOWN:');
-  console.log(`   Claude:     ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
-  console.log(`   Perplexity: ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
-  console.log(`   Gemini:     ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
+  if (tracker.claude.cost > 0) {
+    console.log(`   Claude:          ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
+  }
+  if (tracker.perplexity.cost > 0) {
+    console.log(`   Perplexity:      ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
+  }
+  if (tracker.gemini.cost > 0) {
+    console.log(`   Gemini Pro:      ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
+  }
+  if (tracker.gemini_flash && tracker.gemini_flash.cost > 0) {
+    console.log(`   Gemini Flash:    ${tracker.gemini_flash.input} in + ${tracker.gemini_flash.output} out = $${tracker.gemini_flash.cost.toFixed(4)}`);
+  }
+  if (tracker.gemini_flash_lite && tracker.gemini_flash_lite.cost > 0) {
+    console.log(`   Gemini FlashLite:${tracker.gemini_flash_lite.input} in + ${tracker.gemini_flash_lite.output} out = $${tracker.gemini_flash_lite.cost.toFixed(4)}`);
+  }
   if (tracker.gemini_chat && tracker.gemini_chat.cost > 0) {
-    console.log(`   Gemini Chat:${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
+    console.log(`   Gemini Chat:     ${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
   }
   if (tracker.flux.images > 0) {
-    console.log(`   Flux:       ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
+    console.log(`   Flux:            ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
   }
   console.log(`   ────────────────────────────────────`);
   console.log(`   💵 TOTAL: $${tracker.total.toFixed(4)}`);
@@ -306,40 +322,36 @@ JSON only:
   
   const langConfig = langPrompts[language] || langPrompts['egyptian'];
   
+  // Using Gemini 2.5 Flash Lite for cost efficiency
   const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 150,
-      system: langConfig.system,
-      messages: [{
+      contents: [{
         role: 'user',
-        content: langConfig.prompt
+        parts: [{ text: langConfig.prompt }]
       }],
-    },
-    {
-      headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
+      systemInstruction: {
+        parts: [{ text: langConfig.system }]
       },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        maxOutputTokens: 150,
+      }
     }
   );
   
   // Track cost
-  if (costTracker && response.data.usage) {
-    trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+  if (costTracker && response.data.usageMetadata) {
+    const usage = response.data.usageMetadata;
+    trackCost(costTracker, 'gemini_flash_lite', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
   }
   
   try {
-    const text = response.data.content[0].text;
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      const result = `${parsed.topic} - ${parsed.angle}`;
-      console.log(`   🧠 Understood: "${result}"`);
-      return result;
-    }
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(text);
+    const result = `${parsed.topic} - ${parsed.angle}`;
+    console.log(`   🧠 Understood: "${result}"`);
+    return result;
   } catch (e) {
     console.log('   ⚠️ Parse error, using raw input');
   }
@@ -973,37 +985,36 @@ Output Schema (JSON Only):
 }`;
 
   try {
+    // Using Gemini 2.5 Flash for cost efficiency (biggest cost saver)
     const response = await axios.post(
-      'https://api.anthropic.com/v1/messages',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
-        model: CONFIG.CLAUDE_MODEL,
-        max_tokens: 1500,
-        system: 'You are a JSON generator. Output valid JSON only. No markdown.',
-        messages: [{ role: 'user', content: prompt }],
-      },
-      {
-        headers: {
-          'x-api-key': CONFIG.CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
+        contents: [{
+          role: 'user',
+          parts: [{ text: prompt }]
+        }],
+        systemInstruction: {
+          parts: [{ text: 'You are a JSON generator. Output valid JSON only. No markdown, no code blocks.' }]
         },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          maxOutputTokens: 1500,
+        }
       }
     );
     
-    if (costTracker && response.data.usage) {
-      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+    if (costTracker && response.data.usageMetadata) {
+      const usage = response.data.usageMetadata;
+      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
     }
     
-    const text = response.data.content[0].text;
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     console.log('   📝 Visual API response received');
     
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      if (parsed.hook && parsed.content && parsed.cta) {
-        console.log('   ✓ Visual prompts parsed successfully');
-        return parsed;
-      }
+    const parsed = JSON.parse(text);
+    if (parsed.hook && parsed.content && parsed.cta) {
+      console.log('   ✓ Visual prompts parsed successfully');
+      return parsed;
     }
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
@@ -1441,36 +1452,35 @@ JSON only:
   }
 
   try {
+    // Using Gemini 2.5 Flash for cost efficiency
     const response = await axios.post(
-      'https://api.anthropic.com/v1/messages',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
-        model: CONFIG.CLAUDE_MODEL,
-        max_tokens: 500,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: prompt }],
-      },
-      {
-        headers: {
-          'x-api-key': CONFIG.CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
+        contents: [{
+          role: 'user',
+          parts: [{ text: prompt }]
+        }],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
         },
+        generationConfig: {
+          responseMimeType: 'application/json',
+          maxOutputTokens: 500,
+        }
       }
     );
     
-    if (response.data.usage) {
-      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+    if (response.data.usageMetadata) {
+      const usage = response.data.usageMetadata;
+      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
       console.log(`   💰 Ideas cost: $${costTracker.total.toFixed(4)}`);
     }
     
-    const text = response.data.content[0].text;
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      console.log(`   ✓ Generated ${parsed.ideas?.length || 0} ideas`);
-      res.json({ success: true, ideas: parsed.ideas || [], cost: costTracker.total.toFixed(4) });
-      return;
-    }
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const parsed = JSON.parse(text);
+    console.log(`   ✓ Generated ${parsed.ideas?.length || 0} ideas`);
+    res.json({ success: true, ideas: parsed.ideas || [], cost: costTracker.total.toFixed(4) });
+    return;
   } catch (e) {
     console.error('   ⚠️ Trending ideas error:', e.message);
   }
