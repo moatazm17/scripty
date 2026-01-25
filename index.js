@@ -1479,7 +1479,7 @@ JSON only:
         },
         generationConfig: {
           responseMimeType: 'application/json',
-          maxOutputTokens: 500,
+          maxOutputTokens: 1000,
         }
       }
     );
@@ -1490,11 +1490,37 @@ JSON only:
       console.log(`   💰 Ideas cost: $${costTracker.total.toFixed(4)}`);
     }
     
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = JSON.parse(text);
-    console.log(`   ✓ Generated ${parsed.ideas?.length || 0} ideas`);
-    res.json({ success: true, ideas: parsed.ideas || [], cost: costTracker.total.toFixed(4) });
-    return;
+    // Check for blocking or empty response
+    const candidate = response.data.candidates?.[0];
+    if (!candidate || candidate.finishReason === 'SAFETY') {
+      console.log('   ⚠️ Response blocked or empty, using fallback');
+      throw new Error('Response blocked');
+    }
+    
+    const text = candidate.content?.parts?.[0]?.text || '';
+    console.log(`   📝 Ideas response length: ${text.length}`);
+    
+    // Try to parse JSON
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.ideas && parsed.ideas.length > 0) {
+        console.log(`   ✓ Generated ${parsed.ideas.length} ideas`);
+        res.json({ success: true, ideas: parsed.ideas, cost: costTracker.total.toFixed(4) });
+        return;
+      }
+    } catch (parseErr) {
+      // Try regex extraction
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.ideas && parsed.ideas.length > 0) {
+          console.log(`   ✓ Generated ${parsed.ideas.length} ideas (via regex)`);
+          res.json({ success: true, ideas: parsed.ideas, cost: costTracker.total.toFixed(4) });
+          return;
+        }
+      }
+      console.log('   ⚠️ Failed to parse ideas JSON:', parseErr.message);
+    }
   } catch (e) {
     console.error('   ⚠️ Trending ideas error:', e.message);
   }
