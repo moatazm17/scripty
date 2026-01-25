@@ -994,11 +994,11 @@ Output Schema (JSON Only):
           parts: [{ text: prompt }]
         }],
         systemInstruction: {
-          parts: [{ text: 'You are a JSON generator. Output valid JSON only. No markdown, no code blocks.' }]
+          parts: [{ text: 'You are a JSON generator. Output valid JSON only. No markdown, no code blocks. Keep prompts concise (40-50 words each).' }]
         },
         generationConfig: {
           responseMimeType: 'application/json',
-          maxOutputTokens: 1500,
+          maxOutputTokens: 2500,
         }
       }
     );
@@ -1009,12 +1009,26 @@ Output Schema (JSON Only):
     }
     
     const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    console.log('   📝 Visual API response received');
+    console.log('   📝 Visual API response received, length:', text.length);
     
-    const parsed = JSON.parse(text);
-    if (parsed.hook && parsed.content && parsed.cta) {
-      console.log('   ✓ Visual prompts parsed successfully');
-      return parsed;
+    // Try direct JSON parse first
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed.hook && parsed.content && parsed.cta) {
+        console.log('   ✓ Visual prompts parsed successfully');
+        return parsed;
+      }
+    } catch (parseErr) {
+      // Try to extract JSON with regex if direct parse fails
+      console.log('   ⚠️ Direct parse failed, trying regex extraction...');
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.hook && parsed.content && parsed.cta) {
+          console.log('   ✓ Visual prompts parsed via regex');
+          return parsed;
+        }
+      }
     }
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
