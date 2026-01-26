@@ -986,7 +986,7 @@ async function writeScript(topic, researchData, niche, selectedHook, duration, l
 
   // Log preserved facts if any
   if (preserveFromUser && preserveFromUser.length > 0) {
-    console.log(`   📌 Preserving ${preserveFromUser.length} user facts literally`);
+    console.log(`   📌 Using ${preserveFromUser.length} user facts as reference`);
   }
   
   const durationConfig = getDurationConfig(duration);
@@ -1009,7 +1009,7 @@ ${ex.script}
     
     // Build preserve facts section if available
     const preserveSection = preserveFromUser && preserveFromUser.length > 0
-      ? `\n🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):\n${preserveFromUser.map(fact => `- "${fact}"`).join('\n')}\n`
+      ? `\n📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):\n${preserveFromUser.map(fact => `- ${fact}`).join('\n')}\n`
       : '';
     
     const requestsSection = explicitRequests && explicitRequests.length > 0
@@ -1026,10 +1026,11 @@ ${examplesText}
 ${topic}
 
 === قواعد الدمج الذكي ===
-1. ✅ استخدم حقائق المستخدم حرفياً (لا تغيرها أبداً) - دي أولوية قصوى
+1. ✅ استخدم بيانات المستخدم كمرجع - أعد صياغتها بأسلوب viral (متنسخش الجمل)
 2. ✅ املأ الفجوات بمعلومات من البحث
 3. ✅ أجب على أي أسئلة أو طلبات بحث ذكرها المستخدم
 4. ❌ لا تضيف معلومات عشوائية - اربط كل شيء بالموضوع
+5. ❌ متنسخش جمل المستخدم حرفياً - اكتبها من جديد بأسلوبك
 ${preserveSection}${requestsSection}
 === البحث (استخدمه لملء الفجوات فقط) ===
 ${researchData}
@@ -1038,7 +1039,7 @@ ${researchData}
 - Hook: "${selectedHook}"
 - الطول: ${durationConfig.words} كلمة تقريباً
 - ابدأ بالـ Hook
-- استخدم حقائق المستخدم حرفياً (اللي فوق 🔒)
+- استخدم معلومات المستخدم (📊) كمرجع - أعد صياغتها
 - املأ الفراغات من البحث
 - اكتب بالعامية المصرية
 - الـ CTA: فعل أمر مباشر وقصير + urgency (النهاردة/دلوقتي) + مرتبط بالموضوع
@@ -1056,10 +1057,11 @@ ${examplesText}
 ${topic}
 
 === قواعد الدمج الذكي ===
-1. ✅ استخدم حقائق المستخدم حرفياً (لا تغيرها أبداً) - دي أولوية قصوى
+1. ✅ استخدم بيانات المستخدم كمرجع - أعد صياغتها بأسلوب viral (لا تنسخ الجمل)
 2. ✅ املأ الفجوات بمعلومات من البحث
 3. ✅ أجب على أي أسئلة ذكرها المستخدم
 4. ❌ لا تضيف معلومات عشوائية
+5. ❌ لا تنسخ جمل المستخدم حرفياً - اكتبها من جديد بأسلوبك
 ${preserveSection}${requestsSection}
 === البحث (لملء الفجوات) ===
 ${researchData}
@@ -1067,7 +1069,7 @@ ${researchData}
 === المطلوب ===
 - Hook: "${selectedHook}"
 - الطول: ${durationConfig.words} كلمة تقريباً
-- استخدم حقائق المستخدم حرفياً (اللي فوق 🔒)
+- استخدم معلومات المستخدم (📊) كمرجع - أعد صياغتها
 - اكتب باللهجة الخليجية
 - الـ CTA: فعل أمر مباشر وقصير + urgency (اليوم/الحين) + مرتبط بالموضوع
   ❌ ضعيف: "لو تبي، حاول تسوي كذا.. صحتك أهم"
@@ -1084,11 +1086,12 @@ ${examplesText}
 ${topic}
 
 === SMART BLENDING RULES ===
-1. ✅ Use user's facts and numbers EXACTLY as provided (never change them) - TOP PRIORITY
+1. ✅ Use user's facts as REFERENCE - rewrite them in viral style (don't copy sentences!)
 2. ✅ Fill gaps with information from research
 3. ✅ Answer any questions or research requests the user mentioned
 4. ❌ Don't add random information - keep everything relevant
-${preserveSection ? preserveSection.replace('🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):', '🔒 MUST preserve these facts LITERALLY (never change):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ User questions (answer from research):') : ''}
+5. ❌ DON'T copy user's sentences word-for-word - rewrite them in your style
+${preserveSection ? preserveSection.replace('📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):', '📊 Reference info from user (use the DATA but rewrite naturally - don\'t copy sentences):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ User questions (answer from research):') : ''}
 === RESEARCH (Use to fill gaps only) ===
 ${researchData}
 
@@ -1096,7 +1099,7 @@ ${researchData}
 - Hook: "${selectedHook}"
 - Length: ~${durationConfig.words} words
 - Start with the Hook
-- Use user facts literally (especially 🔒 above)
+- Use user facts (📊) as reference - rewrite them naturally
 - Fill blanks from research
 - Write in natural English
 - CTA: Direct short command + urgency (today/now) + topic-related
@@ -1114,18 +1117,19 @@ ${examplesText}
 ${topic}
 
 === RÈGLES DE FUSION INTELLIGENTE ===
-1. ✅ Utilise les faits et chiffres de l'utilisateur EXACTEMENT (ne les change jamais) - PRIORITÉ MAXIMALE
+1. ✅ Utilise les faits utilisateur comme RÉFÉRENCE - réécris-les en style viral (ne copie pas!)
 2. ✅ Remplis les lacunes avec des informations de la recherche
 3. ✅ Réponds aux questions ou demandes de recherche mentionnées par l'utilisateur
 4. ❌ N'ajoute pas d'informations aléatoires - reste pertinent
-${preserveSection ? preserveSection.replace('🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):', '🔒 DOIT préserver ces faits LITTÉRALEMENT (ne jamais changer):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur (répondre depuis recherche):') : ''}
+5. ❌ NE copie PAS les phrases de l'utilisateur mot à mot - réécris-les dans ton style
+${preserveSection ? preserveSection.replace('📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):', '📊 Infos de référence (utilise les DONNÉES mais réécris naturellement - ne copie pas):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur (répondre depuis recherche):') : ''}
 === RECHERCHE (pour combler les lacunes uniquement) ===
 ${researchData}
 
 === REQUIS ===
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
-- Utilise les faits utilisateur littéralement (surtout 🔒 ci-dessus)
+- Utilise les faits utilisateur (📊) comme référence - réécris-les
 - Écris en Français naturel
 - CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
   ❌ Faible: "Si tu veux, essaie de faire ça.. ta santé compte"
@@ -1142,18 +1146,19 @@ ${examplesText}
 ${topic}
 
 === RÈGLES DE FUSION INTELLIGENTE ===
-1. ✅ Utilise les faits et chiffres de l'utilisateur EXACTEMENT - PRIORITÉ MAXIMALE
+1. ✅ Utilise les faits utilisateur comme RÉFÉRENCE - réécris-les en style viral
 2. ✅ Remplis les lacunes avec des informations de la recherche
 3. ✅ Réponds aux questions mentionnées par l'utilisateur
 4. ❌ N'ajoute pas d'informations aléatoires
-${preserveSection ? preserveSection.replace('🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):', '🔒 DOIT préserver ces faits:') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur:') : ''}
+5. ❌ NE copie PAS les phrases mot à mot - réécris-les
+${preserveSection ? preserveSection.replace('📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):', '📊 Infos de référence (utilise les DONNÉES mais réécris):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur:') : ''}
 === RECHERCHE ===
 ${researchData}
 
 === REQUIS ===
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
-- Utilise les faits littéralement (surtout 🔒)
+- Utilise les faits (📊) comme référence - réécris-les
 - CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
   ❌ Faible: "Si tu veux, essaie ça.. ta santé compte"
   ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
