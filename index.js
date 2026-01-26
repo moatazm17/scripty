@@ -141,11 +141,13 @@ function getDurationConfig(duration) {
 // ============================================
 
 const PRICING = {
-  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },      // Claude Sonnet 4
-  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },   // sonar-pro
-  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },      // Gemini 3 Pro
-  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 }, // Gemini 2.5 Flash Lite (chat)
-  flux: { perImage: 0.003 },                                            // Flux Schnell $3/1000 images
+  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },           // Claude Sonnet 4
+  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },        // sonar-pro
+  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },           // Gemini 3 Pro
+  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },      // Gemini 2.5 Flash Lite (chat)
+  gemini_flash_lite: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },// Gemini 2.5 Flash Lite (understanding)
+  gemini_flash: { input: 0.10 / 1_000_000, output: 0.40 / 1_000_000 },      // Gemini 2.0 Flash (visuals)
+  flux: { perImage: 0.003 },                                                 // Flux Schnell $3/1000 images
 };
 
 function createCostTracker() {
@@ -154,6 +156,8 @@ function createCostTracker() {
     perplexity: { input: 0, output: 0, cost: 0 },
     gemini: { input: 0, output: 0, cost: 0 },
     gemini_chat: { input: 0, output: 0, cost: 0 },
+    gemini_flash_lite: { input: 0, output: 0, cost: 0 },
+    gemini_flash: { input: 0, output: 0, cost: 0 },
     flux: { images: 0, cost: 0 },
     total: 0,
   };
@@ -182,14 +186,26 @@ function trackFluxCost(tracker) {
 function logTotalCost(tracker) {
   console.log('═══════════════════════════════════════');
   console.log('💰 COST BREAKDOWN:');
-  console.log(`   Claude:     ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
-  console.log(`   Perplexity: ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
-  console.log(`   Gemini:     ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
+  if (tracker.claude.cost > 0) {
+    console.log(`   Claude:      ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
+  }
+  if (tracker.perplexity.cost > 0) {
+    console.log(`   Perplexity:  ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
+  }
+  if (tracker.gemini.cost > 0) {
+    console.log(`   Gemini Pro:  ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
+  }
   if (tracker.gemini_chat && tracker.gemini_chat.cost > 0) {
-    console.log(`   Gemini Chat:${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
+    console.log(`   Gemini Chat: ${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
+  }
+  if (tracker.gemini_flash_lite && tracker.gemini_flash_lite.cost > 0) {
+    console.log(`   Flash Lite:  ${tracker.gemini_flash_lite.input} in + ${tracker.gemini_flash_lite.output} out = $${tracker.gemini_flash_lite.cost.toFixed(4)}`);
+  }
+  if (tracker.gemini_flash && tracker.gemini_flash.cost > 0) {
+    console.log(`   Flash:       ${tracker.gemini_flash.input} in + ${tracker.gemini_flash.output} out = $${tracker.gemini_flash.cost.toFixed(4)}`);
   }
   if (tracker.flux.images > 0) {
-    console.log(`   Flux:       ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
+    console.log(`   Flux:        ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
   }
   console.log(`   ────────────────────────────────────`);
   console.log(`   💵 TOTAL: $${tracker.total.toFixed(4)}`);
@@ -370,34 +386,28 @@ JSON only:
   
   const langConfig = langPrompts[language] || langPrompts['egyptian'];
   
+  // Use Gemini Flash Lite for cost efficiency (simple extraction task)
   const response = await axios.post(
-    'https://api.anthropic.com/v1/messages',
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
-      model: CONFIG.CLAUDE_MODEL,
-      max_tokens: 150,
-      system: langConfig.system,
-      messages: [{
-        role: 'user',
-        content: langConfig.prompt
+      contents: [{
+        parts: [{ text: `${langConfig.system}\n\n${langConfig.prompt}` }]
       }],
-    },
-    {
-      headers: {
-        'x-api-key': CONFIG.CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
+      generationConfig: {
+        maxOutputTokens: 200,
+        temperature: 0.3,
+      }
     }
   );
   
-  // Track cost
-  if (costTracker && response.data.usage) {
-    trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+  // Track cost (Gemini Flash Lite pricing)
+  if (costTracker && response.data.usageMetadata) {
+    trackCost(costTracker, 'gemini_flash_lite', response.data.usageMetadata.promptTokenCount || 0, response.data.usageMetadata.candidatesTokenCount || 0);
   }
   
   try {
-    const text = response.data.content[0].text;
-    console.log(`   📄 Claude raw response: ${text.substring(0, 300)}`);
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log(`   📄 Gemini raw response: ${text.substring(0, 300)}`);
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
@@ -1101,29 +1111,26 @@ Output Schema (JSON Only):
 }`;
 
   try {
+    // Use Gemini Flash for cost efficiency (keyword extraction task)
     const response = await axios.post(
-      'https://api.anthropic.com/v1/messages',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
-        model: CONFIG.CLAUDE_MODEL,
-        max_tokens: 1500,
-        system: 'You are a JSON generator. Output valid JSON only. No markdown.',
-        messages: [{ role: 'user', content: prompt }],
-      },
-      {
-        headers: {
-          'x-api-key': CONFIG.CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 1500,
+          temperature: 0.7,
+        }
       }
     );
     
-    if (costTracker && response.data.usage) {
-      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+    if (costTracker && response.data.usageMetadata) {
+      trackCost(costTracker, 'gemini_flash', response.data.usageMetadata.promptTokenCount || 0, response.data.usageMetadata.candidatesTokenCount || 0);
     }
     
-    const text = response.data.content[0].text;
-    console.log('   📝 Visual API response received');
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('   📝 Visual API response received (Gemini Flash)');
     
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
