@@ -1231,9 +1231,10 @@ ${userInstructions}
       .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
   }
 
-  // Use Gemini 3 Pro for high-quality script generation
+  // Use Gemini 3 Flash for fast, cost-effective script generation
+  const writeModel = 'gemini-3-flash-preview';
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${writeModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
       contents: [{
         parts: [{ text: prompt }]
@@ -1250,10 +1251,10 @@ ${userInstructions}
     }
   );
   
-  // Track cost
+  // Track cost (using 'gemini_flash' label for Flash model)
   if (costTracker && response.data?.usageMetadata) {
     const usage = response.data.usageMetadata;
-    trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+    trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
   }
   
   let script = response.data.candidates[0].content.parts[0].text;
@@ -2024,8 +2025,10 @@ ${hook}
 === المطلوب ===
 أعد كتابة السكريبت مع تحسين ${weakest_area}:
 - خلّي الـ ${weakest_area} زي الأمثلة
-- حافظ على كل المعلومات
+- ⚠️ حافظ على الربط المباشر بين الـ Hook والموضوع - الـ Hook لازم يكون مرتبط بالموضوع
+- حافظ على كل المعلومات والأرقام
 - حافظ على نفس الطول
+- الـ Hook يكون في أول السكريبت
 
 اكتب السكريبت المحسّن (بدون JSON أو markdown):`,
 
@@ -2048,7 +2051,9 @@ ${hook}
 === المطلوب ===
 أعد كتابة السكريبت مع تحسين ${weakest_area}:
 - خلّي الـ ${weakest_area} مثل الأمثلة
-- حافظ على كل المعلومات
+- ⚠️ حافظ على الربط المباشر بين الـ Hook والموضوع - الـ Hook لازم يكون مرتبط بالموضوع
+- حافظ على كل المعلومات والأرقام
+- الـ Hook يبقى في أول السكريبت
 
 اكتب السكريبت المحسّن:`,
 
@@ -2071,8 +2076,10 @@ ${hook}
 === TASK ===
 Rewrite improving ${weakest_area}:
 - Make ${weakest_area} match the examples
-- Keep all information
+- ⚠️ Keep direct connection between Hook and topic - Hook must be relevant to the topic
+- Keep all information and numbers
 - Keep same length
+- Hook stays at the start
 
 Write improved script (no JSON or markdown):`,
 
@@ -2095,7 +2102,9 @@ ${hook}
 === TÂCHE ===
 Réécrivez en améliorant ${weakest_area}:
 - Rendez ${weakest_area} comme les exemples
-- Gardez toutes les informations
+- ⚠️ Gardez la connexion directe entre le Hook et le sujet - le Hook doit être lié au sujet
+- Gardez toutes les informations et chiffres
+- Le Hook reste au début
 
 Écrivez le script amélioré:`,
 
@@ -2109,8 +2118,15 @@ ${examplesText}
 === SCRIPT ===
 ${script}
 
-=== HOOK ===
+=== HOOK (garder au début) ===
 ${hook}
+
+=== TÂCHE ===
+Réécrivez en améliorant ${weakest_area}:
+- Rendez ${weakest_area} comme les exemples
+- ⚠️ Gardez la connexion directe entre le Hook et le sujet
+- Gardez toutes les informations
+- Le Hook reste au début
 
 Écrivez le script amélioré:`
   };
