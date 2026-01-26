@@ -240,67 +240,72 @@ function detectMode(rawInput) {
 async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
   console.log('   🧠 Understanding topic...');
   
-  // Language-specific prompts for topic extraction (SIMPLE - no mode detection)
+  // Language-specific prompts for topic extraction + user facts
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح بالعامية المصرية.',
+      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج الحقائق.',
       prompt: `افهم الموضوع ده واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
+1. الموضوع الأساسي (جملة واحدة واضحة)
+2. الزاوية أو الـ angle
+3. أي أرقام أو حقائق محددة ذكرها المستخدم (array فاضي لو مفيش)
 
 النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+{"topic": "الموضوع", "angle": "الزاوية", "userFacts": ["حقيقة 1", "حقيقة 2"]}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح باللهجة الخليجية.',
+      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج الحقائق.',
       prompt: `افهم الموضوع هذا واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. الزاوية أو الـ angle (وش اللي المستخدم يبي يركز عليه)
+1. الموضوع الأساسي (جملة واحدة واضحة)
+2. الزاوية أو الـ angle
+3. أي أرقام أو حقائق محددة ذكرها المستخدم (array فاضي لو ما في)
 
 النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+{"topic": "الموضوع", "angle": "الزاوية", "userFacts": ["حقيقة 1", "حقيقة 2"]}`
     },
     french: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
-      prompt: `Analyse ce sujet et extrais:
-1. Le sujet principal (une phrase claire en Français)
-2. L'angle (sur quoi l'utilisateur veut se concentrer)
+      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais les faits.',
+      prompt: `Analyse ce texte et extrais:
+1. Le sujet principal (une phrase claire)
+2. L'angle
+3. Tous les chiffres ou faits spécifiques mentionnés (array vide si aucun)
 
 Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "angle": "L'angle"}`
+{"topic": "Le sujet", "angle": "L'angle", "userFacts": ["fait 1", "fait 2"]}`
     },
     frensh: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
-      prompt: `Analyse ce sujet et extrais:
-1. Le sujet principal (une phrase claire en Français)
-2. L'angle (sur quoi l'utilisateur veut se concentrer)
+      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais les faits.',
+      prompt: `Analyse ce texte et extrais:
+1. Le sujet principal (une phrase claire)
+2. L'angle
+3. Tous les chiffres ou faits spécifiques mentionnés (array vide si aucun)
 
 Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "angle": "L'angle"}`
+{"topic": "Le sujet", "angle": "L'angle", "userFacts": ["fait 1", "fait 2"]}`
     },
     english: {
-      system: 'You are a topic analyst. Understand the topic and define it clearly in English.',
-      prompt: `Understand this topic and extract:
-1. The main topic (one clear sentence in English)
-2. The angle (what the user wants to focus on)
+      system: 'You are a topic analyst. Understand the topic and extract facts.',
+      prompt: `Understand this text and extract:
+1. The main topic (one clear sentence)
+2. The angle
+3. Any specific numbers or facts the user mentioned (empty array if none)
 
 Text:
 "${rawInput}"
 
 JSON only:
-{"topic": "The clear topic", "angle": "The angle"}`
+{"topic": "The topic", "angle": "The angle", "userFacts": ["fact 1", "fact 2"]}`
     }
   };
   
@@ -336,15 +341,19 @@ JSON only:
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      const result = `${parsed.topic} - ${parsed.angle}`;
-      console.log(`   🧠 Understood: "${result}"`);
-      return result;
+      const topicStr = `${parsed.topic} - ${parsed.angle}`;
+      const userFacts = Array.isArray(parsed.userFacts) ? parsed.userFacts.filter(f => f && f.trim()) : [];
+      console.log(`   🧠 Understood: "${topicStr}"`);
+      if (userFacts.length > 0) {
+        console.log(`   📌 User facts: ${userFacts.length} found`);
+      }
+      return { topic: topicStr, userFacts };
     }
   } catch (e) {
     console.log('   ⚠️ Parse error, using raw input');
   }
   
-  return rawInput;
+  return { topic: rawInput, userFacts: [] };
 }
 
 // ============================================
@@ -437,12 +446,17 @@ async function research(rawInput, extractedTopic, costTracker = null, retries = 
 // 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
-async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
+async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', userFacts = []) {
   console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
   // Get niche-specific hooks for this language (used as style reference for both modes)
   const nicheHooks = getNicheHooks(niche, language);
   const universalHooks = getUniversalHooks(language);
+  
+  // Build user facts section if available
+  const userFactsSection = userFacts && userFacts.length > 0
+    ? `\n=== User mentioned (use these facts!) ===\n${userFacts.map(f => `• ${f}`).join('\n')}\n`
+    : '';
   
   console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks (${language})`);
   console.log(`   🎯 Mode: ${actionType.toUpperCase()}`);
@@ -515,7 +529,7 @@ ${researchData}`;
 Topic: ${topic}
 
 ${contentSource}
-
+${userFactsSection}
 === Example Hooks from "${niche}" (copy the STYLE exactly!) ===
 ${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
@@ -587,11 +601,16 @@ JSON only:
 // ✍️ STAGE 3: WRITE SCRIPT (Gemini 3 Pro)
 // ============================================
 
-async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
+async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', userFacts = []) {
   console.log(`   ✍️ Writing script (Gemini 3 Pro) - Mode: ${actionType.toUpperCase()}...`);
   
   const durationConfig = getDurationConfig(duration);
   const examples = getNicheExamples(niche, duration, language);
+  
+  // Build user facts section if available
+  const userFactsSection = userFacts && userFacts.length > 0
+    ? `\n=== User mentioned (prioritize these facts!) ===\n${userFacts.map(f => `• ${f}`).join('\n')}\n`
+    : '';
   
   // Get 2-3 golden examples
   const goldenExamples = examples.slice(0, Math.min(3, examples.length));
@@ -743,7 +762,7 @@ ${userInstructions}
       .replace(/\$\{examplesText\}/g, examplesText)
       .replace(/\$\{topic\}/g, topic)
       .replace(/\$\{selectedHook\}/g, selectedHook)
-      .replace(/\$\{researchData\}/g, researchData)
+      .replace(/\$\{researchData\}/g, userFactsSection + researchData)  // Prepend user facts to research
       .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
   }
 
@@ -1056,8 +1075,10 @@ async function generateScript(rawTopic, language, niche, duration) {
     const action_type = detectMode(rawTopic);
     const user_instructions = action_type === 'refine' ? rawTopic : '';
     
-    // Stage 0B: Extract Core Topic (simple - just topic & angle)
-    const topic = await extractTopic(rawTopic, language);
+    // Stage 0B: Extract Core Topic + User Facts
+    const topicResult = await extractTopic(rawTopic, language);
+    const topic = topicResult.topic;
+    const userFacts = topicResult.userFacts || [];
     console.log(`   ✓ Topic: "${topic}"`);
     
     // Stage 1: Research (SKIP if refine mode)
@@ -1070,15 +1091,15 @@ async function generateScript(rawTopic, language, niche, duration) {
       console.log('   ✓ Research done');
     }
     
-    // Stage 2: Generate Hooks (with action_type)
-    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions);
+    // Stage 2: Generate Hooks (with action_type and userFacts)
+    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions, userFacts);
     console.log(`   ✓ Hooks: ${hooks.length}`);
     
     // Select first hook as main
     const selectedHook = hooks[0] || topic;
     
-    // Stage 3: Write Script (with action_type)
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions);
+    // Stage 3: Write Script (with action_type and userFacts)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions, userFacts);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Stage 4: Style Cleanup
@@ -1169,7 +1190,7 @@ app.post('/api/generate-hooks', async (req, res) => {
   const costTracker = createCostTracker();
   
   try {
-    let extractedTopic, researchData, action_type, user_instructions;
+    let extractedTopic, researchData, action_type, user_instructions, userFacts = [];
     
     if (isRegenerateOnly) {
       // Use existing data (regenerate hooks only)
@@ -1184,8 +1205,10 @@ app.post('/api/generate-hooks', async (req, res) => {
       action_type = detectMode(topic);
       user_instructions = action_type === 'refine' ? topic : '';
       
-      // Stage 0B: Extract Core Topic (simple - just topic & angle)
-      extractedTopic = await extractTopic(topic, language, costTracker);
+      // Stage 0B: Extract Core Topic + User Facts
+      const topicResult = await extractTopic(topic, language, costTracker);
+      extractedTopic = topicResult.topic;
+      userFacts = topicResult.userFacts || [];
       console.log(`   ✓ Topic: "${extractedTopic}"`);
       
       // Research (SKIP if refine mode)
@@ -1198,8 +1221,8 @@ app.post('/api/generate-hooks', async (req, res) => {
       }
     }
     
-    // Generate 3 hooks (with action_type)
-    const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions);
+    // Generate 3 hooks (with action_type and userFacts)
+    const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions, userFacts);
     console.log(`   ✓ Generated ${hooks.length} hooks`);
     
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -1213,6 +1236,7 @@ app.post('/api/generate-hooks', async (req, res) => {
       research: researchData,
       mode: action_type, // Include mode in response
       user_instructions: user_instructions, // Pass through for Step 2
+      user_facts: userFacts, // Pass user facts for Step 2
       elapsed: `${elapsed}s`,
       cost: costTracker.total.toFixed(4),
     });
@@ -1237,6 +1261,7 @@ app.post('/api/write-script', async (req, res) => {
     language = 'egyptian',
     mode = 'research', // NEW: Accept mode from Step 1
     user_instructions = '', // NEW: Accept user_instructions from Step 1
+    user_facts = [], // NEW: Accept user_facts from Step 1
   } = req.body;
   
   if (!topic || !selectedHook || !researchData) {
@@ -1260,8 +1285,8 @@ app.post('/api/write-script', async (req, res) => {
   const costTracker = createCostTracker();
   
   try {
-    // Write script with selected hook (with mode)
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker, mode, user_instructions);
+    // Write script with selected hook (with mode and user facts)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker, mode, user_instructions, user_facts);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Style cleanup
