@@ -644,8 +644,8 @@ async function research(rawInput, extractedTopic, costTracker = null, retries = 
 // 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
-async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
-  console.log('   🎣 Generating hooks (Gemini 3.0 Flash Preview)...');
+async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', preserveFromUser = []) {
+  console.log('   🎣 Generating hooks (Gemini 3 Flash)...');
   
   // Get niche-specific hooks for this language (used as style reference for both modes)
   const nicheHooks = getNicheHooks(niche, language);
@@ -752,10 +752,15 @@ ${userInstructions}`;
 ${researchData}`;
   }
   
+  // Build preserve section for hybrid mode (user's facts that must be used literally)
+  const preserveSection = preserveFromUser && preserveFromUser.length > 0
+    ? `\n🔒 MUST USE THESE FACTS LITERALLY (from user input - don't change!):\n${preserveFromUser.map(fact => `- "${fact}"`).join('\n')}\n`
+    : '';
+  
   const prompt = `${hookConfig.instruction}:
 
 Topic: ${topic}
-
+${preserveSection}
 ${contentSource}
 
 === Example Hooks from "${niche}" (copy the STYLE exactly!) ===
@@ -770,6 +775,7 @@ ${hookConfig.tips}
 ${hookConfig.thinkFirst}
 
 ${actionType === 'refine' ? '⚠️ IMPORTANT: The hooks must relate to the USER\'S CONTENT above, not external information.' : ''}
+${preserveFromUser && preserveFromUser.length > 0 ? '⚠️ IMPORTANT: If user provided specific numbers/facts above (🔒), use them EXACTLY in hooks instead of research data!' : ''}
 
 JSON only (include reasoning for each hook):
 {
@@ -2365,7 +2371,8 @@ async function generateScript(rawTopic, language, niche, duration) {
     }
     
     // Stage 2: Generate Hooks (with action_type)
-    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions);
+    // Note: This legacy endpoint doesn't have contentAnalysis, so preserveFromUser is empty
+    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions, []);
     console.log(`   ✓ Hooks: ${hooks.length}`);
     
     // Select first hook as main
@@ -2545,7 +2552,9 @@ app.post('/api/generate-hooks', async (req, res) => {
     // Stage 4: Generate 3 hooks
     console.log('   🎣 Stage 4: Generating hooks...');
     perf.startStage('hook_generation');
-    const hooksResult = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions);
+    // Pass preserve_from_user to hooks so they use user's facts (not conflicting research data)
+    const preserveFromUser = contentAnalysis?.preserve_from_user || [];
+    const hooksResult = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions, preserveFromUser);
     perf.endStage();
     console.log(`   ✓ Generated ${hooksResult.hooks.length} hooks`);
     
