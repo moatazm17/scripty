@@ -950,9 +950,14 @@ async function generateVisualPrompts(topic, script, language = 'egyptian', costT
   
   const culturalContext = culturalContexts[language] || culturalContexts.egyptian;
   
-  const prompt = `Act as an expert AI Art Director specializing in "Black Forest Labs Flux" prompting.
-  
-Analyze the script and generate 3 Highly Detailed visual descriptions.
+  const prompt = `You are a JSON generator. Output valid JSON only. No markdown, no code blocks. Keep prompts concise (40-50 words each).
+
+Act as an expert AI Art Director specializing in "Black Forest Labs Flux" prompting AND a Professional Media Researcher.
+
+Analyze the script and generate:
+1. 3 Highly Detailed visual descriptions for AI generation (Flux).
+2. Smart Google Image Search keywords for finding REAL images for those scenes.
+3. A list of 5-8 Supplementary B-Roll search terms to cover the full 60-second video duration.
 
 Topic: ${topic}
 Script Context: ${script.substring(0, 1000)}
@@ -960,35 +965,70 @@ Target Culture: ${language.toUpperCase()}
 
 Create 3 distinct scenes:
 1. Hook scene (High impact, controversial or shocking visual)
-2. Content scene (Educational, clear, engaging)  
+2. Content scene (Educational, clear, engaging)
 3. CTA scene (Direct, emotional connection)
 
 🚨 CULTURAL CONTEXT (CRITICAL - MUST FOLLOW):
 ${culturalContext}
-ALL people, clothing, settings, and environments MUST reflect this specific culture. This is mandatory.
+ALL people, clothing, settings, and environments MUST reflect this specific culture.
 
-For EACH scene, the "prompt" field must follow this FLUX Structure:
+---
+
+### RULESET 1: AI IMAGE PROMPTS (FLUX)
+For EACH scene, the "prompt" field must follow this Structure:
 "[Medium/Style] of [Subject Description with cultural appearance] doing [Action] in [Cultural Environment]. [Lighting Description]. [Camera/Mood Details]."
+- DO NOT use generic tags. Use Natural English sentences.
+- LIGHTING: Specify lighting (e.g., "volumetric lighting", "dramatic rim light").
+- STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of...".
+- CULTURAL ACCURACY: Characters/Settings MUST match the target culture.
 
-CRITICAL RULES for the "prompt" field:
-- DO NOT use generic tags (e.g., "4k", "best quality"). Use Natural English sentences.
-- LENGTH: Must be 40-60 words per prompt (Descriptive & Rich).
-- LIGHTING: You MUST specify lighting to fix flatness (e.g., "volumetric lighting", "dramatic rim light", "soft cinematic shading").
-- STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of..." depending on the topic.
-- NO TEXT: Do not include text inside the image unless necessary.
-- CULTURAL ACCURACY: Characters and settings MUST match the target culture specified above.
+### RULESET 2: REAL IMAGE SEARCH (Google)
+For the "google_search_term" field:
+- Extract the specific ENTITY mentioned (e.g., "iPhone 15 Pro", "Pyramids of Giza").
+- If no specific entity, use the most descriptive visual concept.
+- Append keywords like "real photo", "official", "high quality" to ensure good results.
+- MUST be in English.
+
+### RULESET 3: B-ROLL KEYWORDS (Supplementary)
+- Extract 5 to 8 additional visual concepts from the script to act as "Filler" or "B-Roll".
+- Focus on objects, specific places, emotions, or metaphors mentioned in the text.
+- Format them as search-ready strings (e.g., "Cairo traffic chaos", "Bitcoin chart falling").
+
+---
 
 Output Schema (JSON Only):
 {
   "hook": {
-    "prompt": "A cinematic hyper-realistic shot of... (full detailed flux prompt with cultural elements)", 
-    "description_ar": "وصف قصير بالعربي", 
+    "prompt": "A cinematic hyper-realistic shot of... (Flux prompt)",
+    "google_search_term": "Specific keywords for Google Images",
+    "description_ar": "وصف قصير بالعربي",
     "description_en": "Short English description",
     "description_fr": "Courte description en français",
     "caption": "Scene Title"
   },
-  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "description_fr": "...", "caption": "..."},
-  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "description_fr": "...", "caption": "..."}
+  "content": {
+    "prompt": "...",
+    "google_search_term": "...",
+    "description_ar": "...",
+    "description_en": "...",
+    "description_fr": "...",
+    "caption": "..."
+  },
+  "cta": {
+    "prompt": "...",
+    "google_search_term": "...",
+    "description_ar": "...",
+    "description_en": "...",
+    "description_fr": "...",
+    "caption": "..."
+  },
+  "b_roll_keywords": [
+    "keyword 1",
+    "keyword 2",
+    "keyword 3",
+    "keyword 4",
+    "keyword 5"
+  ]
 }`;
 
   try {
@@ -1033,6 +1073,7 @@ Output Schema (JSON Only):
   return {
     hook: { 
       prompt: `A cinematic hyper-realistic wide shot of ${topic} captured in dramatic composition. Volumetric lighting creates depth with golden hour rays streaming through. Shot on professional cinema camera with shallow depth of field creating atmospheric mood.`,
+      google_search_term: `${topic} real photo high quality`,
       description_ar: 'منظر واسع للموضوع',
       description_en: 'Wide shot overview',
       description_fr: 'Vue large du sujet',
@@ -1040,6 +1081,7 @@ Output Schema (JSON Only):
     },
     content: { 
       prompt: `A detailed hyper-realistic medium shot showcasing ${topic} with clear educational focus. Soft cinematic shading highlights key details while maintaining visual clarity. Professional documentary style with balanced composition and natural color grading.`,
+      google_search_term: `${topic} details real photo`,
       description_ar: 'لقطة متوسطة للتفاصيل',
       description_en: 'Medium shot details',
       description_fr: 'Plan moyen détaillé',
@@ -1047,11 +1089,19 @@ Output Schema (JSON Only):
     },
     cta: { 
       prompt: `A cinematic hyper-realistic close-up of ${topic} with emotional impact and hopeful atmosphere. Dramatic rim lighting creates powerful silhouette effect. Warm color palette with soft bokeh background evoking inspiration and connection.`,
+      google_search_term: `${topic} inspiration real photo`,
       description_ar: 'لقطة قريبة للختام',
       description_en: 'Close-up finale',
       description_fr: 'Gros plan final',
       caption: 'CTA Scene'
-    }
+    },
+    b_roll_keywords: [
+      `${topic} background`,
+      `${topic} concept`,
+      `${topic} illustration`,
+      `professional workspace`,
+      `success motivation`
+    ]
   };
 }
 
