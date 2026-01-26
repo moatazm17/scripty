@@ -1231,10 +1231,9 @@ ${userInstructions}
       .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
   }
 
-  // Use Gemini 3 Flash for fast, cost-effective script generation
-  const writeModel = 'gemini-3-flash-preview';
+  // Use Gemini 3 Pro for high-quality script generation
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${writeModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
       contents: [{
         parts: [{ text: prompt }]
@@ -1251,10 +1250,10 @@ ${userInstructions}
     }
   );
   
-  // Track cost (using 'gemini_flash' label for Flash model)
+  // Track cost
   if (costTracker && response.data?.usageMetadata) {
     const usage = response.data.usageMetadata;
-    trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+    trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
   }
   
   let script = response.data.candidates[0].content.parts[0].text;
