@@ -1424,6 +1424,12 @@ app.post('/api/write-script', async (req, res) => {
   console.log(`🎯 Mode: ${mode.toUpperCase()}`);
   console.log('═══════════════════════════════════════');
   
+  // DEBUG: Log what user_facts was received
+  console.log('   🔍 DEBUG user_facts received:', JSON.stringify(user_facts));
+  console.log('   🔍 DEBUG req.body.user_facts:', JSON.stringify(req.body.user_facts));
+  console.log('   🔍 DEBUG typeof user_facts:', typeof user_facts);
+  console.log('   🔍 DEBUG Array.isArray:', Array.isArray(user_facts));
+  
   const startTime = Date.now();
   const costTracker = createCostTracker();
   
