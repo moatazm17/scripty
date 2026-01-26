@@ -744,7 +744,7 @@ Pick the strongest hook and explain why.`
   let contentSource;
   if (actionType === 'refine') {
     // For refine mode: use user instructions as the content source
-    contentSource = `User's Draft/Instructions (extract key points for hooks):
+    contentSource = `User's Draft/Instructions (use the INFORMATION but rewrite in hook style - don't copy sentences!):
 ${userInstructions}`;
   } else {
     // For research mode: use research data
@@ -752,9 +752,9 @@ ${userInstructions}`;
 ${researchData}`;
   }
   
-  // Build preserve section for hybrid mode (user's facts that must be used literally)
+  // Build preserve section for hybrid mode (user's facts - use info but rewrite style)
   const preserveSection = preserveFromUser && preserveFromUser.length > 0
-    ? `\n🔒 MUST USE THESE FACTS LITERALLY (from user input - don't change!):\n${preserveFromUser.map(fact => `- "${fact}"`).join('\n')}\n`
+    ? `\n🔒 USER FACTS (use this information but rewrite in punchy hook style):\n${preserveFromUser.map(fact => `- "${fact}"`).join('\n')}\n`
     : '';
   
   const prompt = `${hookConfig.instruction}:
@@ -775,7 +775,7 @@ ${hookConfig.tips}
 ${hookConfig.thinkFirst}
 
 ${actionType === 'refine' ? '⚠️ IMPORTANT: The hooks must relate to the USER\'S CONTENT above, not external information.' : ''}
-${preserveFromUser && preserveFromUser.length > 0 ? '⚠️ IMPORTANT: If user provided specific numbers/facts above (🔒), use them EXACTLY in hooks instead of research data!' : ''}
+${preserveFromUser && preserveFromUser.length > 0 ? '⚠️ IMPORTANT: Use the INFORMATION from user facts (🔒) but REWRITE in hook style - don\'t copy word-for-word!' : ''}
 
 JSON only (include reasoning for each hook):
 {
