@@ -1102,6 +1102,7 @@ ${researchData}
 4. ❌ ممنوع إضافة معلومات جديدة أو أرقام من عندك
 5. ❌ ممنوع حذف أي نقطة من نقاط المستخدم
 6. ❌ ممنوع التأليف أو الاختراع
+7. ❌ ممنوع تنسخ جمل المستخدم حرفياً - اكتبها من جديد بأسلوب الأمثلة
 
 === أمثلة الأسلوب المطلوب (قلد الـ tone بالظبط) ===
 ${examplesText}
@@ -1127,6 +1128,7 @@ ${userInstructions}
 4. ❌ ممنوع إضافة معلومات جديدة
 5. ❌ ممنوع حذف أي نقطة
 6. ❌ ممنوع التأليف
+7. ❌ ممنوع تنسخ جمل المستخدم حرفياً - اكتبها من جديد بأسلوب الأمثلة
 
 === أمثلة الأسلوب المطلوب ===
 ${examplesText}
@@ -1150,6 +1152,7 @@ ${userInstructions}
 4. ❌ DO NOT add new information or numbers
 5. ❌ DO NOT remove any of the user's points
 6. ❌ DO NOT make up or hallucinate anything
+7. ❌ DO NOT copy user's sentences word-for-word - rewrite them in the examples' style
 
 === STYLE EXAMPLES (copy this tone exactly) ===
 ${examplesText}
@@ -1174,6 +1177,7 @@ Write the script directly (no JSON or markdown):`,
 4. ❌ N'ajoute PAS de nouvelles informations
 5. ❌ Ne supprime AUCUN point de l'utilisateur
 6. ❌ N'invente RIEN
+7. ❌ Ne copie PAS les phrases de l'utilisateur mot à mot - réécris-les dans le style des exemples
 
 === EXEMPLES DE STYLE ===
 ${examplesText}
@@ -1196,6 +1200,7 @@ ${userInstructions}
 4. ❌ N'ajoute PAS de nouvelles informations
 5. ❌ Ne supprime AUCUN point de l'utilisateur
 6. ❌ N'invente RIEN
+7. ❌ Ne copie PAS les phrases de l'utilisateur mot à mot - réécris-les dans le style des exemples
 
 === EXEMPLES DE STYLE ===
 ${examplesText}
