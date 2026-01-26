@@ -243,94 +243,128 @@ async function extractTopic(rawInput, language = 'egyptian', costTracker = null)
   // Language-specific prompts for topic extraction + user facts
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج كل المعلومات المهمة.',
-      prompt: `افهم الموضوع ده واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة)
-2. الزاوية أو الـ angle (وجهة نظر اليوزر)
-3. userFacts: كل حاجة مهمة ذكرها اليوزر:
-   - أي أرقام أو إحصائيات
-   - أي رأي أو claim عايز يقوله (مثلاً: "أفضل", "أسوأ", "الوحيد")
-   - أي سبب أو تفسير ذكره (مثلاً: "عشان", "بسبب")
-   - أي معلومة محددة
-   (array فاضي بس لو فعلاً مفيش أي حاجة)
+      system: 'أنت محلل مواضيع خبير. شغلتك تفهم كل كلمة اليوزر قالها وتستخرج كل حاجة مهمة.',
+      prompt: `أنت لازم تفهم كل حاجة اليوزر قالها وتحفظها.
 
-النص:
+اليوزر كاتب:
 "${rawInput}"
 
+استخرج:
+1. topic: الموضوع الأساسي (جملة واحدة)
+2. angle: وجهة نظر اليوزر أو الـ angle
+3. userFacts: ده الأهم! كل حاجة اليوزر قالها لازم تتحفظ:
+   - أي رأي أو وجهة نظر (أفضل، أحسن، أسوأ، غلط، صح، مهم)
+   - أي سبب أو تفسير (عشان، لأن، بسبب، علشان)
+   - أي معلومة أو fact ذكرها
+   - أي رقم أو إحصائية
+   - أي حاجة specific اليوزر عايزها تبقى في الفيديو
+   - أي claim أو argument
+   
+مثال: لو قال "عايز فيديو عن القهوة وإزاي بتأثر على النوم وأنا شخصياً بشرب 5 كوبايات"
+userFacts = ["القهوة بتأثر على النوم", "اليوزر بيشرب 5 كوبايات يومياً"]
+
+مثال: لو قال "المعتزلة كانت أحسن فترة عشان التفكير العقلاني"
+userFacts = ["المعتزلة كانت أفضل فترة في الإسلام", "السبب: التفكير العقلاني"]
+
+⚠️ مهم: لو اليوزر قال حاجة = لازم تبقى في userFacts. Array فاضي بس لو كتب كلمة واحدة زي "قهوة"
+
 JSON فقط:
-{"topic": "الموضوع", "angle": "الزاوية", "userFacts": ["حقيقة 1", "حقيقة 2"]}`
+{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج كل المعلومات المهمة.',
-      prompt: `افهم الموضوع هذا واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة)
-2. الزاوية أو الـ angle (وجهة نظر اليوزر)
-3. userFacts: كل شي مهم ذكره اليوزر:
-   - أي أرقام أو إحصائيات
-   - أي رأي أو claim يبي يقوله (مثلاً: "أفضل", "أسوأ", "الوحيد")
-   - أي سبب أو تفسير ذكره (مثلاً: "لأن", "بسبب")
-   - أي معلومة محددة
-   (array فاضي بس لو فعلاً ما في شي)
+      system: 'أنت محلل مواضيع خبير. شغلتك تفهم كل كلمة اليوزر قالها وتستخرج كل شي مهم.',
+      prompt: `أنت لازم تفهم كل شي اليوزر قاله وتحفظه.
 
-النص:
+اليوزر كاتب:
 "${rawInput}"
+
+استخرج:
+1. topic: الموضوع الأساسي (جملة واحدة)
+2. angle: وجهة نظر اليوزر أو الـ angle
+3. userFacts: هذا الأهم! كل شي اليوزر قاله لازم يتحفظ:
+   - أي رأي أو وجهة نظر (أفضل، أحسن، أسوأ، غلط، صح، مهم)
+   - أي سبب أو تفسير (عشان، لأن، بسبب)
+   - أي معلومة أو fact ذكرها
+   - أي رقم أو إحصائية
+   - أي شي specific اليوزر يبيه يكون في الفيديو
+   - أي claim أو argument
+
+⚠️ مهم: لو اليوزر قال شي = لازم يكون في userFacts. Array فاضي بس لو كتب كلمة وحدة مثل "قهوة"
 
 JSON فقط:
-{"topic": "الموضوع", "angle": "الزاوية", "userFacts": ["حقيقة 1", "حقيقة 2"]}`
+{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
     },
     french: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais toutes les informations importantes.',
-      prompt: `Analyse ce texte et extrais:
-1. Le sujet principal (une phrase claire)
-2. L'angle (point de vue de l'utilisateur)
-3. userFacts: tout ce qui est important mentionné:
-   - Chiffres ou statistiques
-   - Opinions ou claims ("meilleur", "pire", "seul")
-   - Raisons données ("parce que", "car")
-   - Informations spécifiques
-   (array vide seulement si vraiment rien)
+      system: 'Tu es un analyste expert. Ton travail est de comprendre et capturer tout ce que l\'utilisateur a dit.',
+      prompt: `Tu dois comprendre et préserver tout ce que l'utilisateur a écrit.
 
-Texte:
+L'utilisateur a écrit:
 "${rawInput}"
 
+Extrais:
+1. topic: Le sujet principal (une phrase)
+2. angle: Le point de vue de l'utilisateur
+3. userFacts: C'est le plus important! Tout ce que l'utilisateur a dit doit être préservé:
+   - Toute opinion (meilleur, pire, important, faux, vrai)
+   - Toute raison (parce que, car, à cause de)
+   - Toute information ou fait mentionné
+   - Tout chiffre ou statistique
+   - Tout ce que l'utilisateur veut spécifiquement dans la vidéo
+   - Tout argument ou claim
+
+⚠️ Important: Si l'utilisateur a dit quelque chose = ça doit être dans userFacts. Array vide seulement si un seul mot comme "café"
+
 JSON uniquement:
-{"topic": "Le sujet", "angle": "L'angle", "userFacts": ["fait 1", "fait 2"]}`
+{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
     },
     frensh: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais toutes les informations importantes.',
-      prompt: `Analyse ce texte et extrais:
-1. Le sujet principal (une phrase claire)
-2. L'angle (point de vue de l'utilisateur)
-3. userFacts: tout ce qui est important mentionné:
-   - Chiffres ou statistiques
-   - Opinions ou claims ("meilleur", "pire", "seul")
-   - Raisons données ("parce que", "car")
-   - Informations spécifiques
-   (array vide seulement si vraiment rien)
+      system: 'Tu es un analyste expert. Ton travail est de comprendre et capturer tout ce que l\'utilisateur a dit.',
+      prompt: `Tu dois comprendre et préserver tout ce que l'utilisateur a écrit.
 
-Texte:
+L'utilisateur a écrit:
 "${rawInput}"
+
+Extrais:
+1. topic: Le sujet principal (une phrase)
+2. angle: Le point de vue de l'utilisateur
+3. userFacts: C'est le plus important! Tout ce que l'utilisateur a dit doit être préservé:
+   - Toute opinion (meilleur, pire, important, faux, vrai)
+   - Toute raison (parce que, car, à cause de)
+   - Toute information ou fait mentionné
+   - Tout chiffre ou statistique
+   - Tout ce que l'utilisateur veut spécifiquement dans la vidéo
+   - Tout argument ou claim
+
+⚠️ Important: Si l'utilisateur a dit quelque chose = ça doit être dans userFacts. Array vide seulement si un seul mot comme "café"
 
 JSON uniquement:
-{"topic": "Le sujet", "angle": "L'angle", "userFacts": ["fait 1", "fait 2"]}`
+{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
     },
     english: {
-      system: 'You are a topic analyst. Understand the topic and extract all important information.',
-      prompt: `Understand this text and extract:
-1. The main topic (one clear sentence)
-2. The angle (user's perspective)
-3. userFacts: everything important the user mentioned:
-   - Any numbers or statistics
-   - Any opinions or claims ("best", "worst", "only", "most")
-   - Any reasons given ("because", "due to")
-   - Any specific information
-   (empty array ONLY if truly nothing)
+      system: 'You are an expert topic analyst. Your job is to understand and capture everything the user said.',
+      prompt: `You must understand and preserve everything the user wrote.
 
-Text:
+The user wrote:
 "${rawInput}"
 
+Extract:
+1. topic: The main topic (one sentence)
+2. angle: The user's perspective or angle
+3. userFacts: This is the most important! Everything the user said must be preserved:
+   - Any opinion (best, worst, important, wrong, right)
+   - Any reason (because, since, due to)
+   - Any information or fact mentioned
+   - Any number or statistic
+   - Anything specific the user wants in the video
+   - Any claim or argument
+
+Example: "I want a video about coffee and how it affects sleep and I personally drink 5 cups"
+userFacts = ["Coffee affects sleep", "User drinks 5 cups daily"]
+
+⚠️ Important: If the user said something = it must be in userFacts. Empty array ONLY if they wrote a single word like "coffee"
+
 JSON only:
-{"topic": "The topic", "angle": "The angle", "userFacts": ["fact 1", "fact 2"]}`
+{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
     }
   };
   
