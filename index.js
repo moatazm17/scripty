@@ -243,11 +243,16 @@ async function extractTopic(rawInput, language = 'egyptian', costTracker = null)
   // Language-specific prompts for topic extraction + user facts
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج الحقائق.',
+      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج كل المعلومات المهمة.',
       prompt: `افهم الموضوع ده واستخرج:
 1. الموضوع الأساسي (جملة واحدة واضحة)
-2. الزاوية أو الـ angle
-3. أي أرقام أو حقائق محددة ذكرها المستخدم (array فاضي لو مفيش)
+2. الزاوية أو الـ angle (وجهة نظر اليوزر)
+3. userFacts: كل حاجة مهمة ذكرها اليوزر:
+   - أي أرقام أو إحصائيات
+   - أي رأي أو claim عايز يقوله (مثلاً: "أفضل", "أسوأ", "الوحيد")
+   - أي سبب أو تفسير ذكره (مثلاً: "عشان", "بسبب")
+   - أي معلومة محددة
+   (array فاضي بس لو فعلاً مفيش أي حاجة)
 
 النص:
 "${rawInput}"
@@ -256,11 +261,16 @@ JSON فقط:
 {"topic": "الموضوع", "angle": "الزاوية", "userFacts": ["حقيقة 1", "حقيقة 2"]}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج الحقائق.',
+      system: 'أنت محلل مواضيع. افهم الموضوع واستخرج كل المعلومات المهمة.',
       prompt: `افهم الموضوع هذا واستخرج:
 1. الموضوع الأساسي (جملة واحدة واضحة)
-2. الزاوية أو الـ angle
-3. أي أرقام أو حقائق محددة ذكرها المستخدم (array فاضي لو ما في)
+2. الزاوية أو الـ angle (وجهة نظر اليوزر)
+3. userFacts: كل شي مهم ذكره اليوزر:
+   - أي أرقام أو إحصائيات
+   - أي رأي أو claim يبي يقوله (مثلاً: "أفضل", "أسوأ", "الوحيد")
+   - أي سبب أو تفسير ذكره (مثلاً: "لأن", "بسبب")
+   - أي معلومة محددة
+   (array فاضي بس لو فعلاً ما في شي)
 
 النص:
 "${rawInput}"
@@ -269,11 +279,16 @@ JSON فقط:
 {"topic": "الموضوع", "angle": "الزاوية", "userFacts": ["حقيقة 1", "حقيقة 2"]}`
     },
     french: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais les faits.',
+      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais toutes les informations importantes.',
       prompt: `Analyse ce texte et extrais:
 1. Le sujet principal (une phrase claire)
-2. L'angle
-3. Tous les chiffres ou faits spécifiques mentionnés (array vide si aucun)
+2. L'angle (point de vue de l'utilisateur)
+3. userFacts: tout ce qui est important mentionné:
+   - Chiffres ou statistiques
+   - Opinions ou claims ("meilleur", "pire", "seul")
+   - Raisons données ("parce que", "car")
+   - Informations spécifiques
+   (array vide seulement si vraiment rien)
 
 Texte:
 "${rawInput}"
@@ -282,11 +297,16 @@ JSON uniquement:
 {"topic": "Le sujet", "angle": "L'angle", "userFacts": ["fait 1", "fait 2"]}`
     },
     frensh: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais les faits.',
+      system: 'Tu es un analyste de sujets. Comprends le sujet et extrais toutes les informations importantes.',
       prompt: `Analyse ce texte et extrais:
 1. Le sujet principal (une phrase claire)
-2. L'angle
-3. Tous les chiffres ou faits spécifiques mentionnés (array vide si aucun)
+2. L'angle (point de vue de l'utilisateur)
+3. userFacts: tout ce qui est important mentionné:
+   - Chiffres ou statistiques
+   - Opinions ou claims ("meilleur", "pire", "seul")
+   - Raisons données ("parce que", "car")
+   - Informations spécifiques
+   (array vide seulement si vraiment rien)
 
 Texte:
 "${rawInput}"
@@ -295,11 +315,16 @@ JSON uniquement:
 {"topic": "Le sujet", "angle": "L'angle", "userFacts": ["fait 1", "fait 2"]}`
     },
     english: {
-      system: 'You are a topic analyst. Understand the topic and extract facts.',
+      system: 'You are a topic analyst. Understand the topic and extract all important information.',
       prompt: `Understand this text and extract:
 1. The main topic (one clear sentence)
-2. The angle
-3. Any specific numbers or facts the user mentioned (empty array if none)
+2. The angle (user's perspective)
+3. userFacts: everything important the user mentioned:
+   - Any numbers or statistics
+   - Any opinions or claims ("best", "worst", "only", "most")
+   - Any reasons given ("because", "due to")
+   - Any specific information
+   (empty array ONLY if truly nothing)
 
 Text:
 "${rawInput}"
@@ -338,19 +363,25 @@ JSON only:
   
   try {
     const text = response.data.content[0].text;
+    console.log(`   📄 Claude raw response: ${text.substring(0, 300)}`);
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
       const topicStr = `${parsed.topic} - ${parsed.angle}`;
       const userFacts = Array.isArray(parsed.userFacts) ? parsed.userFacts.filter(f => f && f.trim()) : [];
       console.log(`   🧠 Understood: "${topicStr}"`);
+      console.log(`   📌 EXTRACTED USER FACTS (${userFacts.length}):`);
       if (userFacts.length > 0) {
-        console.log(`   📌 User facts: ${userFacts.length} found`);
+        userFacts.forEach((fact, i) => console.log(`      ${i + 1}. ${fact}`));
+      } else {
+        console.log(`      ❌ No facts extracted from input`);
       }
       return { topic: topicStr, userFacts };
+    } else {
+      console.log(`   ⚠️ No JSON found in response`);
     }
   } catch (e) {
-    console.log('   ⚠️ Parse error, using raw input');
+    console.log('   ⚠️ Parse error, using raw input:', e.message);
   }
   
   return { topic: rawInput, userFacts: [] };
