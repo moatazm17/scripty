@@ -909,7 +909,7 @@ JSON only (include reasoning for each hook):
 // ============================================
 
 async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', preserveFromUser = [], explicitRequests = []) {
-  console.log(`   ✍️ Writing script (Gemini 3 Flash) - Mode: ${actionType.toUpperCase()}...`);
+  console.log(`   ✍️ Writing script (Gemini 3 Pro) - Mode: ${actionType.toUpperCase()}...`);
   
   // Log preserved facts if any
   if (preserveFromUser && preserveFromUser.length > 0) {
@@ -1225,10 +1225,9 @@ ${userInstructions}
       .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
   }
 
-  // Use Gemini 3 Flash for fast script generation
-  const scriptModel = 'gemini-3-flash-preview';
+  // Use Gemini 3 Pro for high-quality script generation
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/${scriptModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
       contents: [{
         parts: [{ text: prompt }]
@@ -1245,10 +1244,10 @@ ${userInstructions}
     }
   );
   
-  // Track cost (using 'gemini_flash' label for Flash model)
+  // Track cost
   if (costTracker && response.data?.usageMetadata) {
     const usage = response.data.usageMetadata;
-    trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+    trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
   }
   
   let script = response.data.candidates[0].content.parts[0].text;
