@@ -1080,6 +1080,7 @@ async function generateScript(rawTopic, language, niche, duration) {
     const topic = topicResult.topic;
     const userFacts = topicResult.userFacts || [];
     console.log(`   ✓ Topic: "${topic}"`);
+    console.log(`   📌 User Facts: ${JSON.stringify(userFacts)}`);
     
     // Stage 1: Research (SKIP if refine mode)
     let researchData;
@@ -1092,6 +1093,7 @@ async function generateScript(rawTopic, language, niche, duration) {
     }
     
     // Stage 2: Generate Hooks (with action_type and userFacts)
+    console.log(`   📌 Passing ${userFacts.length} user facts to hooks`);
     const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions, userFacts);
     console.log(`   ✓ Hooks: ${hooks.length}`);
     
@@ -1099,6 +1101,7 @@ async function generateScript(rawTopic, language, niche, duration) {
     const selectedHook = hooks[0] || topic;
     
     // Stage 3: Write Script (with action_type and userFacts)
+    console.log(`   📌 Passing ${userFacts.length} user facts to script`);
     let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions, userFacts);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
@@ -1210,6 +1213,7 @@ app.post('/api/generate-hooks', async (req, res) => {
       extractedTopic = topicResult.topic;
       userFacts = topicResult.userFacts || [];
       console.log(`   ✓ Topic: "${extractedTopic}"`);
+      console.log(`   📌 User Facts: ${JSON.stringify(userFacts)}`);
       
       // Research (SKIP if refine mode)
       if (action_type === 'refine') {
@@ -1222,6 +1226,7 @@ app.post('/api/generate-hooks', async (req, res) => {
     }
     
     // Generate 3 hooks (with action_type and userFacts)
+    console.log(`   📌 Passing ${userFacts.length} user facts to hooks`);
     const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions, userFacts);
     console.log(`   ✓ Generated ${hooks.length} hooks`);
     
@@ -1286,6 +1291,7 @@ app.post('/api/write-script', async (req, res) => {
   
   try {
     // Write script with selected hook (with mode and user facts)
+    console.log(`   📌 Passing ${user_facts.length} user facts to script`);
     let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker, mode, user_instructions, user_facts);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
