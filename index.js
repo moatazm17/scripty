@@ -3,8 +3,6 @@ const cors = require('cors');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const PerformanceTracker = require('./performanceTracker');
-const { getErrorMessage, detectErrorType } = require('./errorMessages');
 require('dotenv').config();
 
 const app = express();
@@ -143,13 +141,11 @@ function getDurationConfig(duration) {
 // ============================================
 
 const PRICING = {
-  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },           // Claude Sonnet 4
-  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },        // sonar-pro
-  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },           // Gemini 3 Pro
-  gemini_flash: { input: 0.15 / 1_000_000, output: 0.60 / 1_000_000 },      // Gemini 2.5 Flash
-  gemini_flash_lite: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },// Gemini 2.5 Flash Lite
-  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },      // Gemini 2.5 Flash Lite (chat) - alias
-  flux: { perImage: 0.003 },                                                 // Flux Schnell $3/1000 images
+  claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },      // Claude Sonnet 4
+  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },   // sonar-pro
+  gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },      // Gemini 3 Pro
+  gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 }, // Gemini 2.5 Flash Lite (chat)
+  flux: { perImage: 0.003 },                                            // Flux Schnell $3/1000 images
 };
 
 function createCostTracker() {
@@ -157,8 +153,6 @@ function createCostTracker() {
     claude: { input: 0, output: 0, cost: 0 },
     perplexity: { input: 0, output: 0, cost: 0 },
     gemini: { input: 0, output: 0, cost: 0 },
-    gemini_flash: { input: 0, output: 0, cost: 0 },
-    gemini_flash_lite: { input: 0, output: 0, cost: 0 },
     gemini_chat: { input: 0, output: 0, cost: 0 },
     flux: { images: 0, cost: 0 },
     total: 0,
@@ -188,26 +182,14 @@ function trackFluxCost(tracker) {
 function logTotalCost(tracker) {
   console.log('═══════════════════════════════════════');
   console.log('💰 COST BREAKDOWN:');
-  if (tracker.claude.cost > 0) {
-    console.log(`   Claude:          ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
-  }
-  if (tracker.perplexity.cost > 0) {
-    console.log(`   Perplexity:      ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
-  }
-  if (tracker.gemini.cost > 0) {
-    console.log(`   Gemini Pro:      ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
-  }
-  if (tracker.gemini_flash && tracker.gemini_flash.cost > 0) {
-    console.log(`   Gemini Flash:    ${tracker.gemini_flash.input} in + ${tracker.gemini_flash.output} out = $${tracker.gemini_flash.cost.toFixed(4)}`);
-  }
-  if (tracker.gemini_flash_lite && tracker.gemini_flash_lite.cost > 0) {
-    console.log(`   Gemini FlashLite:${tracker.gemini_flash_lite.input} in + ${tracker.gemini_flash_lite.output} out = $${tracker.gemini_flash_lite.cost.toFixed(4)}`);
-  }
+  console.log(`   Claude:     ${tracker.claude.input} in + ${tracker.claude.output} out = $${tracker.claude.cost.toFixed(4)}`);
+  console.log(`   Perplexity: ${tracker.perplexity.input} in + ${tracker.perplexity.output} out = $${tracker.perplexity.cost.toFixed(4)}`);
+  console.log(`   Gemini:     ${tracker.gemini.input} in + ${tracker.gemini.output} out = $${tracker.gemini.cost.toFixed(4)}`);
   if (tracker.gemini_chat && tracker.gemini_chat.cost > 0) {
-    console.log(`   Gemini Chat:     ${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
+    console.log(`   Gemini Chat:${tracker.gemini_chat.input} in + ${tracker.gemini_chat.output} out = $${tracker.gemini_chat.cost.toFixed(4)}`);
   }
   if (tracker.flux.images > 0) {
-    console.log(`   Flux:            ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
+    console.log(`   Flux:       ${tracker.flux.images} images = $${tracker.flux.cost.toFixed(4)}`);
   }
   console.log(`   ────────────────────────────────────`);
   console.log(`   💵 TOTAL: $${tracker.total.toFixed(4)}`);
@@ -232,213 +214,23 @@ const STYLE_GUIDE = `
 `;
 
 // ============================================
-// 🎯 STAGE 0A: CONTENT SUFFICIENCY ANALYSIS (Smart AI-Based)
+// 🎯 STAGE 0A: MODE DETECTION (Simple Code-Based)
 // ============================================
 
-async function analyzeContentSufficiency(userInput, duration = '30', language = 'egyptian', costTracker = null) {
-  console.log('   🧠 Analyzing content sufficiency...');
+function detectMode(rawInput) {
+  const text = rawInput.trim();
+  const wordCount = text.split(/\s+/).length;
   
-  const durationConfig = getDurationConfig(duration);
-  const targetWords = durationConfig.words;
-  
-  // Language-specific analysis prompts
-  const langPrompts = {
-    egyptian: {
-      system: 'أنت محلل محتوى. وظيفتك تحليل كفاية المحتوى لكتابة سكريبت فيديو.',
-      prompt: `حلل إذا كان هذا المدخل كافي لكتابة سكريبت فيديو ${duration} ثانية (~${targetWords} كلمة).
-
-=== مدخل المستخدم ===
-${userInput}
-
-=== خطوات التحليل ===
-1. استخرج كل الحقائق/المعلومات اللي المستخدم قدمها (أرقام، تواريخ، أسماء، تفاصيل)
-2. استخرج كل الأسئلة أو طلبات البحث ("ابحث عن"، "شوف كام"، "مش متأكد"، "إزاي")
-3. قدّر: لو كتبت 15-20 كلمة عن كل حقيقة، هيطلع كام كلمة مجموع؟
-4. احسب الفجوة: الكلمات المطلوبة - الكلمات المقدرة
-
-=== OUTPUT (JSON فقط) ===
-{
-  "user_facts": ["حقيقة 1", "حقيقة 2"],
-  "explicit_research_requests": ["سعر التذكرة", "عدد الزوار"],
-  "estimated_words_from_facts": 80,
-  "target_words": ${targetWords},
-  "gap": 70,
-  "needs_research": true,
-  "research_queries": [
-    "استعلام محدد 1",
-    "استعلام محدد 2"
-  ],
-  "preserve_from_user": ["8 مليون كتاب", "80 جنيه"]
-}`
-    },
-    gulf: {
-      system: 'أنت محلل محتوى. وظيفتك تحليل كفاية المحتوى لكتابة سكريبت فيديو.',
-      prompt: `حلل إذا كان هذا المدخل كافي لكتابة سكريبت فيديو ${duration} ثانية (~${targetWords} كلمة).
-
-=== مدخل المستخدم ===
-${userInput}
-
-=== خطوات التحليل ===
-1. استخرج كل الحقائق/المعلومات اللي المستخدم قدمها (أرقام، تواريخ، أسماء، تفاصيل)
-2. استخرج كل الأسئلة أو طلبات البحث ("ابحث", "وش السعر", "مب متأكد", "كيف")
-3. قدّر: لو كتبت 15-20 كلمة عن كل حقيقة، كم كلمة مجموع؟
-4. احسب الفجوة: الكلمات المطلوبة - الكلمات المقدرة
-
-=== OUTPUT (JSON فقط) ===
-{
-  "user_facts": ["حقيقة 1", "حقيقة 2"],
-  "explicit_research_requests": ["سعر التذكرة", "عدد الزوار"],
-  "estimated_words_from_facts": 80,
-  "target_words": ${targetWords},
-  "gap": 70,
-  "needs_research": true,
-  "research_queries": [
-    "استعلام محدد 1",
-    "استعلام محدد 2"
-  ],
-  "preserve_from_user": ["المبلغ الكبير", "السعر المنخفض"]
-}`
-    },
-    english: {
-      system: 'You are a content analyst. Your job is to analyze if user input is sufficient for writing a video script.',
-      prompt: `Analyze if this input is sufficient to write a ${duration}s video script (~${targetWords} words).
-
-=== USER INPUT ===
-${userInput}
-
-=== ANALYSIS STEPS ===
-1. Extract all FACTS/INFORMATION the user provided (numbers, dates, names, details)
-2. Extract all QUESTIONS or RESEARCH REQUESTS ("how much", "find out", "not sure", "what is")
-3. Estimate: if I write 15-20 words about each fact, how many total words?
-4. Calculate the gap: target words - estimated words
-
-=== OUTPUT (JSON only) ===
-{
-  "user_facts": ["fact 1", "fact 2"],
-  "explicit_research_requests": ["ticket price", "visitor count"],
-  "estimated_words_from_facts": 80,
-  "target_words": ${targetWords},
-  "gap": 70,
-  "needs_research": true,
-  "research_queries": [
-    "specific query 1",
-    "specific query 2"
-  ],
-  "preserve_from_user": ["8 million books", "$80 price"]
-}`
-    },
-    french: {
-      system: 'Tu es un analyste de contenu. Ton travail est d\'analyser si l\'entrée de l\'utilisateur est suffisante pour écrire un script vidéo.',
-      prompt: `Analyse si cette entrée est suffisante pour écrire un script vidéo de ${duration}s (~${targetWords} mots).
-
-=== ENTRÉE UTILISATEUR ===
-${userInput}
-
-=== ÉTAPES D'ANALYSE ===
-1. Extraire tous les FAITS/INFORMATIONS fournis par l'utilisateur (chiffres, dates, noms, détails)
-2. Extraire toutes les QUESTIONS ou DEMANDES DE RECHERCHE ("combien", "trouve", "pas sûr", "quel est")
-3. Estimer : si j'écris 15-20 mots sur chaque fait, combien de mots au total ?
-4. Calculer l'écart : mots cibles - mots estimés
-
-=== SORTIE (JSON uniquement) ===
-{
-  "user_facts": ["fait 1", "fait 2"],
-  "explicit_research_requests": ["prix du billet", "nombre de visiteurs"],
-  "estimated_words_from_facts": 80,
-  "target_words": ${targetWords},
-  "gap": 70,
-  "needs_research": true,
-  "research_queries": [
-    "requête spécifique 1",
-    "requête spécifique 2"
-  ],
-  "preserve_from_user": ["8 millions de livres", "80€"]
-}`
-    },
-    frensh: {
-      system: 'Tu es un analyste de contenu. Ton travail est d\'analyser si l\'entrée de l\'utilisateur est suffisante pour écrire un script vidéo.',
-      prompt: `Analyse si cette entrée est suffisante pour écrire un script vidéo de ${duration}s (~${targetWords} mots).
-
-=== ENTRÉE UTILISATEUR ===
-${userInput}
-
-=== ÉTAPES D'ANALYSE ===
-1. Extraire tous les FAITS/INFORMATIONS fournis par l'utilisateur (chiffres, dates, noms, détails)
-2. Extraire toutes les QUESTIONS ou DEMANDES DE RECHERCHE ("combien", "trouve", "pas sûr", "quel est")
-3. Estimer : si j'écris 15-20 mots sur chaque fait, combien de mots au total ?
-4. Calculer l'écart : mots cibles - mots estimés
-
-=== SORTIE (JSON uniquement) ===
-{
-  "user_facts": ["fait 1", "fait 2"],
-  "explicit_research_requests": ["prix du billet", "nombre de visiteurs"],
-  "estimated_words_from_facts": 80,
-  "target_words": ${targetWords},
-  "gap": 70,
-  "needs_research": true,
-  "research_queries": [
-    "requête spécifique 1",
-    "requête spécifique 2"
-  ],
-  "preserve_from_user": ["8 millions de livres", "80€"]
-}`
-    }
-  };
-  
-  const langConfig = langPrompts[language] || langPrompts['egyptian'];
-  
-  try {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-      {
-        contents: [{
-          role: 'user',
-          parts: [{ text: langConfig.prompt }]
-        }],
-        systemInstruction: {
-          parts: [{ text: langConfig.system }]
-        },
-        generationConfig: {
-          maxOutputTokens: 500,
-          temperature: 0.1, // Low temp for consistent analysis
-        }
-      }
-    );
-    
-    // Track cost
-    if (costTracker && response.data.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash_lite', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
-    }
-    
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    
-    // Extract JSON from response
-    const match = text.match(/\{[\s\S]*\}/);
-    if (match) {
-      const analysis = JSON.parse(match[0]);
-      console.log(`   📊 Analysis: ${analysis.user_facts?.length || 0} facts, gap: ${analysis.gap} words`);
-      console.log(`   🔍 Needs research: ${analysis.needs_research ? 'YES' : 'NO'}`);
-      
-      return analysis;
-    }
-    
-  } catch (e) {
-    console.log('   ⚠️ Analysis parse error:', e.message);
+  // Simple word count threshold logic:
+  // - Less than 60 words → RESEARCH (external search needed to fill content)
+  // - 60+ words → REFINE (user provided enough content, skip search)
+  if (wordCount >= 60) {
+    console.log(`   🎯 Mode: REFINE (${wordCount} words >= 60)`);
+    return 'refine';
   }
   
-  // Fallback to simple word count logic if analysis fails
-  const wordCount = userInput.split(/\s+/).length;
-  return {
-    user_facts: [],
-    explicit_research_requests: [],
-    estimated_words_from_facts: wordCount,
-    target_words: targetWords,
-    gap: targetWords - wordCount,
-    needs_research: wordCount < 60,
-    research_queries: [userInput],
-    preserve_from_user: [],
-  };
+  console.log(`   🎯 Mode: RESEARCH (${wordCount} words < 60)`);
+  return 'research';
 }
 
 // ============================================
@@ -446,178 +238,113 @@ ${userInput}
 // ============================================
 
 async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
-  console.log('   🧠 Understanding topic & extracting user facts...');
-
-  // Language-specific prompts for topic extraction WITH facts extraction
+  console.log('   🧠 Understanding topic...');
+  
+  // Language-specific prompts for topic extraction (SIMPLE - no mode detection)
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع ذكي. استخرج الموضوع والحقائق من كلام المستخدم.',
-      prompt: `حلل النص ده واستخرج:
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح بالعامية المصرية.',
+      prompt: `افهم الموضوع ده واستخرج:
+1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
+2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
 
-1. **topic**: الموضوع الأساسي فقط (بدون كلمات الأوامر زي "عايز سكريبت" أو "اكتبلي")
-2. **angle**: الزاوية أو التركيز المطلوب
-3. **userFacts**: قائمة بكل الأرقام والإحصائيات والمعلومات المحددة اللي المستخدم ذكرها (array فاضي لو مفيش)
-
-=== أمثلة ===
-Input: "عايز سكريبت عن مصنع الرمال السودا، بيوفر 50 مليون دولار وبيشغل 2000 عامل"
-Output: {"topic": "مصنع الرمال السوداء", "angle": "التأثير الاقتصادي", "userFacts": ["بيوفر 50 مليون دولار", "بيشغل 2000 عامل"]}
-
-Input: "اكتبلي عن الذكاء الاصطناعي"
-Output: {"topic": "الذكاء الاصطناعي", "angle": "عام", "userFacts": []}
-
-Input: "سكريبت عن فوائد القهوة، دراسة هارفارد 2023 قالت بتقلل السكر 25%"
-Output: {"topic": "فوائد القهوة", "angle": "الفوائد الصحية", "userFacts": ["دراسة هارفارد 2023 قالت بتقلل السكر 25%"]}
-
-=== النص المطلوب تحليله ===
+النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "", "angle": "", "userFacts": []}`
+{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع ذكي. استخرج الموضوع والحقائق من كلام المستخدم.',
-      prompt: `حلل النص هذا واستخرج:
+      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح باللهجة الخليجية.',
+      prompt: `افهم الموضوع هذا واستخرج:
+1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
+2. الزاوية أو الـ angle (وش اللي المستخدم يبي يركز عليه)
 
-1. **topic**: الموضوع الأساسي فقط (بدون كلمات الأوامر مثل "أبي سكربت" أو "اكتبلي")
-2. **angle**: الزاوية أو التركيز المطلوب
-3. **userFacts**: قائمة بكل الأرقام والإحصائيات والمعلومات المحددة اللي المستخدم ذكرها (array فاضي لو ما في)
-
-=== أمثلة ===
-Input: "أبي سكربت عن مصنع الرمال السودا، يوفر 50 مليون دولار ويشغل 2000 عامل"
-Output: {"topic": "مصنع الرمال السوداء", "angle": "التأثير الاقتصادي", "userFacts": ["يوفر 50 مليون دولار", "يشغل 2000 عامل"]}
-
-Input: "اكتبلي عن الذكاء الاصطناعي"
-Output: {"topic": "الذكاء الاصطناعي", "angle": "عام", "userFacts": []}
-
-=== النص المطلوب تحليله ===
+النص:
 "${rawInput}"
 
 JSON فقط:
-{"topic": "", "angle": "", "userFacts": []}`
+{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
     },
     french: {
-      system: 'Tu es un analyste intelligent. Extrais le sujet et les faits du texte utilisateur.',
-      prompt: `Analyse ce texte et extrais:
+      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
+      prompt: `Analyse ce sujet et extrais:
+1. Le sujet principal (une phrase claire en Français)
+2. L'angle (sur quoi l'utilisateur veut se concentrer)
 
-1. **topic**: Le sujet principal uniquement (sans mots de commande comme "je veux un script" ou "écris-moi")
-2. **angle**: L'angle ou le focus demandé
-3. **userFacts**: Liste de tous les chiffres, statistiques et informations spécifiques mentionnés (array vide si aucun)
-
-=== Exemples ===
-Input: "Je veux un script sur l'usine de sable noir, économise 50 millions de dollars et emploie 2000 travailleurs"
-Output: {"topic": "L'usine de sable noir", "angle": "Impact économique", "userFacts": ["économise 50 millions de dollars", "emploie 2000 travailleurs"]}
-
-Input: "Écris-moi sur l'intelligence artificielle"
-Output: {"topic": "L'intelligence artificielle", "angle": "général", "userFacts": []}
-
-=== Texte à analyser ===
+Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "", "angle": "", "userFacts": []}`
+{"topic": "Le sujet clair", "angle": "L'angle"}`
     },
     frensh: {
-      system: 'Tu es un analyste intelligent. Extrais le sujet et les faits du texte utilisateur.',
-      prompt: `Analyse ce texte et extrais:
+      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
+      prompt: `Analyse ce sujet et extrais:
+1. Le sujet principal (une phrase claire en Français)
+2. L'angle (sur quoi l'utilisateur veut se concentrer)
 
-1. **topic**: Le sujet principal uniquement (sans mots de commande comme "je veux un script" ou "écris-moi")
-2. **angle**: L'angle ou le focus demandé
-3. **userFacts**: Liste de tous les chiffres, statistiques et informations spécifiques mentionnés (array vide si aucun)
-
-=== Exemples ===
-Input: "Je veux un script sur l'usine de sable noir, économise 50 millions de dollars et emploie 2000 travailleurs"
-Output: {"topic": "L'usine de sable noir", "angle": "Impact économique", "userFacts": ["économise 50 millions de dollars", "emploie 2000 travailleurs"]}
-
-Input: "Écris-moi sur l'intelligence artificielle"
-Output: {"topic": "L'intelligence artificielle", "angle": "général", "userFacts": []}
-
-=== Texte à analyser ===
+Texte:
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "", "angle": "", "userFacts": []}`
+{"topic": "Le sujet clair", "angle": "L'angle"}`
     },
     english: {
-      system: 'You are a smart topic analyst. Extract the topic and facts from user input.',
-      prompt: `Analyze this text and extract:
+      system: 'You are a topic analyst. Understand the topic and define it clearly in English.',
+      prompt: `Understand this topic and extract:
+1. The main topic (one clear sentence in English)
+2. The angle (what the user wants to focus on)
 
-1. **topic**: The main topic only (without command words like "I want a script" or "write me")
-2. **angle**: The angle or focus requested
-3. **userFacts**: List of all numbers, statistics, and specific information the user mentioned (empty array if none)
-
-=== Examples ===
-Input: "I want a script about the black sand factory, saves 50 million dollars and employs 2000 workers"
-Output: {"topic": "The black sand factory", "angle": "Economic impact", "userFacts": ["saves 50 million dollars", "employs 2000 workers"]}
-
-Input: "Write me about artificial intelligence"
-Output: {"topic": "Artificial intelligence", "angle": "general", "userFacts": []}
-
-Input: "Script about coffee benefits, Harvard 2023 study said it reduces diabetes by 25%"
-Output: {"topic": "Coffee benefits", "angle": "Health benefits", "userFacts": ["Harvard 2023 study said it reduces diabetes by 25%"]}
-
-=== Text to analyze ===
+Text:
 "${rawInput}"
 
 JSON only:
-{"topic": "", "angle": "", "userFacts": []}`
+{"topic": "The clear topic", "angle": "The angle"}`
     }
   };
   
   const langConfig = langPrompts[language] || langPrompts['egyptian'];
   
-  // Using Gemini 2.5 Flash Lite for cost efficiency
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+    'https://api.anthropic.com/v1/messages',
     {
-      contents: [{
+      model: CONFIG.CLAUDE_MODEL,
+      max_tokens: 150,
+      system: langConfig.system,
+      messages: [{
         role: 'user',
-        parts: [{ text: langConfig.prompt }]
+        content: langConfig.prompt
       }],
-      systemInstruction: {
-        parts: [{ text: langConfig.system }]
+    },
+    {
+      headers: {
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
       },
-      generationConfig: {
-        maxOutputTokens: 200,
-      }
     }
   );
   
   // Track cost
-  if (costTracker && response.data.usageMetadata) {
-    const usage = response.data.usageMetadata;
-    trackCost(costTracker, 'gemini_flash_lite', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
+  if (costTracker && response.data.usage) {
+    trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
   }
   
   try {
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    // Extract JSON from response
+    const text = response.data.content[0].text;
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      const topicString = `${parsed.topic}${parsed.angle && parsed.angle !== 'عام' && parsed.angle !== 'general' && parsed.angle !== 'général' ? ' - ' + parsed.angle : ''}`;
-      const userFacts = Array.isArray(parsed.userFacts) ? parsed.userFacts : [];
-      
-      console.log(`   🧠 Topic: "${topicString}"`);
-      if (userFacts.length > 0) {
-        console.log(`   📌 User Facts extracted: ${userFacts.length} facts`);
-        userFacts.forEach((fact, i) => console.log(`      ${i + 1}. "${fact}"`));
-      }
-      
-      // Return object with both topic and userFacts
-      return {
-        topic: topicString,
-        userFacts: userFacts
-      };
+      const result = `${parsed.topic} - ${parsed.angle}`;
+      console.log(`   🧠 Understood: "${result}"`);
+      return result;
     }
   } catch (e) {
-    console.log('   ⚠️ Parse error, using raw input:', e.message);
+    console.log('   ⚠️ Parse error, using raw input');
   }
   
-  // Fallback: return raw input with empty facts
-  return {
-    topic: rawInput,
-    userFacts: []
-  };
+  return rawInput;
 }
 
 // ============================================
@@ -710,18 +437,17 @@ async function research(rawInput, extractedTopic, costTracker = null, retries = 
 // 🎣 STAGE 2: GENERATE HOOKS (Gemini 3 Pro)
 // ============================================
 
-async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', preserveFromUser = []) {
-  console.log('   🎣 Generating hooks (Gemini 3 Flash)...');
+async function generateHooks(topic, researchData, niche, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
+  console.log('   🎣 Generating hooks (Gemini 3 Pro)...');
   
   // Get niche-specific hooks for this language (used as style reference for both modes)
   const nicheHooks = getNicheHooks(niche, language);
   const universalHooks = getUniversalHooks(language);
   
-  console.log(`   📌 Using ${nicheHooks.length} niche hooks (${language})`);
-  // Universal hooks paused for testing
+  console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks (${language})`);
   console.log(`   🎯 Mode: ${actionType.toUpperCase()}`);
 
-  // Language-specific hook generation prompts with Chain of Thought
+  // Language-specific hook generation prompts
   const langHookPrompts = {
     egyptian: {
       instruction: 'اكتب 3 Hooks مثيرة للفضول بالعامية المصرية زي الأمثلة دي بالظبط',
@@ -730,14 +456,7 @@ async function generateHooks(topic, researchData, niche, language = 'egyptian', 
 • استخدم رقم أو حقيقة صادمة من البحث
 • ❌ ممنوع تكشف الموضوع بالكامل
 • ❌ ممنوع "هل تعلم" أو "تخيل كده"
-• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."، "الرقم ده..."`,
-      thinkFirst: `=== فكّر قبل ما تكتب ===
-لكل hook، حلل:
-1. الـ Curiosity Gap: إيه اللي هيخليه عايز يعرف أكتر؟
-2. الـ Emotion: إيه الإحساس؟ (curiosity/shock/fomo/pride/anger)
-3. إيقاف السكرول: ليه هيوقف يتفرج؟
-
-اختار أقوى hook وقول ليه.`
+• ✅ "لو فاكر إن..."، "ليه..."، "أوعى..."، "الرقم ده..."`
     },
     gulf: {
       instruction: 'اكتب 3 Hooks مثيرة للفضول باللهجة الخليجية زي الأمثلة هذي بالضبط',
@@ -746,14 +465,7 @@ async function generateHooks(topic, researchData, niche, language = 'egyptian', 
 • استخدم رقم أو حقيقة صادمة من البحث
 • ❌ ممنوع تكشف الموضوع كله
 • ❌ ممنوع "هل تعلم" أو "تخيل معي"
-• ✅ "لو تحسب إن..."، "ليش..."، "انتبه..."، "الرقم هذا..."`,
-      thinkFirst: `=== فكّر قبل ما تكتب ===
-لكل hook، حلل:
-1. الـ Curiosity Gap: وش اللي يخليه يبي يعرف أكثر؟
-2. الـ Emotion: وش الإحساس؟ (curiosity/shock/fomo/pride/anger)
-3. إيقاف السكرول: ليش بيوقف يتفرج؟
-
-اختار أقوى hook وقول ليش.`
+• ✅ "لو تحسب إن..."، "ليش..."، "انتبه..."، "الرقم هذا..."`
     },
     french: {
       instruction: 'Écris 3 Hooks intrigants en Français exactement comme ces exemples',
@@ -762,14 +474,7 @@ async function generateHooks(topic, researchData, niche, language = 'egyptian', 
 • Utilise un chiffre ou fait choquant de la recherche
 • ❌ Ne révèle pas tout le sujet
 • ❌ Pas de "Saviez-vous" ou "Imaginez"
-• ✅ "Si tu penses que...", "Pourquoi...", "Attention...", "Ce chiffre..."`,
-      thinkFirst: `=== RÉFLÉCHIS AVANT D'ÉCRIRE ===
-Pour CHAQUE hook, analyse:
-1. Curiosity Gap: Qu'est-ce qui donne envie d'en savoir plus?
-2. Emotion: Quel sentiment? (curiosity/shock/fomo/pride/anger)
-3. Facteur d'arrêt: Pourquoi quelqu'un arrêterait de scroller?
-
-Choisis le hook le plus fort et explique pourquoi.`
+• ✅ "Si tu penses que...", "Pourquoi...", "Attention...", "Ce chiffre..."`
     },
     frensh: {
       instruction: 'Écris 3 Hooks intrigants en Français exactement comme ces exemples',
@@ -778,14 +483,7 @@ Choisis le hook le plus fort et explique pourquoi.`
 • Utilise un chiffre ou fait choquant de la recherche
 • ❌ Ne révèle pas tout le sujet
 • ❌ Pas de "Saviez-vous" ou "Imaginez"
-• ✅ "Si tu penses que...", "Pourquoi...", "Attention...", "Ce chiffre..."`,
-      thinkFirst: `=== RÉFLÉCHIS AVANT D'ÉCRIRE ===
-Pour CHAQUE hook, analyse:
-1. Curiosity Gap: Qu'est-ce qui donne envie d'en savoir plus?
-2. Emotion: Quel sentiment? (curiosity/shock/fomo/pride/anger)
-3. Facteur d'arrêt: Pourquoi quelqu'un arrêterait de scroller?
-
-Choisis le hook le plus fort et explique pourquoi.`
+• ✅ "Si tu penses que...", "Pourquoi...", "Attention...", "Ce chiffre..."`
     },
     english: {
       instruction: 'Write 3 curiosity-inducing Hooks in English exactly like these examples',
@@ -794,14 +492,7 @@ Choisis le hook le plus fort et explique pourquoi.`
 • Use a shocking number or fact from the research
 • ❌ Don't reveal the whole topic
 • ❌ No "Did you know" or "Imagine this"
-• ✅ "If you think...", "Why...", "Watch out...", "This number..."`,
-      thinkFirst: `=== THINK BEFORE YOU WRITE ===
-For EACH hook, analyze:
-1. Curiosity Gap: What makes them NEED to know more?
-2. Emotion: What feeling? (curiosity/shock/fomo/pride/anger)
-3. Scroll Stop Factor: Why would someone STOP scrolling?
-
-Pick the strongest hook and explain why.`
+• ✅ "If you think...", "Why...", "Watch out...", "This number..."`
     }
   };
   
@@ -811,7 +502,7 @@ Pick the strongest hook and explain why.`
   let contentSource;
   if (actionType === 'refine') {
     // For refine mode: use user instructions as the content source
-    contentSource = `User's Draft/Instructions (use the INFORMATION but rewrite in hook style - don't copy sentences!):
+    contentSource = `User's Draft/Instructions (extract key points for hooks):
 ${userInstructions}`;
   } else {
     // For research mode: use research data
@@ -819,52 +510,29 @@ ${userInstructions}`;
 ${researchData}`;
   }
   
-  // Build preserve section for hybrid mode
-  const preserveSection = preserveFromUser && preserveFromUser.length > 0
-    ? `\n--- Reference Facts (pick ONE only, save rest for script) ---\n${preserveFromUser.map(fact => `• ${fact}`).join('\n')}\n`
-    : '';
-  
-  const prompt = `${hookConfig.instruction}
+  const prompt = `${hookConfig.instruction}:
 
-=== ⛔ HOOK RULES (READ FIRST) ===
-- MAX 25 WORDS - no exceptions
-- Pick ONLY ONE fact - create mystery around it
-- Hide everything else - that's for the script
-- ❌ NEVER summarize or pack multiple facts
+Topic: ${topic}
 
-=== Example Hooks from "${niche}" ===
-${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
-
-=== Topic: ${topic} ===
-${preserveSection}
---- Background (context only, DON'T summarize) ---
 ${contentSource}
 
+=== Example Hooks from "${niche}" (copy the STYLE exactly!) ===
+${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+
+=== Universal Hook Patterns (for inspiration) ===
+${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
+
+=== Style Tips ===
 ${hookConfig.tips}
-${hookConfig.thinkFirst}
+
+${actionType === 'refine' ? '⚠️ IMPORTANT: The hooks must relate to the USER\'S CONTENT above, not external information.' : ''}
 
 JSON only:
-{
-  "analysis": {
-    "one_fact_chosen": "The ONE fact for the hook",
-    "target_emotion": "curiosity|shock|fomo|pride|anger"
-  },
-  "hooks": [
-    {
-      "text": "Hook (MAX 25 WORDS)",
-      "word_count": 0,
-      "emotion": "curiosity|shock|fomo|pride|anger",
-      "curiosity_gap": "What's hidden"
-    }
-  ],
-  "recommended": 0
-}`;
+{"hooks": ["hook1", "hook2", "hook3"]}`;
 
   try {
-    // Use Gemini 3.0 Flash Preview for hook generation (faster + cheaper)
-    const hookModel = 'gemini-3-flash-preview';
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${hookModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
@@ -875,10 +543,10 @@ JSON only:
       { headers: { 'Content-Type': 'application/json' } }
     );
 
-    // Track cost (using 'gemini_flash' label for Flash model)
+    // Track cost
     if (costTracker && response.data?.usageMetadata) {
       const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+      trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
     }
 
     // Debug: log full response
@@ -891,46 +559,9 @@ JSON only:
       const match = cleanText.match(/\{[\s\S]*\}/);
       if (match) {
         const parsed = JSON.parse(match[0]);
-        
-        // Handle NEW format with reasoning
         if (parsed.hooks && parsed.hooks.length > 0) {
-          // Check if hooks are objects (new format) or strings (old format fallback)
-          const isNewFormat = typeof parsed.hooks[0] === 'object';
-          
-          if (isNewFormat) {
-            // Extract text for backward compatibility
-            const hooksArray = parsed.hooks.map(h => h.text);
-            const recommended = parsed.recommended ?? 0;
-            const analysis = parsed.analysis || null;
-            
-            console.log(`   ✓ Got ${hooksArray.length} hooks with reasoning`);
-            console.log(`   ⭐ Recommended: Hook #${recommended + 1}`);
-            if (analysis?.target_emotion) {
-              console.log(`   🎯 Target emotion: ${analysis.target_emotion}`);
-            }
-            
-            // Return enriched object
-            return {
-              hooks: hooksArray,           // string[] for backward compatibility
-              hooksDetailed: parsed.hooks, // full objects with reasoning
-              recommended: recommended,    // index of recommended hook
-              analysis: analysis           // topic analysis
-            };
-          } else {
-            // Old format fallback (just strings)
-            console.log(`   ✓ Got ${parsed.hooks.length} hooks (simple format)`);
-            return {
-              hooks: parsed.hooks,
-              hooksDetailed: parsed.hooks.map((text, i) => ({
-                text,
-                reasoning: '',
-                emotion: 'curiosity',
-                scroll_stop_factor: ''
-              })),
-              recommended: 0,
-              analysis: null
-            };
-          }
+          console.log(`   ✓ Got ${parsed.hooks.length} hooks`);
+          return parsed.hooks;
         }
       }
     } else {
@@ -945,49 +576,19 @@ JSON only:
   
   // Fallback
   console.log('   ⚠️ Using fallback hooks');
-  const fallbackHooks = [
+  return [
     `اللي بيوصلك عن ${topic.substring(0, 30)} ده نص الحقيقة بس...`,
     `لو فاكر إن اللي بيحصل في ${topic.substring(0, 30)} ده صدفة... تبقى غلطان!`,
     `أتحداك تكون واخد بالك من التفصيلة دي...`
   ];
-  
-  return {
-    hooks: fallbackHooks,
-    hooksDetailed: fallbackHooks.map((text, i) => ({
-      text,
-      reasoning: 'Fallback hook',
-      emotion: 'curiosity',
-      scroll_stop_factor: 'Mystery/intrigue'
-    })),
-    recommended: 0,
-    analysis: null
-  };
 }
 
 // ============================================
 // ✍️ STAGE 3: WRITE SCRIPT (Gemini 3 Pro)
 // ============================================
 
-async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', preserveFromUser = [], explicitRequests = []) {
+async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '') {
   console.log(`   ✍️ Writing script (Gemini 3 Pro) - Mode: ${actionType.toUpperCase()}...`);
-
-  // DEBUG: Log what writeScript receives
-  console.log('');
-  console.log('   ╔══════════════════════════════════════════════╗');
-  console.log('   ║  DEBUG: writeScript received data            ║');
-  console.log('   ╠══════════════════════════════════════════════╣');
-  console.log(`   ║ topic: "${topic?.substring(0, 50)}..."`);
-  console.log(`   ║ userInstructions: "${userInstructions?.substring(0, 80)}..."`);
-  console.log(`   ║ preserveFromUser: ${JSON.stringify(preserveFromUser?.slice(0, 3))}${preserveFromUser?.length > 3 ? '...' : ''}`);
-  console.log(`   ║ actionType: ${actionType}`);
-  console.log(`   ║ researchData length: ${researchData?.length || 0} chars`);
-  console.log('   ╚══════════════════════════════════════════════╝');
-  console.log('');
-
-  // Log preserved facts if any
-  if (preserveFromUser && preserveFromUser.length > 0) {
-    console.log(`   📌 Using ${preserveFromUser.length} user facts as reference`);
-  }
   
   const durationConfig = getDurationConfig(duration);
   const examples = getNicheExamples(niche, duration, language);
@@ -1001,192 +602,17 @@ ${ex.script}
 
   let prompt;
   
-  if (actionType === 'hybrid') {
-    // ============================================
-    // 🧩 HYBRID MODE: Smart Content Blending
-    // ============================================
-    console.log('   🧩 Using HYBRID mode (User Content + Research)');
-    
-    // Build preserve facts section if available
-    const preserveSection = preserveFromUser && preserveFromUser.length > 0
-      ? `\n📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):\n${preserveFromUser.map(fact => `- ${fact}`).join('\n')}\n`
-      : '';
-    
-    const requestsSection = explicitRequests && explicitRequests.length > 0
-      ? `\n❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):\n${explicitRequests.map(req => `- ${req}`).join('\n')}\n`
-      : '';
-    
-    const hybridPrompts = {
-      egyptian: `أنت كاتب سكريبتات فيروسية ذكي. مهمتك دمج حقائق المستخدم مع البحث بشكل سلس.
-
-=== أمثلة الأسلوب المطلوب (قلد الـ DNA بالظبط) ===
-${examplesText}
-
-=== الموضوع ===
-${topic}
-
-=== قواعد الدمج الذكي ===
-1. ✅ استخدم بيانات المستخدم كمرجع - أعد صياغتها بأسلوب viral (متنسخش الجمل)
-2. ✅ املأ الفجوات بمعلومات من البحث
-3. ✅ أجب على أي أسئلة أو طلبات بحث ذكرها المستخدم
-4. ❌ لا تضيف معلومات عشوائية - اربط كل شيء بالموضوع
-5. ❌ متنسخش جمل المستخدم حرفياً - اكتبها من جديد بأسلوبك
-${preserveSection}${requestsSection}
-=== البحث (استخدمه لملء الفجوات فقط) ===
-${researchData}
-
-=== المطلوب ===
-- Hook: "${selectedHook}"
-- الطول: ${durationConfig.words} كلمة تقريباً
-- ابدأ بالـ Hook
-- استخدم معلومات المستخدم (📊) كمرجع - أعد صياغتها
-- املأ الفراغات من البحث
-- اكتب بالعامية المصرية
-- الـ CTA: فعل أمر مباشر وقصير + urgency (النهاردة/دلوقتي) + مرتبط بالموضوع
-  ❌ ضعيف: "لو عايز، حاول تعمل كذا.. صحتك أهم"
-  ✅ قوي: "جرب ده من بكرة. متستناش لما يفوت الأوان."
-
-اكتب السكريبت مباشرة:`,
-
-      gulf: `أنت كاتب سكربتات فايرال ذكي. مهمتك دمج حقائق المستخدم مع البحث بشكل سلس.
-
-=== أمثلة الأسلوب المطلوب ===
-${examplesText}
-
-=== الموضوع ===
-${topic}
-
-=== قواعد الدمج الذكي ===
-1. ✅ استخدم بيانات المستخدم كمرجع - أعد صياغتها بأسلوب viral (لا تنسخ الجمل)
-2. ✅ املأ الفجوات بمعلومات من البحث
-3. ✅ أجب على أي أسئلة ذكرها المستخدم
-4. ❌ لا تضيف معلومات عشوائية
-5. ❌ لا تنسخ جمل المستخدم حرفياً - اكتبها من جديد بأسلوبك
-${preserveSection}${requestsSection}
-=== البحث (لملء الفجوات) ===
-${researchData}
-
-=== المطلوب ===
-- Hook: "${selectedHook}"
-- الطول: ${durationConfig.words} كلمة تقريباً
-- استخدم معلومات المستخدم (📊) كمرجع - أعد صياغتها
-- اكتب باللهجة الخليجية
-- الـ CTA: فعل أمر مباشر وقصير + urgency (اليوم/الحين) + مرتبط بالموضوع
-  ❌ ضعيف: "لو تبي، حاول تسوي كذا.. صحتك أهم"
-  ✅ قوي: "جرب هالشي من بكرة. لا تنتظر لين يفوت الأوان."
-
-اكتب السكريبت مباشرة:`,
-
-      english: `You are a Smart Viral Scriptwriter. Your job is to intelligently blend user facts with research.
-
-=== STYLE EXAMPLES (copy the DNA exactly) ===
-${examplesText}
-
-=== TOPIC ===
-${topic}
-
-=== SMART BLENDING RULES ===
-1. ✅ Use user's facts as REFERENCE - rewrite them in viral style (don't copy sentences!)
-2. ✅ Fill gaps with information from research
-3. ✅ Answer any questions or research requests the user mentioned
-4. ❌ Don't add random information - keep everything relevant
-5. ❌ DON'T copy user's sentences word-for-word - rewrite them in your style
-${preserveSection ? preserveSection.replace('📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):', '📊 Reference info from user (use the DATA but rewrite naturally - don\'t copy sentences):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ User questions (answer from research):') : ''}
-=== RESEARCH (Use to fill gaps only) ===
-${researchData}
-
-=== REQUIREMENTS ===
-- Hook: "${selectedHook}"
-- Length: ~${durationConfig.words} words
-- Start with the Hook
-- Use user facts (📊) as reference - rewrite them naturally
-- Fill blanks from research
-- Write in natural English
-- CTA: Direct short command + urgency (today/now) + topic-related
-  ❌ Weak: "If you want, try to do this.. your health matters"
-  ✅ Strong: "Try this starting tomorrow. Don't wait until it's too late."
-
-Write the script directly:`,
-
-      french: `Tu es un concepteur de scripts viraux intelligent. Ta mission est de fusionner intelligemment les faits utilisateur avec la recherche.
-
-=== EXEMPLES DE STYLE (copie le DNA exactement) ===
-${examplesText}
-
-=== SUJET ===
-${topic}
-
-=== RÈGLES DE FUSION INTELLIGENTE ===
-1. ✅ Utilise les faits utilisateur comme RÉFÉRENCE - réécris-les en style viral (ne copie pas!)
-2. ✅ Remplis les lacunes avec des informations de la recherche
-3. ✅ Réponds aux questions ou demandes de recherche mentionnées par l'utilisateur
-4. ❌ N'ajoute pas d'informations aléatoires - reste pertinent
-5. ❌ NE copie PAS les phrases de l'utilisateur mot à mot - réécris-les dans ton style
-${preserveSection ? preserveSection.replace('📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):', '📊 Infos de référence (utilise les DONNÉES mais réécris naturellement - ne copie pas):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur (répondre depuis recherche):') : ''}
-=== RECHERCHE (pour combler les lacunes uniquement) ===
-${researchData}
-
-=== REQUIS ===
-- Hook: "${selectedHook}"
-- Longueur: ~${durationConfig.words} mots
-- Utilise les faits utilisateur (📊) comme référence - réécris-les
-- Écris en Français naturel
-- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
-  ❌ Faible: "Si tu veux, essaie de faire ça.. ta santé compte"
-  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
-
-Écris le script directement:`,
-
-      frensh: `Tu es un concepteur de scripts viraux intelligent. Ta mission est de fusionner intelligemment les faits utilisateur avec la recherche.
-
-=== EXEMPLES DE STYLE ===
-${examplesText}
-
-=== SUJET ===
-${topic}
-
-=== RÈGLES DE FUSION INTELLIGENTE ===
-1. ✅ Utilise les faits utilisateur comme RÉFÉRENCE - réécris-les en style viral
-2. ✅ Remplis les lacunes avec des informations de la recherche
-3. ✅ Réponds aux questions mentionnées par l'utilisateur
-4. ❌ N'ajoute pas d'informations aléatoires
-5. ❌ NE copie PAS les phrases mot à mot - réécris-les
-${preserveSection ? preserveSection.replace('📊 معلومات مرجعية من المستخدم (استخدم البيانات لكن أعد صياغتها بأسلوبك - متنسخش الجمل):', '📊 Infos de référence (utilise les DONNÉES mais réécris):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur:') : ''}
-=== RECHERCHE ===
-${researchData}
-
-=== REQUIS ===
-- Hook: "${selectedHook}"
-- Longueur: ~${durationConfig.words} mots
-- Utilise les faits (📊) comme référence - réécris-les
-- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
-  ❌ Faible: "Si tu veux, essaie ça.. ta santé compte"
-  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
-
-Écris le script directement:`
-    };
-
-    prompt = hybridPrompts[language] || hybridPrompts['egyptian'];
-    
-  } else if (actionType === 'refine') {
+  if (actionType === 'refine') {
     // ============================================
     // 🔄 REFINE MODE: Strict Viral Editor
     // ============================================
     console.log('   🔄 Using REFINE mode (Strict Viral Editor)');
     
-    // Build user content from preserveFromUser (extracted facts) or researchData
-    const userContentSection = preserveFromUser && preserveFromUser.length > 0
-      ? preserveFromUser.map(fact => `• ${fact}`).join('\n')
-      : researchData;
-    
     const refinePrompts = {
-      egyptian: `أنت محرر سكريبتات فيروسية صارم. مهمتك تحويل حقائق المستخدم لسكريبت فيروسي مع الحفاظ على كل المعلومات.
-
-=== الموضوع ===
-${topic}
+      egyptian: `أنت محرر سكريبتات فيروسية صارم. مهمتك تحويل مسودة المستخدم لسكريبت فيروسي مع الحفاظ على كل المعلومات.
 
 === قواعد صارمة ===
-1. ✅ استخدم فقط المعلومات الموجودة في حقائق المستخدم
+1. ✅ استخدم فقط المعلومات الموجودة في مسودة المستخدم
 2. ✅ حافظ على نفس الترتيب والهيكل (النقاط بنفس الترتيب)
 3. ✅ أعد صياغة كل جملة بأسلوب فيروسي زي الأمثلة
 4. ❌ ممنوع إضافة معلومات جديدة أو أرقام من عندك
@@ -1196,8 +622,8 @@ ${topic}
 === أمثلة الأسلوب المطلوب (قلد الـ tone بالظبط) ===
 ${examplesText}
 
-=== حقائق المستخدم (المصدر الوحيد للمعلومات) ===
-${userContentSection}
+=== مسودة المستخدم (المصدر الوحيد للمعلومات) ===
+${userInstructions}
 
 === المطلوب ===
 - Hook: "${selectedHook}"
@@ -1205,19 +631,13 @@ ${userContentSection}
 - اكتب بالعامية المصرية
 - حول كل نقطة لجملة فيروسية بنفس الترتيب
 - ابدأ بالـ Hook ثم النقاط ثم CTA
-- الـ CTA: فعل أمر مباشر وقصير + urgency (النهاردة/دلوقتي) + مرتبط بالموضوع
-  ❌ ضعيف: "لو عايز، حاول تعمل كذا.. صحتك أهم"
-  ✅ قوي: "جرب ده من بكرة. متستناش لما يفوت الأوان."
 
 اكتب السكريبت مباشرة (بدون JSON أو markdown):`,
 
-      gulf: `أنت محرر سكريبتات فايرال صارم. مهمتك تحويل حقائق المستخدم لسكريبت فايرال مع الحفاظ على كل المعلومات.
-
-=== الموضوع ===
-${topic}
+      gulf: `أنت محرر سكريبتات فايرال صارم. مهمتك تحويل مسودة المستخدم لسكريبت فايرال مع الحفاظ على كل المعلومات.
 
 === قواعد صارمة ===
-1. ✅ استخدم فقط المعلومات الموجودة في حقائق المستخدم
+1. ✅ استخدم فقط المعلومات الموجودة في مسودة المستخدم
 2. ✅ حافظ على نفس الترتيب والهيكل
 3. ✅ أعد صياغة كل جملة بأسلوب فايرال زي الأمثلة
 4. ❌ ممنوع إضافة معلومات جديدة
@@ -1227,26 +647,20 @@ ${topic}
 === أمثلة الأسلوب المطلوب ===
 ${examplesText}
 
-=== حقائق المستخدم ===
-${userContentSection}
+=== مسودة المستخدم ===
+${userInstructions}
 
 === المطلوب ===
 - Hook: "${selectedHook}"
 - الطول: ${durationConfig.words} كلمة تقريباً
 - اكتب باللهجة الخليجية
-- الـ CTA: فعل أمر مباشر وقصير + urgency (اليوم/الحين) + مرتبط بالموضوع
-  ❌ ضعيف: "لو تبي، حاول تسوي كذا.. صحتك أهم"
-  ✅ قوي: "جرب هالشي من بكرة. لا تنتظر لين يفوت الأوان."
 
 اكتب السكريبت مباشرة:`,
 
-      english: `You are a STRICT Viral Script Editor. Your job is to transform the user's facts into a viral script while preserving ALL information.
-
-=== TOPIC ===
-${topic}
+      english: `You are a STRICT Viral Script Editor. Your job is to transform the user's draft into a viral script while preserving ALL information.
 
 === STRICT RULES ===
-1. ✅ Use ONLY information from the user's facts
+1. ✅ Use ONLY information from the user's draft
 2. ✅ Keep the SAME order and structure (points in same sequence)
 3. ✅ Rewrite each sentence in viral style like the examples
 4. ❌ DO NOT add new information or numbers
@@ -1256,27 +670,21 @@ ${topic}
 === STYLE EXAMPLES (copy this tone exactly) ===
 ${examplesText}
 
-=== USER'S FACTS (your ONLY source of information) ===
-${userContentSection}
+=== USER'S DRAFT (your ONLY source of information) ===
+${userInstructions}
 
 === REQUIREMENTS ===
 - Hook: "${selectedHook}"
 - Length: ~${durationConfig.words} words
 - Transform each point into a viral sentence in the same order
 - Start with Hook, then points, then CTA
-- CTA: Direct command + urgency (today/now) + topic-related
-  ❌ Weak: "If you want, try to do this.. your health matters"
-  ✅ Strong: "Try this starting tomorrow. Don't wait until it's too late."
 
 Write the script directly (no JSON or markdown):`,
 
-      french: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer les faits de l'utilisateur en script viral tout en préservant TOUTES les informations.
-
-=== SUJET ===
-${topic}
+      french: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
 
 === RÈGLES STRICTES ===
-1. ✅ Utilise UNIQUEMENT les informations des faits utilisateur
+1. ✅ Utilise UNIQUEMENT les informations du brouillon
 2. ✅ Garde le MÊME ordre et structure
 3. ✅ Réécris chaque phrase en style viral comme les exemples
 4. ❌ N'ajoute PAS de nouvelles informations
@@ -1286,25 +694,19 @@ ${topic}
 === EXEMPLES DE STYLE ===
 ${examplesText}
 
-=== FAITS DE L'UTILISATEUR ===
-${userContentSection}
+=== BROUILLON DE L'UTILISATEUR ===
+${userInstructions}
 
 === REQUIS ===
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
-- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
-  ❌ Faible: "Si tu veux, essaie de faire ça.. ta santé compte"
-  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
 
 Écris le script directement:`,
 
-      frensh: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer les faits de l'utilisateur en script viral tout en préservant TOUTES les informations.
-
-=== SUJET ===
-${topic}
+      frensh: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
 
 === RÈGLES STRICTES ===
-1. ✅ Utilise UNIQUEMENT les informations des faits utilisateur
+1. ✅ Utilise UNIQUEMENT les informations du brouillon
 2. ✅ Garde le MÊME ordre et structure
 3. ✅ Réécris chaque phrase en style viral comme les exemples
 4. ❌ N'ajoute PAS de nouvelles informations
@@ -1314,21 +716,18 @@ ${topic}
 === EXEMPLES DE STYLE ===
 ${examplesText}
 
-=== FAITS DE L'UTILISATEUR ===
-${userContentSection}
+=== BROUILLON DE L'UTILISATEUR ===
+${userInstructions}
 
 === REQUIS ===
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
-- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
-  ❌ Faible: "Si tu veux, essaie ça.. ta santé compte"
-  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
 
 Écris le script directement:`
     };
-
+    
     prompt = refinePrompts[language] || refinePrompts['egyptian'];
-
+    
   } else {
     // ============================================
     // 🔍 RESEARCH MODE: Creative Writer (Original)
@@ -1348,7 +747,6 @@ ${userContentSection}
       .replace(/\$\{durationConfig\.words\}/g, durationConfig.words);
   }
 
-  // Use Gemini 3 Pro for high-quality script generation
   const response = await axios.post(
     `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
     {
@@ -1357,7 +755,7 @@ ${userContentSection}
       }],
       generationConfig: {
         maxOutputTokens: durationConfig.maxTokens,
-        temperature: actionType === 'refine' ? 0.5 : actionType === 'hybrid' ? 0.6 : 0.7, // Hybrid: balanced creativity
+        temperature: actionType === 'refine' ? 0.5 : 0.7, // Lower temp for refine mode
       }
     },
     {
@@ -1421,24 +819,11 @@ ${ex.script}
   const langConfig = langInstructions[language] || langInstructions['egyptian'];
   
   // Use appropriate source based on action type
-  let sourceContent, expandInstructions;
-  
-  if (actionType === 'refine') {
-    sourceContent = `User's original draft (ONLY use information from here):
-${userInstructions}`;
-    expandInstructions = 'Add more detail from the user\'s draft ONLY';
-  } else if (actionType === 'hybrid') {
-    sourceContent = `User's Content (preserve exactly):
-${userInstructions}
-
-Research Data (use to fill gaps):
+  const sourceContent = actionType === 'refine' 
+    ? `User's original draft (ONLY use information from here):
+${userInstructions}`
+    : `Full research (use additional info from here):
 ${research}`;
-    expandInstructions = 'Use user facts literally, fill gaps with research details';
-  } else {
-    sourceContent = `Full research (use additional info from here):
-${research}`;
-    expandInstructions = 'Add details, examples, comparisons from the research';
-  }
   
   const prompt = `The script is too short and needs to be expanded.
 
@@ -1454,33 +839,32 @@ ${examplesText}
 
 Requirements:
 - Expand the script to ${targetWords} words
-- ${expandInstructions}
+- ${actionType === 'refine' ? 'Add more detail from the user\'s draft ONLY' : 'Add details, examples, comparisons from the research'}
 - Keep the same fast-paced, engaging style
 - Start with the same Hook: "${selectedHook}"
 - ❌ Don't repeat existing information
+- ${actionType === 'refine' ? '❌ DO NOT add information not in the user\'s draft' : '✅ Add new information from the research'}
 - ❌ Never say "unspecified" or "unknown"
 
 ${langConfig.instruction}:`;
 
   try {
-    // Use Gemini 3 Flash for fast expansion
-    const expandModel = 'gemini-3-flash-preview';
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${expandModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           maxOutputTokens: targetWords * 8,
-          temperature: actionType === 'refine' ? 0.5 : actionType === 'hybrid' ? 0.6 : 0.7,
+          temperature: actionType === 'refine' ? 0.5 : 0.7,
         }
       },
       { headers: { 'Content-Type': 'application/json' } }
     );
     
-    // Track cost (using 'gemini_flash' label for Flash model)
+    // Track cost
     if (costTracker && response.data?.usageMetadata) {
       const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
+      trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
     }
     
     let expanded = response.data.candidates[0].content.parts[0].text;
@@ -1532,762 +916,6 @@ function styleCleanup(script, selectedHook) {
 }
 
 // ============================================
-// ✅ STAGE 6B: FACT VALIDATION (Zero Hallucination)
-// ============================================
-
-async function validateFactsAgainstResearch(script, research, language = 'egyptian', costTracker = null) {
-  // Skip if no research (refine mode) or research too short
-  if (!research || research.length < 100) {
-    return { valid: true, accuracy_score: 100, issues: [], skipped: true };
-  }
-  
-  console.log('   🔍 Validating facts against research...');
-  
-  const prompts = {
-    egyptian: `أنت fact-checker دقيق. قارن السكريبت بالبحث.
-
-=== السكريبت ===
-${script}
-
-=== البحث (مصدر الحقيقة الوحيد) ===
-${research}
-
-=== المطلوب ===
-اكتشف أي claim في السكريبت:
-1. فيها رقم/تاريخ مش موجود في البحث
-2. بتقول معلومة مش مدعومة بالبحث
-3. بتبالغ أو بتحرّف حقائق البحث
-4. مخترعة من الـ AI
-
-=== Output (JSON فقط) ===
-{
-  "valid": true,
-  "accuracy_score": 95,
-  "issues": [
-    {
-      "claim_in_script": "الجملة الغلط",
-      "problem": "not_in_research|exaggerated|wrong_number|fabricated",
-      "what_research_says": "الصح من البحث أو null"
-    }
-  ]
-}`,
-
-    gulf: `أنت fact-checker دقيق. قارن السكريبت بالبحث.
-
-=== السكريبت ===
-${script}
-
-=== البحث (مصدر الحقيقة الوحيد) ===
-${research}
-
-=== المطلوب ===
-اكتشف أي claim في السكريبت:
-1. فيها رقم/تاريخ مو موجود في البحث
-2. تقول معلومة مو مدعومة بالبحث
-3. تبالغ أو تحرّف حقائق البحث
-
-=== Output (JSON فقط) ===
-{
-  "valid": true,
-  "accuracy_score": 95,
-  "issues": [
-    {
-      "claim_in_script": "الجملة الغلط",
-      "problem": "not_in_research|exaggerated|wrong_number|fabricated",
-      "what_research_says": "الصح من البحث أو null"
-    }
-  ]
-}`,
-
-    english: `You are a precise fact-checker. Compare the script against research.
-
-=== SCRIPT ===
-${script}
-
-=== RESEARCH (Single Source of Truth) ===
-${research}
-
-=== TASK ===
-Find ANY claim in the script that:
-1. Has a number/date NOT in the research
-2. Makes a claim NOT supported by research
-3. Exaggerates or distorts research facts
-4. Is completely fabricated by AI
-
-=== OUTPUT (JSON only) ===
-{
-  "valid": true,
-  "accuracy_score": 95,
-  "issues": [
-    {
-      "claim_in_script": "The wrong sentence",
-      "problem": "not_in_research|exaggerated|wrong_number|fabricated",
-      "what_research_says": "Correct info or null"
-    }
-  ]
-}`,
-
-    french: `Vous êtes un fact-checker précis. Comparez le script avec la recherche.
-
-=== SCRIPT ===
-${script}
-
-=== RECHERCHE (Seule Source de Vérité) ===
-${research}
-
-=== TÂCHE ===
-Trouvez toute affirmation dans le script qui:
-1. A un nombre/date NON présent dans la recherche
-2. Fait une affirmation NON soutenue
-3. Exagère ou déforme les faits
-4. Est complètement fabriquée
-
-=== OUTPUT (JSON uniquement) ===
-{
-  "valid": true,
-  "accuracy_score": 95,
-  "issues": [
-    {
-      "claim_in_script": "La phrase incorrecte",
-      "problem": "not_in_research|exaggerated|wrong_number|fabricated",
-      "what_research_says": "Info correcte ou null"
-    }
-  ]
-}`,
-
-    frensh: `Vous êtes un fact-checker précis. Comparez le script avec la recherche.
-
-=== SCRIPT ===
-${script}
-
-=== RECHERCHE (Seule Source de Vérité) ===
-${research}
-
-=== TÂCHE ===
-Trouvez toute affirmation dans le script qui:
-1. A un nombre/date NON présent
-2. Fait une affirmation NON soutenue
-3. Exagère ou déforme les faits
-
-=== OUTPUT (JSON uniquement) ===
-{
-  "valid": true,
-  "accuracy_score": 95,
-  "issues": []
-}`
-  };
-
-  const prompt = prompts[language] || prompts['english'];
-
-  try {
-    // Use Gemini Flash Lite (fast + cheap for validation)
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: 1500,
-          temperature: 0.1  // Low temp for accuracy
-        }
-      },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    // Track cost
-    if (costTracker && response.data?.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash_lite', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
-    }
-
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-    
-    if (jsonMatch) {
-      const result = JSON.parse(jsonMatch[0]);
-      console.log(`   📊 Fact check: ${result.accuracy_score || 100}% accuracy, ${result.issues?.length || 0} issues`);
-      return result;
-    }
-    
-    return { valid: true, accuracy_score: 80, issues: [], parse_error: true };
-  } catch (e) {
-    console.error('   ⚠️ Fact validation error:', e.message);
-    return { valid: true, accuracy_score: 80, issues: [], error: e.message };
-  }
-}
-
-// ============================================
-// 🔧 STAGE 6C: FIX FACTUAL ERRORS
-// ============================================
-
-async function fixFactualErrors(script, issues, research, language = 'egyptian', costTracker = null) {
-  if (!issues || issues.length === 0) {
-    return script;
-  }
-  
-  console.log(`   🔧 Fixing ${issues.length} factual errors...`);
-  
-  const issuesText = issues.map((issue, i) => `${i + 1}. "${issue.claim_in_script}"
-   المشكلة: ${issue.problem}
-   الصح: ${issue.what_research_says || 'احذف الجملة'}`).join('\n\n');
-
-  const prompts = {
-    egyptian: `أنت محرر سكريبتات. صحّح الأخطاء دي:
-
-=== السكريبت ===
-${script}
-
-=== الأخطاء ===
-${issuesText}
-
-=== البحث ===
-${research.substring(0, 2000)}
-
-=== القواعد ===
-1. صحّح الجمل الغلط بس
-2. احتفظ بنفس الأسلوب والطاقة
-3. لو مفيش معلومة صح → احذف الجملة
-4. متضيفش معلومات جديدة
-
-اكتب السكريبت المصحح كامل (بدون JSON أو markdown):`,
-
-    gulf: `أنت محرر سكريبتات. صحّح الأخطاء هذي:
-
-=== السكريبت ===
-${script}
-
-=== الأخطاء ===
-${issuesText}
-
-=== البحث ===
-${research.substring(0, 2000)}
-
-=== القواعد ===
-1. صحّح الجمل الغلط بس
-2. احتفظ بنفس الأسلوب
-3. لو ما فيه معلومة صح → احذف
-4. لا تضيف جديد
-
-اكتب السكريبت المصحح:`,
-
-    english: `You are a script editor. Fix these errors:
-
-=== SCRIPT ===
-${script}
-
-=== ERRORS ===
-${issues.map((issue, i) => `${i + 1}. "${issue.claim_in_script}"
-   Problem: ${issue.problem}
-   Correct: ${issue.what_research_says || 'Remove this sentence'}`).join('\n\n')}
-
-=== RESEARCH ===
-${research.substring(0, 2000)}
-
-=== RULES ===
-1. Only fix incorrect sentences
-2. Keep same style and energy
-3. If no correct info → remove sentence
-4. Do NOT add new information
-
-Write the corrected script (no JSON or markdown):`,
-
-    french: `Vous êtes un éditeur. Corrigez ces erreurs:
-
-=== SCRIPT ===
-${script}
-
-=== ERREURS ===
-${issues.map((issue, i) => `${i + 1}. "${issue.claim_in_script}"
-   Problème: ${issue.problem}
-   Correct: ${issue.what_research_says || 'Supprimez'}`).join('\n\n')}
-
-=== RECHERCHE ===
-${research.substring(0, 2000)}
-
-=== RÈGLES ===
-1. Corrigez seulement les erreurs
-2. Gardez le même style
-3. Si pas d'info correcte → supprimez
-4. N'ajoutez rien
-
-Écrivez le script corrigé:`,
-
-    frensh: `Vous êtes un éditeur. Corrigez ces erreurs:
-
-=== SCRIPT ===
-${script}
-
-=== ERREURS ===
-${issues.map((issue, i) => `${i + 1}. "${issue.claim_in_script}"
-   Problème: ${issue.problem}
-   Correct: ${issue.what_research_says || 'Supprimez'}`).join('\n\n')}
-
-=== RECHERCHE ===
-${research.substring(0, 2000)}
-
-Écrivez le script corrigé:`
-  };
-
-  const prompt = prompts[language] || prompts['english'];
-
-  try {
-    // Use Gemini 3 Flash for fast error fixing
-    const fixModel = 'gemini-3-flash-preview';
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${fixModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: 3000,
-          temperature: 0.3
-        }
-      },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    // Track cost (using 'gemini_flash' label for Flash model)
-    if (costTracker && response.data?.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
-    }
-
-    const fixedScript = response.data.candidates?.[0]?.content?.parts?.[0]?.text || script;
-    
-    // Clean up the result
-    const cleaned = fixedScript
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/#{1,3}\s*/g, '')
-      .replace(/\*\*(.+?)\*\*/g, '$1')
-      .trim();
-    
-    console.log('   ✅ Factual errors fixed');
-    return cleaned;
-  } catch (e) {
-    console.error('   ⚠️ Fix errors failed:', e.message);
-    return script; // Return original if fix fails
-  }
-}
-
-// ============================================
-// 📊 STAGE 7: QUALITY SCORING (Compare to Golden Examples)
-// ============================================
-
-async function scoreScriptQuality(script, hook, duration, language, niche, costTracker) {
-  console.log('   📊 Scoring script quality against golden examples...');
-  
-  // Get the SAME examples used for script writing
-  const examples = getNicheExamples(niche, duration, language);
-  const examplesText = examples.slice(0, 2).map((ex, i) => 
-    `--- Example ${i + 1} ---\n${ex.script || ex}`
-  ).join('\n\n');
-
-  const prompts = {
-    egyptian: `أنت محلل جودة سكريبتات فيرال.
-
-=== الأمثلة المرجعية (السكريبت لازم يكون شبههم) ===
-${examplesText}
-
-=== السكريبت الجديد ===
-${script}
-
-=== الـ Hook ===
-${hook}
-
-=== قارن السكريبت بالأمثلة وقيّم (1-10) ===
-1. **hook_strength**: الـ hook قوي زي الأمثلة؟
-2. **flow_pacing**: الإيقاع والجمل القصيرة زي الأمثلة؟
-3. **information_density**: كثافة المعلومات زي الأمثلة؟
-4. **emotional_triggers**: الإثارة والطاقة زي الأمثلة؟
-5. **cta_strength**: الـ CTA قوي زي الأمثلة؟
-6. **dialect_authenticity**: اللهجة طبيعية زي الأمثلة؟
-7. **virality_potential**: هيتعمله share زي الأمثلة؟
-
-=== Output (JSON فقط) ===
-{
-  "scores": {
-    "hook_strength": 8,
-    "flow_pacing": 7,
-    "information_density": 8,
-    "emotional_triggers": 6,
-    "cta_strength": 5,
-    "dialect_authenticity": 9,
-    "virality_potential": 7
-  },
-  "overall": 7.1,
-  "weakest_area": "cta_strength",
-  "weakness_detail": "الـ CTA مش قوي زي الأمثلة، محتاج يكون أوضح وفيه urgency",
-  "strongest_area": "dialect_authenticity",
-  "similarity_to_examples": "السكريبت شبه الأمثلة في اللهجة بس الـ CTA أضعف"
-}`,
-
-    gulf: `أنت محلل جودة سكريبتات فيرال.
-
-=== الأمثلة المرجعية (السكريبت لازم يكون شبههم) ===
-${examplesText}
-
-=== السكريبت الجديد ===
-${script}
-
-=== الـ Hook ===
-${hook}
-
-=== قارن السكريبت بالأمثلة وقيّم (1-10) ===
-1. **hook_strength**: الـ hook قوي مثل الأمثلة؟
-2. **flow_pacing**: الإيقاع والجمل مثل الأمثلة؟
-3. **information_density**: كثافة المعلومات مثل الأمثلة؟
-4. **emotional_triggers**: الإثارة والطاقة مثل الأمثلة؟
-5. **cta_strength**: الـ CTA قوي مثل الأمثلة؟
-6. **dialect_authenticity**: اللهجة طبيعية مثل الأمثلة؟
-7. **virality_potential**: بيتشير مثل الأمثلة؟
-
-=== Output (JSON فقط) ===
-{
-  "scores": {
-    "hook_strength": 8,
-    "flow_pacing": 7,
-    "information_density": 8,
-    "emotional_triggers": 6,
-    "cta_strength": 5,
-    "dialect_authenticity": 9,
-    "virality_potential": 7
-  },
-  "overall": 7.1,
-  "weakest_area": "cta_strength",
-  "weakness_detail": "الـ CTA مو قوي مثل الأمثلة",
-  "strongest_area": "dialect_authenticity",
-  "similarity_to_examples": "السكريبت مشابه للأمثلة في اللهجة بس الـ CTA أضعف"
-}`,
-
-    english: `You are a viral script quality analyst.
-
-=== REFERENCE EXAMPLES (Script should match these) ===
-${examplesText}
-
-=== NEW SCRIPT ===
-${script}
-
-=== HOOK ===
-${hook}
-
-=== COMPARE TO EXAMPLES AND SCORE (1-10) ===
-1. **hook_strength**: Hook as strong as examples?
-2. **flow_pacing**: Rhythm and short sentences like examples?
-3. **information_density**: Info density like examples?
-4. **emotional_triggers**: Energy and excitement like examples?
-5. **cta_strength**: CTA as strong as examples?
-6. **dialect_authenticity**: Natural language like examples?
-7. **virality_potential**: Shareable like examples?
-
-=== OUTPUT (JSON only) ===
-{
-  "scores": {
-    "hook_strength": 8,
-    "flow_pacing": 7,
-    "information_density": 8,
-    "emotional_triggers": 6,
-    "cta_strength": 5,
-    "dialect_authenticity": 9,
-    "virality_potential": 7
-  },
-  "overall": 7.1,
-  "weakest_area": "cta_strength",
-  "weakness_detail": "CTA not as strong as examples, needs more urgency",
-  "strongest_area": "dialect_authenticity",
-  "similarity_to_examples": "Script matches examples in tone but CTA is weaker"
-}`,
-
-    french: `Vous êtes un analyste de qualité de scripts viraux.
-
-=== EXEMPLES DE RÉFÉRENCE (Le script doit leur ressembler) ===
-${examplesText}
-
-=== NOUVEAU SCRIPT ===
-${script}
-
-=== HOOK ===
-${hook}
-
-=== COMPAREZ AUX EXEMPLES ET NOTEZ (1-10) ===
-1. **hook_strength**: Hook aussi fort que les exemples?
-2. **flow_pacing**: Rythme et phrases comme les exemples?
-3. **information_density**: Densité d'info comme les exemples?
-4. **emotional_triggers**: Énergie comme les exemples?
-5. **cta_strength**: CTA aussi fort que les exemples?
-6. **dialect_authenticity**: Langage naturel comme les exemples?
-7. **virality_potential**: Partageable comme les exemples?
-
-=== OUTPUT (JSON uniquement) ===
-{
-  "scores": {
-    "hook_strength": 8,
-    "flow_pacing": 7,
-    "information_density": 8,
-    "emotional_triggers": 6,
-    "cta_strength": 5,
-    "dialect_authenticity": 9,
-    "virality_potential": 7
-  },
-  "overall": 7.1,
-  "weakest_area": "cta_strength",
-  "weakness_detail": "CTA pas aussi fort que les exemples",
-  "strongest_area": "dialect_authenticity",
-  "similarity_to_examples": "Script similaire aux exemples mais CTA plus faible"
-}`,
-
-    frensh: `Vous êtes un analyste de qualité de scripts viraux.
-
-=== EXEMPLES DE RÉFÉRENCE ===
-${examplesText}
-
-=== NOUVEAU SCRIPT ===
-${script}
-
-=== HOOK ===
-${hook}
-
-=== COMPAREZ ET NOTEZ (1-10) ===
-
-=== OUTPUT (JSON uniquement) ===
-{
-  "scores": {},
-  "overall": 7.5,
-  "weakest_area": "",
-  "weakness_detail": "",
-  "strongest_area": "",
-  "similarity_to_examples": ""
-}`
-  };
-
-  const prompt = prompts[language] || prompts['english'];
-
-  try {
-    // Use Gemini Flash Lite (fast + cheap for scoring)
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: 1000,
-          temperature: 0.2
-        }
-      },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    // Track cost
-    if (costTracker && response.data?.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash_lite', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
-    }
-
-    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
-    
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      // Calculate overall if not provided
-      if (!parsed.overall && parsed.scores) {
-        const scores = Object.values(parsed.scores);
-        parsed.overall = scores.reduce((a, b) => a + b, 0) / scores.length;
-      }
-      console.log(`   📈 Quality: ${parsed.overall?.toFixed(1) || '?'}/10 | Weakest: ${parsed.weakest_area || 'N/A'}`);
-      return parsed;
-    }
-    
-    return { overall: 7.5, scores: {}, skipped: true, parse_error: true };
-  } catch (e) {
-    console.error('   ⚠️ Quality scoring error:', e.message);
-    return { overall: 7.5, scores: {}, skipped: true, error: e.message };
-  }
-}
-
-// ============================================
-// 🔄 STAGE 8: REWRITE WEAK AREAS
-// ============================================
-
-async function rewriteWeakAreas(script, qualityScore, hook, duration, language, niche, costTracker) {
-  const { weakest_area, weakness_detail } = qualityScore;
-  
-  if (!weakest_area) {
-    return script;
-  }
-  
-  console.log(`   🔄 Rewriting weak area: ${weakest_area}...`);
-  
-  // Get the SAME examples for reference
-  const examples = getNicheExamples(niche, duration, language);
-  const examplesText = examples.slice(0, 2).map((ex, i) => 
-    `--- Example ${i + 1} ---\n${ex.script || ex}`
-  ).join('\n\n');
-
-  const prompts = {
-    egyptian: `أنت محرر سكريبتات فيرال.
-
-السكريبت محتاج تحسين في **${weakest_area}**
-
-=== المشكلة ===
-${weakness_detail || `الـ ${weakest_area} محتاج يكون أقوى زي الأمثلة`}
-
-=== الأمثلة المرجعية (قلّد أسلوبهم) ===
-${examplesText}
-
-=== السكريبت الحالي ===
-${script}
-
-=== الـ Hook (يفضل في الأول) ===
-${hook}
-
-=== المطلوب ===
-أعد كتابة السكريبت مع تحسين ${weakest_area}:
-- خلّي الـ ${weakest_area} زي الأمثلة
-- ⚠️ حافظ على الربط المباشر بين الـ Hook والموضوع - الـ Hook لازم يكون مرتبط بالموضوع
-- حافظ على كل المعلومات والأرقام
-- حافظ على نفس الطول
-- الـ Hook يكون في أول السكريبت
-
-اكتب السكريبت المحسّن (بدون JSON أو markdown):`,
-
-    gulf: `أنت محرر سكريبتات فيرال.
-
-السكريبت يحتاج تحسين في **${weakest_area}**
-
-=== المشكلة ===
-${weakness_detail || `الـ ${weakest_area} يحتاج يكون أقوى مثل الأمثلة`}
-
-=== الأمثلة المرجعية (قلّد أسلوبهم) ===
-${examplesText}
-
-=== السكريبت الحالي ===
-${script}
-
-=== الـ Hook (يبقى في الأول) ===
-${hook}
-
-=== المطلوب ===
-أعد كتابة السكريبت مع تحسين ${weakest_area}:
-- خلّي الـ ${weakest_area} مثل الأمثلة
-- ⚠️ حافظ على الربط المباشر بين الـ Hook والموضوع - الـ Hook لازم يكون مرتبط بالموضوع
-- حافظ على كل المعلومات والأرقام
-- الـ Hook يبقى في أول السكريبت
-
-اكتب السكريبت المحسّن:`,
-
-    english: `You are a viral script editor.
-
-Script needs improvement in **${weakest_area}**
-
-=== PROBLEM ===
-${weakness_detail || `The ${weakest_area} needs to be stronger like the examples`}
-
-=== REFERENCE EXAMPLES (Match their style) ===
-${examplesText}
-
-=== CURRENT SCRIPT ===
-${script}
-
-=== HOOK (keep at start) ===
-${hook}
-
-=== TASK ===
-Rewrite improving ${weakest_area}:
-- Make ${weakest_area} match the examples
-- ⚠️ Keep direct connection between Hook and topic - Hook must be relevant to the topic
-- Keep all information and numbers
-- Keep same length
-- Hook stays at the start
-
-Write improved script (no JSON or markdown):`,
-
-    french: `Vous êtes un éditeur de scripts viraux.
-
-Le script a besoin d'amélioration dans **${weakest_area}**
-
-=== PROBLÈME ===
-${weakness_detail || `Le ${weakest_area} doit être plus fort comme les exemples`}
-
-=== EXEMPLES DE RÉFÉRENCE (Copiez leur style) ===
-${examplesText}
-
-=== SCRIPT ACTUEL ===
-${script}
-
-=== HOOK (garder au début) ===
-${hook}
-
-=== TÂCHE ===
-Réécrivez en améliorant ${weakest_area}:
-- Rendez ${weakest_area} comme les exemples
-- ⚠️ Gardez la connexion directe entre le Hook et le sujet - le Hook doit être lié au sujet
-- Gardez toutes les informations et chiffres
-- Le Hook reste au début
-
-Écrivez le script amélioré:`,
-
-    frensh: `Vous êtes un éditeur de scripts viraux.
-
-Le script a besoin d'amélioration dans **${weakest_area}**
-
-=== EXEMPLES ===
-${examplesText}
-
-=== SCRIPT ===
-${script}
-
-=== HOOK (garder au début) ===
-${hook}
-
-=== TÂCHE ===
-Réécrivez en améliorant ${weakest_area}:
-- Rendez ${weakest_area} comme les exemples
-- ⚠️ Gardez la connexion directe entre le Hook et le sujet
-- Gardez toutes les informations
-- Le Hook reste au début
-
-Écrivez le script amélioré:`
-  };
-
-  const prompt = prompts[language] || prompts['english'];
-
-  try {
-    // Use Gemini 3 Flash for fast rewriting
-    const rewriteModel = 'gemini-3-flash-preview';
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${rewriteModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          maxOutputTokens: 3000,
-          temperature: 0.5
-        }
-      },
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-
-    // Track cost (using 'gemini_flash' label for Flash model)
-    if (costTracker && response.data?.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
-    }
-
-    const rewrittenScript = response.data.candidates?.[0]?.content?.parts?.[0]?.text || script;
-    
-    // Clean up the result
-    const cleaned = rewrittenScript
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/#{1,3}\s*/g, '')
-      .replace(/\*\*(.+?)\*\*/g, '$1')
-      .trim();
-    
-    console.log('   ✅ Weak area rewritten');
-    return cleaned;
-  } catch (e) {
-    console.error('   ⚠️ Rewrite failed:', e.message);
-    return script; // Return original if rewrite fails
-  }
-}
-
-// ============================================
 // 🖼️ GENERATE VISUAL PROMPTS
 // ============================================
 
@@ -2303,12 +931,9 @@ async function generateVisualPrompts(topic, script, language = 'egyptian', costT
   
   const culturalContext = culturalContexts[language] || culturalContexts.egyptian;
   
-  const prompt = `Act as an expert AI Art Director specializing in "Black Forest Labs Flux" prompting AND a Professional Media Researcher.
-
-Analyze the script and generate:
-1. 3 Highly Detailed visual descriptions for AI generation (Flux).
-2. Smart Google Image Search keywords for finding REAL images for those scenes.
-3. A list of 5-8 Supplementary B-Roll search terms to cover the full 60-second video duration.
+  const prompt = `Act as an expert AI Art Director specializing in "Black Forest Labs Flux" prompting.
+  
+Analyze the script and generate 3 Highly Detailed visual descriptions.
 
 Topic: ${topic}
 Script Context: ${script.substring(0, 1000)}
@@ -2316,117 +941,70 @@ Target Culture: ${language.toUpperCase()}
 
 Create 3 distinct scenes:
 1. Hook scene (High impact, controversial or shocking visual)
-2. Content scene (Educational, clear, engaging)
+2. Content scene (Educational, clear, engaging)  
 3. CTA scene (Direct, emotional connection)
 
 🚨 CULTURAL CONTEXT (CRITICAL - MUST FOLLOW):
 ${culturalContext}
-ALL people, clothing, settings, and environments MUST reflect this specific culture.
+ALL people, clothing, settings, and environments MUST reflect this specific culture. This is mandatory.
 
----
-
-### RULESET 1: AI IMAGE PROMPTS (FLUX)
-For EACH scene, the "prompt" field must follow this Structure:
+For EACH scene, the "prompt" field must follow this FLUX Structure:
 "[Medium/Style] of [Subject Description with cultural appearance] doing [Action] in [Cultural Environment]. [Lighting Description]. [Camera/Mood Details]."
-- DO NOT use generic tags. Use Natural English sentences.
-- LIGHTING: Specify lighting (e.g., "volumetric lighting", "dramatic rim light").
-- STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of...".
-- CULTURAL ACCURACY: Characters/Settings MUST match the target culture.
 
-### RULESET 2: REAL IMAGE SEARCH (Google)
-For the "google_search_term" field:
-- Extract the specific ENTITY mentioned (e.g., "iPhone 15 Pro", "Chevening Scholarship", "Pyramids of Giza").
-- If no specific entity, use the most descriptive visual concept.
-- Append keywords like "real photo", "official logo", "png", "high quality", or "wallpaper" to ensure good results.
-- MUST be in English.
-
-### RULESET 3: B-ROLL KEYWORDS (Supplementary)
-- Extract 5 to 8 additional visual concepts from the script to act as "Filler" or "B-Roll".
-- Focus on objects, specific places, emotions, or metaphors mentioned in the text.
-- Format them as search-ready strings (e.g., "Cairo traffic chaos", "Bitcoin chart falling", "Student studying late night").
-
----
+CRITICAL RULES for the "prompt" field:
+- DO NOT use generic tags (e.g., "4k", "best quality"). Use Natural English sentences.
+- LENGTH: Must be 40-60 words per prompt (Descriptive & Rich).
+- LIGHTING: You MUST specify lighting to fix flatness (e.g., "volumetric lighting", "dramatic rim light", "soft cinematic shading").
+- STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of..." depending on the topic.
+- NO TEXT: Do not include text inside the image unless necessary.
+- CULTURAL ACCURACY: Characters and settings MUST match the target culture specified above.
 
 Output Schema (JSON Only):
 {
   "hook": {
-    "prompt": "A cinematic hyper-realistic shot of... (Flux prompt)",
-    "google_search_term": "Specific keywords for Google Images",
-    "description_ar": "وصف قصير بالعربي",
+    "prompt": "A cinematic hyper-realistic shot of... (full detailed flux prompt with cultural elements)", 
+    "description_ar": "وصف قصير بالعربي", 
     "description_en": "Short English description",
     "description_fr": "Courte description en français",
     "caption": "Scene Title"
   },
-  "content": {
-    "prompt": "...",
-    "google_search_term": "...",
-    "description_ar": "...",
-    "description_en": "...",
-    "description_fr": "...",
-    "caption": "..."
-  },
-  "cta": {
-    "prompt": "...",
-    "google_search_term": "...",
-    "description_ar": "...",
-    "description_en": "...",
-    "description_fr": "...",
-    "caption": "..."
-  },
-  "b_roll_keywords": [
-    "keyword 1",
-    "keyword 2",
-    "keyword 3",
-    "keyword 4",
-    "keyword 5"
-  ]
+  "content": {"prompt": "...", "description_ar": "...", "description_en": "...", "description_fr": "...", "caption": "..."},
+  "cta": {"prompt": "...", "description_ar": "...", "description_en": "...", "description_fr": "...", "caption": "..."}
 }`;
 
   try {
-    // Using Gemini 2.5 Flash for cost efficiency
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      'https://api.anthropic.com/v1/messages',
       {
-        contents: [{
-          role: 'user',
-          parts: [{ text: prompt }]
-        }],
-        systemInstruction: {
-          parts: [{ text: 'You are a JSON generator. Output valid JSON only. No markdown, no code blocks. Keep Flux prompts concise (40-50 words each). Always include google_search_term and b_roll_keywords.' }]
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: 1500,
+        system: 'You are a JSON generator. Output valid JSON only. No markdown.',
+        messages: [{ role: 'user', content: prompt }],
+      },
+      {
+        headers: {
+          'x-api-key': CONFIG.CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
         },
-        generationConfig: {
-          maxOutputTokens: 3000,
-        }
       }
     );
     
-    if (costTracker && response.data.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
+    if (costTracker && response.data.usage) {
+      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
     }
     
-    const candidate = response.data.candidates?.[0];
-    const text = candidate?.content?.parts?.[0]?.text || '';
-    console.log('   📝 Visual API response received, length:', text.length, 'finishReason:', candidate?.finishReason);
+    const text = response.data.content[0].text;
+    console.log('   📝 Visual API response received');
     
-    // Try to extract JSON with regex
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
       if (parsed.hook && parsed.content && parsed.cta) {
-        // Ensure b_roll_keywords exists
-        if (!parsed.b_roll_keywords || !Array.isArray(parsed.b_roll_keywords)) {
-          parsed.b_roll_keywords = [`${topic} background`, `${topic} aesthetic`, `${topic} concept`, `professional workspace`, `success achievement`];
-        }
-        // Ensure google_search_term exists for each scene
-        if (!parsed.hook.google_search_term) parsed.hook.google_search_term = `${topic} real photo high quality`;
-        if (!parsed.content.google_search_term) parsed.content.google_search_term = `${topic} explained infographic`;
-        if (!parsed.cta.google_search_term) parsed.cta.google_search_term = `${topic} success motivation`;
-        console.log('   ✓ Visual prompts parsed successfully (with google_search_term & b_roll)');
+        console.log('   ✓ Visual prompts parsed successfully');
         return parsed;
       }
     }
-    console.log('   ⚠️ No valid JSON found in visual response');
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
   }
@@ -2436,7 +1014,6 @@ Output Schema (JSON Only):
   return {
     hook: { 
       prompt: `A cinematic hyper-realistic wide shot of ${topic} captured in dramatic composition. Volumetric lighting creates depth with golden hour rays streaming through. Shot on professional cinema camera with shallow depth of field creating atmospheric mood.`,
-      google_search_term: `${topic} real photo high quality`,
       description_ar: 'منظر واسع للموضوع',
       description_en: 'Wide shot overview',
       description_fr: 'Vue large du sujet',
@@ -2444,7 +1021,6 @@ Output Schema (JSON Only):
     },
     content: { 
       prompt: `A detailed hyper-realistic medium shot showcasing ${topic} with clear educational focus. Soft cinematic shading highlights key details while maintaining visual clarity. Professional documentary style with balanced composition and natural color grading.`,
-      google_search_term: `${topic} explained infographic`,
       description_ar: 'لقطة متوسطة للتفاصيل',
       description_en: 'Medium shot details',
       description_fr: 'Plan moyen détaillé',
@@ -2452,19 +1028,11 @@ Output Schema (JSON Only):
     },
     cta: { 
       prompt: `A cinematic hyper-realistic close-up of ${topic} with emotional impact and hopeful atmosphere. Dramatic rim lighting creates powerful silhouette effect. Warm color palette with soft bokeh background evoking inspiration and connection.`,
-      google_search_term: `${topic} success motivation`,
       description_ar: 'لقطة قريبة للختام',
       description_en: 'Close-up finale',
       description_fr: 'Gros plan final',
       caption: 'CTA Scene'
-    },
-    b_roll_keywords: [
-      `${topic} background`,
-      `${topic} aesthetic`,
-      `${topic} concept`,
-      `professional workspace`,
-      `success achievement`
-    ]
+    }
   };
 }
 
@@ -2486,18 +1054,12 @@ async function generateScript(rawTopic, language, niche, duration) {
   try {
     // Stage 0A: Detect Mode (simple code-based, no AI)
     const action_type = detectMode(rawTopic);
-
-    // Stage 0B: Extract Core Topic + User Facts (NEW: returns {topic, userFacts})
-    const topicResult = await extractTopic(rawTopic, language);
-    const topic = topicResult.topic;
-    const extractedUserFacts = topicResult.userFacts || [];
-    console.log(`   ✓ Topic: "${topic}"`);
-    if (extractedUserFacts.length > 0) {
-      console.log(`   ✓ User Facts: ${extractedUserFacts.length} facts extracted`);
-    }
+    const user_instructions = action_type === 'refine' ? rawTopic : '';
     
-    const user_instructions = action_type === 'refine' ? topic : '';
-
+    // Stage 0B: Extract Core Topic (simple - just topic & angle)
+    const topic = await extractTopic(rawTopic, language);
+    console.log(`   ✓ Topic: "${topic}"`);
+    
     // Stage 1: Research (SKIP if refine mode)
     let researchData;
     if (action_type === 'refine') {
@@ -2507,17 +1069,16 @@ async function generateScript(rawTopic, language, niche, duration) {
       researchData = await research(rawTopic, topic); // Pass both raw input and extracted topic
       console.log('   ✓ Research done');
     }
-
+    
     // Stage 2: Generate Hooks (with action_type)
-    // Use extractedUserFacts as preserveFromUser
-    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions, extractedUserFacts);
+    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions);
     console.log(`   ✓ Hooks: ${hooks.length}`);
-
+    
     // Select first hook as main
     const selectedHook = hooks[0] || topic;
-
-    // Stage 3: Write Script (with action_type and user facts)
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions, extractedUserFacts);
+    
+    // Stage 3: Write Script (with action_type)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Stage 4: Style Cleanup
@@ -2581,8 +1142,6 @@ app.post('/api/generate-hooks', async (req, res) => {
     topic, 
     language = 'egyptian', 
     niche = 'general',
-    duration = '30',
-    appLanguage = 'en', // NEW: App language for error messages
     // Optional params for regenerating hooks (skip research)
     existingResearch = null,
     existingTopic = null,
@@ -2590,35 +1149,8 @@ app.post('/api/generate-hooks', async (req, res) => {
     existingUserInstructions = null,
   } = req.body;
   
-  // Input validation
   if (!topic) {
-    return res.status(400).json({ 
-      success: false, 
-      error: {
-        code: 'TOPIC_TOO_SHORT',
-        message: getErrorMessage('TOPIC_TOO_SHORT', appLanguage)
-      }
-    });
-  }
-  
-  if (topic.length < 3) {
-    return res.status(400).json({ 
-      success: false, 
-      error: {
-        code: 'TOPIC_TOO_SHORT',
-        message: getErrorMessage('TOPIC_TOO_SHORT', appLanguage)
-      }
-    });
-  }
-  
-  if (topic.length > 2000) {
-    return res.status(400).json({ 
-      success: false, 
-      error: {
-        code: 'TOPIC_TOO_LONG',
-        message: getErrorMessage('TOPIC_TOO_LONG', appLanguage)
-      }
-    });
+    return res.status(400).json({ success: false, error: 'Topic is required' });
   }
   
   // Check if this is a regenerate-only request (has existing research)
@@ -2629,19 +1161,15 @@ app.post('/api/generate-hooks', async (req, res) => {
   console.log(isRegenerateOnly ? '🔄 Regenerate Hooks Only' : '🎣 Step 1: Generate Hooks');
   console.log(`📌 Topic: ${topic.substring(0, 80)}...`);
   console.log(`🎯 Niche: ${niche}`);
-  console.log(`⏱️ Duration: ${duration}s`);
   console.log(`🌍 Language: ${language}`);
   if (isRegenerateOnly) console.log('⚡ Skipping research (using existing data)');
   console.log('═══════════════════════════════════════');
   
-  const perf = new PerformanceTracker();
+  const startTime = Date.now();
   const costTracker = createCostTracker();
   
   try {
-    let extractedTopic, researchData, action_type, user_instructions, contentAnalysis;
-    
-    // NEW: Variable to store user facts extracted from topic
-    let extractedUserFacts = [];
+    let extractedTopic, researchData, action_type, user_instructions;
     
     if (isRegenerateOnly) {
       // Use existing data (regenerate hooks only)
@@ -2650,119 +1178,48 @@ app.post('/api/generate-hooks', async (req, res) => {
       action_type = existingMode || 'research';
       user_instructions = existingUserInstructions || '';
       console.log('   ⏭️ Using existing research data');
-      perf.skip('content_analysis');
-      perf.skip('topic_extraction');
-      perf.skip('research');
     } else {
-      // Full flow: analyze content sufficiency, extract topic, research
+      // Full flow: detect mode, extract topic, research
+      // Stage 0A: Detect Mode (simple code-based, no AI)
+      action_type = detectMode(topic);
+      user_instructions = action_type === 'refine' ? topic : '';
       
-      // Stage 1: Content Sufficiency Analysis
-      console.log('   🧠 Stage 1: Analyzing content sufficiency...');
-      perf.startStage('content_analysis');
-      contentAnalysis = await analyzeContentSufficiency(topic, duration, language, costTracker);
-      perf.endStage();
-      console.log(`   ✓ Analysis complete (needs_research: ${contentAnalysis.needs_research})`);
-      
-      // Stage 2: Extract Core Topic + User Facts (NEW: returns {topic, userFacts})
-      console.log('   📌 Stage 2: Extracting topic & user facts...');
-      perf.startStage('topic_extraction');
-      const topicResult = await extractTopic(topic, language, costTracker);
-      extractedTopic = topicResult.topic;
-      extractedUserFacts = topicResult.userFacts || [];
-      perf.endStage();
+      // Stage 0B: Extract Core Topic (simple - just topic & angle)
+      extractedTopic = await extractTopic(topic, language, costTracker);
       console.log(`   ✓ Topic: "${extractedTopic}"`);
-      if (extractedUserFacts.length > 0) {
-        console.log(`   ✓ User Facts: ${extractedUserFacts.length} facts extracted from user input`);
-      }
       
-      // Stage 3: Intelligent Research (ONLY what's needed)
-      if (contentAnalysis.needs_research && contentAnalysis.research_queries.length > 0) {
-        console.log(`   🔍 Stage 3: Researching ${contentAnalysis.research_queries.length} specific queries...`);
-        perf.startStage('research');
-        const researchQuery = contentAnalysis.research_queries.join('\n');
-        researchData = await research(researchQuery, extractedTopic, costTracker);
-        perf.endStage();
-        console.log('   ✓ Research complete');
-        action_type = 'hybrid';
+      // Research (SKIP if refine mode)
+      if (action_type === 'refine') {
+        console.log('   ⏭️ Skipping research (Refine Mode)');
+        researchData = user_instructions;
       } else {
-        perf.skip('research');
-        console.log('   ⏭️ Skipping research (content sufficient)');
-        // FIX: Don't pass raw input as research! Use extracted facts instead
-        // In refine mode, the preserveFromUser (user facts) is the source of truth
-        researchData = extractedUserFacts.length > 0 
-          ? `معلومات من المستخدم:\n${extractedUserFacts.map(f => `• ${f}`).join('\n')}`
-          : extractedTopic;
-        action_type = 'refine';
+        researchData = await research(topic, extractedTopic, costTracker); // Pass both raw input and extracted topic
+        console.log('   ✓ Research done');
       }
-      
-      // Store clean topic for script writing phase (NOT raw input with commands)
-      user_instructions = extractedTopic;
-      
-      // DEBUG: Log what we're sending
-      console.log('');
-      console.log('   ╔══════════════════════════════════════════╗');
-      console.log('   ║  DEBUG: Data being sent to hooks/script  ║');
-      console.log('   ╠══════════════════════════════════════════╣');
-      console.log(`   ║ extractedTopic: "${extractedTopic.substring(0, 50)}..."`);
-      console.log(`   ║ user_instructions: "${user_instructions.substring(0, 50)}..."`);
-      console.log(`   ║ extractedUserFacts: ${JSON.stringify(extractedUserFacts)}`);
-      console.log(`   ║ action_type: ${action_type}`);
-      console.log(`   ║ researchData length: ${researchData?.length || 0} chars`);
-      console.log('   ╚══════════════════════════════════════════╝');
-      console.log('');
     }
     
-    // Stage 4: Generate 3 hooks
-    console.log('   🎣 Stage 4: Generating hooks...');
-    perf.startStage('hook_generation');
-    // IMPROVED: Combine contentAnalysis preserve_from_user with extractedUserFacts
-    // This ensures user-provided facts are always preserved
-    const contentAnalysisFacts = contentAnalysis?.preserve_from_user || [];
-    const preserveFromUser = [...new Set([...contentAnalysisFacts, ...extractedUserFacts])]; // Deduplicate
-    if (preserveFromUser.length > 0) {
-      console.log(`   📌 Preserving ${preserveFromUser.length} user facts for hooks`);
-    }
-    const hooksResult = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions, preserveFromUser);
-    perf.endStage();
-    console.log(`   ✓ Generated ${hooksResult.hooks.length} hooks`);
+    // Generate 3 hooks (with action_type)
+    const hooks = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions);
+    console.log(`   ✓ Generated ${hooks.length} hooks`);
     
-    // Ensure all stages are closed before generating report
-    perf.closeAll();
-    
-    perf.logReport();
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✨ ${isRegenerateOnly ? 'Regenerate' : 'Step 1'} Complete in ${elapsed}s`);
     logTotalCost(costTracker);
     
     res.json({
       success: true,
       topic: extractedTopic,
-      hooks: hooksResult.hooks,
-      hooksDetailed: hooksResult.hooksDetailed,
-      recommended: hooksResult.recommended,
-      hookAnalysis: hooksResult.analysis,
+      hooks: hooks,
       research: researchData,
-      mode: action_type,
-      user_instructions: user_instructions,
-      user_facts: extractedUserFacts, // NEW: Clean extracted facts from user input
-      preserve_from_user: preserveFromUser, // NEW: Combined facts for script writing
-      content_analysis: contentAnalysis || null,
-      performance: perf.getReport(),
+      mode: action_type, // Include mode in response
+      user_instructions: user_instructions, // Pass through for Step 2
+      elapsed: `${elapsed}s`,
       cost: costTracker.total.toFixed(4),
     });
     
   } catch (error) {
     console.error('❌ Generate Hooks Error:', error.message);
-    
-    const errorType = detectErrorType(error);
-    const statusCode = error.status || error.statusCode || 500;
-    
-    res.status(statusCode).json({ 
-      success: false, 
-      error: {
-        code: errorType,
-        message: getErrorMessage(errorType, appLanguage),
-        technical: process.env.NODE_ENV === 'development' ? error.message : undefined
-      }
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -2778,31 +1235,14 @@ app.post('/api/write-script', async (req, res) => {
     niche = 'general',
     duration = '30',
     language = 'egyptian',
-    mode = 'research',
-    user_instructions = '',
-    preserve_from_user = [],
-    explicit_research_requests = [],
-    appLanguage = 'en', // NEW: App language for error messages
+    mode = 'research', // NEW: Accept mode from Step 1
+    user_instructions = '', // NEW: Accept user_instructions from Step 1
   } = req.body;
   
-  // Input validation
   if (!topic || !selectedHook || !researchData) {
     return res.status(400).json({ 
       success: false, 
-      error: {
-        code: 'SCRIPT_GENERATION_FAILED',
-        message: getErrorMessage('SCRIPT_GENERATION_FAILED', appLanguage)
-      }
-    });
-  }
-  
-  if (!['30', '60'].includes(duration)) {
-    return res.status(400).json({ 
-      success: false, 
-      error: {
-        code: 'INVALID_DURATION',
-        message: getErrorMessage('INVALID_DURATION', appLanguage)
-      }
+      error: 'topic, selectedHook, and research are required' 
     });
   }
   
@@ -2816,113 +1256,25 @@ app.post('/api/write-script', async (req, res) => {
   console.log(`🎯 Mode: ${mode.toUpperCase()}`);
   console.log('═══════════════════════════════════════');
   
-  const perf = new PerformanceTracker();
+  const startTime = Date.now();
   const costTracker = createCostTracker();
   
   try {
-    // Stage 1: Script Writing
-    console.log('   📝 Stage 1: Writing script...');
-    perf.startStage('script_writing');
-    let script = await writeScript(
-      topic, 
-      researchData, 
-      niche, 
-      selectedHook, 
-      duration, 
-      language, 
-      costTracker, 
-      mode, 
-      user_instructions,
-      preserve_from_user,
-      explicit_research_requests
-    );
-    perf.endStage();
+    // Write script with selected hook (with mode)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, costTracker, mode, user_instructions);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
-    // Stage 2: Fact Validation (only for research/hybrid mode)
-    let factValidation = { valid: true, accuracy_score: 100, issues: [], skipped: true };
-    
-    if (mode !== 'refine' && researchData && researchData.length >= 100) {
-      console.log('   🔍 Stage 2: Validating facts...');
-      perf.startStage('fact_validation');
-      factValidation = await validateFactsAgainstResearch(script, researchData, language, costTracker);
-      perf.endStage();
-      
-      if (!factValidation.valid && factValidation.issues?.length > 0) {
-        console.log(`   ⚠️ Found ${factValidation.issues.length} factual issues, fixing...`);
-        perf.startStage('fix_errors');
-        script = await fixFactualErrors(script, factValidation.issues, researchData, language, costTracker);
-        perf.endStage();
-        factValidation.issues_fixed = true;
-      } else {
-        perf.skip('fix_errors');
-        console.log(`   ✅ Fact check passed (${factValidation.accuracy_score}% accuracy)`);
-        factValidation.issues_fixed = false;
-      }
-    } else {
-      perf.skip('fact_validation');
-      perf.skip('fix_errors');
-      console.log('   ⏭️ Skipping fact validation (refine mode or no research)');
-    }
-    
-    // Stage 3: Quality Scoring
-    console.log('   📊 Stage 3: Scoring quality...');
-    perf.startStage('quality_scoring');
-    const QUALITY_THRESHOLD = 7.0; // Lowered from 7.5 to avoid expensive rewrite loops for marginal gains
-    const MAX_REWRITES = 2;
-    let rewriteAttempts = 0;
-    
-    let qualityScore = await scoreScriptQuality(script, selectedHook, duration, language, niche, costTracker);
-    perf.endStage();
-    console.log(`   📈 Quality score: ${qualityScore.overall?.toFixed(1) || '?'}/10`);
-    
-    if (qualityScore.similarity_to_examples) {
-      console.log(`   📝 ${qualityScore.similarity_to_examples}`);
-    }
-    
-    // Stage 4: Rewrite (if needed)
-    if (qualityScore.overall < QUALITY_THRESHOLD && !qualityScore.skipped) {
-      while (rewriteAttempts < MAX_REWRITES && qualityScore.overall < QUALITY_THRESHOLD) {
-        rewriteAttempts++;
-        perf.startStage(`rewrite_attempt_${rewriteAttempts}`);
-        console.log(`   🔄 Quality ${qualityScore.overall.toFixed(1)} < ${QUALITY_THRESHOLD}, rewriting ${qualityScore.weakest_area} (attempt ${rewriteAttempts}/${MAX_REWRITES})...`);
-        
-        script = await rewriteWeakAreas(script, qualityScore, selectedHook, duration, language, niche, costTracker);
-        script = styleCleanup(script, selectedHook);
-        perf.endStage();
-        
-        perf.startStage(`quality_scoring_after_rewrite_${rewriteAttempts}`);
-        qualityScore = await scoreScriptQuality(script, selectedHook, duration, language, niche, costTracker);
-        perf.endStage();
-        console.log(`   📈 New quality: ${qualityScore.overall?.toFixed(1) || '?'}/10`);
-      }
-      
-      if (rewriteAttempts > 0) {
-        console.log(`   ✅ Quality improved after ${rewriteAttempts} rewrite(s)`);
-      }
-    } else {
-      perf.skip('rewrite');
-    }
-    
-    // Stage 5: Style Cleanup
-    console.log('   🧹 Stage 5: Cleaning up style...');
-    perf.startStage('style_cleanup');
+    // Style cleanup
     script = styleCleanup(script, selectedHook);
-    perf.endStage();
     const wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Cleaned: ${wordCount} words`);
     
-    // Stage 6: Visual Prompts
-    console.log('   🖼️ Stage 6: Generating visual prompts...');
-    perf.startStage('visual_prompts');
+    // Visual prompts
     const visualPrompts = await generateVisualPrompts(topic, script, language, costTracker);
-    perf.endStage();
     console.log('   ✓ Visual prompts ready');
     
-    // Ensure all stages are closed before generating report
-    perf.closeAll();
-    
-    perf.logReport();
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✨ Step 2 Complete in ${elapsed}s`);
     logTotalCost(costTracker);
     
     const durationConfig = getDurationConfig(duration);
@@ -2933,39 +1285,14 @@ app.post('/api/write-script', async (req, res) => {
       hook: selectedHook,
       visualPrompts,
       durationRange: durationConfig.displayRange,
-      mode: mode,
-      factValidation: {
-        checked: !factValidation.skipped,
-        accuracy_score: factValidation.accuracy_score || 100,
-        issues_found: factValidation.issues?.length || 0,
-        issues_fixed: factValidation.issues_fixed || false
-      },
-      qualityScore: {
-        overall: qualityScore.overall || 7.5,
-        scores: qualityScore.scores || {},
-        weakest_area: qualityScore.weakest_area || null,
-        strongest_area: qualityScore.strongest_area || null,
-        similarity_to_examples: qualityScore.similarity_to_examples || null,
-        rewrites_needed: rewriteAttempts
-      },
-      performance: perf.getReport(), // NEW: Performance tracking
+      mode: mode, // Include mode in response
+      elapsed: `${elapsed}s`,
       cost: costTracker.total.toFixed(4),
     });
     
   } catch (error) {
     console.error('❌ Write Script Error:', error.message);
-    
-    const errorType = detectErrorType(error);
-    const statusCode = error.status || error.statusCode || 500;
-    
-    res.status(statusCode).json({ 
-      success: false, 
-      error: {
-        code: errorType,
-        message: getErrorMessage(errorType, appLanguage),
-        technical: process.env.NODE_ENV === 'development' ? error.message : undefined
-      }
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -3068,9 +1395,6 @@ app.post('/api/trending-ideas', async (req, res) => {
 - مناسبة للجمهور المصري
 - قابلة للتنفيذ في فيديو قصير (60 ثانية)
 - اكتب بالعامية المصرية
-- الأفكار لازم تكون مناسبة للتصوير في البيت (Talking Head) أو تعليق صوتي (Voiceover)
-- تجنب تماماً أفكار الفلوجات الخارجية، تحديات الأكل، أو اللي محتاجة شراء منتجات غالية
-- ركز على: الأسرار، القصص الغريبة، تحليل المواقف، وتصحيح المفاهيم الخاطئة
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
@@ -3084,9 +1408,6 @@ JSON فقط:
 - مناسبة للجمهور الخليجي والسعودي
 - قابلة للتنفيذ في فيديو قصير (60 ثانية)
 - اكتب باللهجة الخليجية
-- الأفكار لازم تكون مناسبة للتصوير في البيت (Talking Head) أو تعليق صوتي (Voiceover)
-- تجنب تماماً أفكار الفلوجات الخارجية، تحديات الأكل، أو اللي محتاجة شراء منتجات غالية
-- ركز على: الأسرار، القصص الغريبة، تحليل المواقف، وتصحيح المفاهيم الخاطئة
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
@@ -3100,9 +1421,6 @@ Critères:
 - Adaptées au public francophone
 - Réalisables en vidéo courte (60 secondes)
 - Écris en français
-- Les idées doivent être adaptées au tournage à domicile (Face caméra / Talking Head) ou en Voix off
-- Évitez strictement les vlogs en extérieur, les défis culinaires, ou les idées nécessitant l'achat de produits coûteux
-- Concentrez-vous sur : les secrets, les histoires insolites, l'analyse de situations et la correction des idées reçues
 
 JSON uniquement:
 {"ideas": ["idée 1", "idée 2", ...]}`;
@@ -3116,9 +1434,6 @@ Requirements:
 - Suitable for English-speaking audience
 - Executable in a short video (60 seconds)
 - Write in English
-- Ideas must be suitable for home filming (Talking Head) or Voiceover style
-- Strictly avoid outdoor vlogs, food challenges, or ideas that require purchasing expensive products
-- Focus on: Secrets, bizarre stories, analyzing situations, and busting common myths
 
 JSON only:
 {"ideas": ["idea 1", "idea 2", ...]}`;
@@ -3126,50 +1441,36 @@ JSON only:
   }
 
   try {
-    // Using Gemini 2.5 Flash for cost efficiency
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      'https://api.anthropic.com/v1/messages',
       {
-        contents: [{
-          role: 'user',
-          parts: [{ text: prompt }]
-        }],
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: 500,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: prompt }],
+      },
+      {
+        headers: {
+          'x-api-key': CONFIG.CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
         },
-        generationConfig: {
-          maxOutputTokens: 1000,
-        }
       }
     );
     
-    if (response.data.usageMetadata) {
-      const usage = response.data.usageMetadata;
-      trackCost(costTracker, 'gemini_flash', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
+    if (response.data.usage) {
+      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
       console.log(`   💰 Ideas cost: $${costTracker.total.toFixed(4)}`);
     }
     
-    // Check for blocking or empty response
-    const candidate = response.data.candidates?.[0];
-    if (!candidate || candidate.finishReason === 'SAFETY') {
-      console.log('   ⚠️ Response blocked or empty, finishReason:', candidate?.finishReason);
-      throw new Error('Response blocked');
-    }
-    
-    const text = candidate.content?.parts?.[0]?.text || '';
-    console.log(`   📝 Ideas response length: ${text.length}, finishReason: ${candidate.finishReason}`);
-    
-    // Try to extract and parse JSON
+    const text = response.data.content[0].text;
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      if (parsed.ideas && parsed.ideas.length > 0) {
-        console.log(`   ✓ Generated ${parsed.ideas.length} ideas`);
-        res.json({ success: true, ideas: parsed.ideas, cost: costTracker.total.toFixed(4) });
-        return;
-      }
+      console.log(`   ✓ Generated ${parsed.ideas?.length || 0} ideas`);
+      res.json({ success: true, ideas: parsed.ideas || [], cost: costTracker.total.toFixed(4) });
+      return;
     }
-    console.log('   ⚠️ No valid JSON found in response');
   } catch (e) {
     console.error('   ⚠️ Trending ideas error:', e.message);
   }
@@ -3405,32 +1706,23 @@ Just confirm + output the tag immediately:
 - ✅ Guide to pick topic + angle
 
 # ACTION OUTPUT
-When user confirms, append this tag with a **topic summary** (20-40 words):
+When user confirms, append this tag with a **DETAILED topic** (30-50 words):
 
-[ACTION:GENERATE_SCRIPT]{"topic":"TOPIC_SUMMARY","lang":"LANGUAGE_ID"}
+[ACTION:GENERATE_SCRIPT]{"topic":"DETAILED_TOPIC_WITH_STRUCTURE","lang":"LANGUAGE_ID"}
 
 **The "topic" field MUST include:**
 1. The main subject
-2. The chosen angle/approach
-3. Key points to cover (briefly)
+2. The agreed angles/hooks (summarized)
+3. Key points in order
 
-**⚠️ DO NOT include in the topic:**
-- ❌ Specific songs or music names
-- ❌ Visual/camera instructions (like "لقطة سريعة")
-- ❌ Exact hook wording (the script system writes hooks)
-- ❌ Detailed script structure with CTAs
+**Example of GOOD topic:**
+❌ Bad: "المونوريل في مصر"
+✅ Good: "المونوريل في مصر - هوك: سرعة المستقبل، ثم خيال علمي أصبح حقيقة، ثم حل للزحمة بالمقارنة، ثم تجربة الركوب، ختام CTA"
 
-The script generation system will handle hooks, visuals, and structure automatically.
+❌ Bad: "Real estate mistakes"
+✅ Good: "3 mistakes first-time buyers make - hook: she lost $50K, then the 3 mistakes with examples, then how to avoid them, CTA save this"
 
-**Examples:**
-❌ Bad: "رقص بلدي - هوك الحنين للزمن الجميل (أغنية قديمة), لقطة سريعة للحركة..."
-✅ Good: "الرقص البلدي - الفرق بين الأصيل والحديث، أشهر الحركات، أخطاء شائعة"
-
-❌ Bad: "المونوريل - هوك: سرعة المستقبل + لقطة سريعة، ثم خيال علمي، ثم مقارنة، ختام CTA"
-✅ Good: "المونوريل في مصر - زاوية المستقبل والخيال العلمي، مقارنة بالمواصلات العادية، تجربة الركوب"
-
-❌ Bad: "Real estate - hook: she lost $50K + crying face, then show documents..."
-✅ Good: "3 mistakes first-time home buyers make - shock angle with real money examples"
+**Why this matters:** The app uses this to research AND write the script. More detail = better script.
 
 "lang" values: "egyptian", "gulf", "english", "french"
 
@@ -3522,7 +1814,7 @@ Assistant: 🔥 AI موضوع واسع، خليني أضيّقلك على زاو
 User: الأولى
 Assistant: اختيار صح! 💡 دوس Generate وهيتكتبلك كامل 🚀
 
-[ACTION:GENERATE_SCRIPT]{"topic":"تأثير الذكاء الاصطناعي على الوظائف - زاوية صادمة بالأرقام، الوظائف المهددة، مهارات للحماية","lang":"egyptian"}
+[ACTION:GENERATE_SCRIPT]{"topic":"40% من الوظائف هتختفي بسبب AI - هوك بالرقم الصادم، ثم وظائف بالاسم (محاسبين وكتاب)، ثم 3 مهارات تحميك، ختام تابعني","lang":"egyptian"}
 
 **Example 3 (English - deep):**
 User: I want to make a video about real estate
@@ -3537,7 +1829,7 @@ Which feels right for your audience?
 User: the second one
 Assistant: Smart pick! 💡 Hit Generate and let's go! 🚀
 
-[ACTION:GENERATE_SCRIPT]{"topic":"First-time home buyer mistakes - horror story angle, real money loss example, 3 common mistakes, how to protect yourself","lang":"english"}
+[ACTION:GENERATE_SCRIPT]{"topic":"She lost $50K on her first home - hook with the shocking loss, then the 3 mistakes she made, then how to protect yourself, CTA save this video","lang":"english"}
 
 **Example 4 (Arabic - detailed topic):**
 User: عايز أعمل فيديو عن المونوريل
@@ -3551,8 +1843,7 @@ Assistant: المونوريل موضوع نار! 🚄 زوايا ممكن تشت
 
 User: ادمجهم
 Assistant: اختيار ممتاز! 💡 دوس Generate وهيتكتب كامل 🚀
-
-[ACTION:GENERATE_SCRIPT]{"topic":"المونوريل في مصر - زاوية المستقبل والخيال العلمي، مقارنة بالمواصلات العادية، تجربة الركوب","lang":"egyptian"}
+[ACTION:GENERATE_SCRIPT]{"topic":"المونوريل في مصر - هوك سرعة المستقبل، ثم خيال علمي بمشاهد حديثة، ثم مقارنة الزحمة، ثم تجربة الركوب من الداخل، ختام CTA جربه","lang":"egyptian"}
 `;
 
 app.post('/api/chat', async (req, res) => {
