@@ -975,6 +975,9 @@ ${researchData}
 - استخدم حقائق المستخدم حرفياً (خصوصاً اللي فوق 🔒)
 - املأ الفراغات من البحث
 - اكتب بالعامية المصرية
+- الـ CTA: فعل أمر مباشر وقصير + urgency (النهاردة/دلوقتي) + مرتبط بالموضوع
+  ❌ ضعيف: "لو عايز، حاول تعمل كذا.. صحتك أهم"
+  ✅ قوي: "جرب ده من بكرة. متستناش لما يفوت الأوان."
 
 اكتب السكريبت مباشرة:`,
 
@@ -1001,6 +1004,9 @@ ${researchData}
 - الطول: ${durationConfig.words} كلمة تقريباً
 - استخدم حقائق المستخدم حرفياً (خصوصاً اللي فوق 🔒)
 - اكتب باللهجة الخليجية
+- الـ CTA: فعل أمر مباشر وقصير + urgency (اليوم/الحين) + مرتبط بالموضوع
+  ❌ ضعيف: "لو تبي، حاول تسوي كذا.. صحتك أهم"
+  ✅ قوي: "جرب هالشي من بكرة. لا تنتظر لين يفوت الأوان."
 
 اكتب السكريبت مباشرة:`,
 
@@ -1029,6 +1035,9 @@ ${researchData}
 - Use user facts literally (especially 🔒 above)
 - Fill blanks from research
 - Write in natural English
+- CTA: Direct short command + urgency (today/now) + topic-related
+  ❌ Weak: "If you want, try to do this.. your health matters"
+  ✅ Strong: "Try this starting tomorrow. Don't wait until it's too late."
 
 Write the script directly:`,
 
@@ -1055,6 +1064,9 @@ ${researchData}
 - Longueur: ~${durationConfig.words} mots
 - Utilise les faits utilisateur littéralement (surtout 🔒 ci-dessus)
 - Écris en Français naturel
+- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
+  ❌ Faible: "Si tu veux, essaie de faire ça.. ta santé compte"
+  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
 
 Écris le script directement:`,
 
@@ -1080,10 +1092,13 @@ ${researchData}
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
 - Utilise les faits littéralement (surtout 🔒)
+- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
+  ❌ Faible: "Si tu veux, essaie ça.. ta santé compte"
+  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
 
 Écris le script directement:`
     };
-    
+
     prompt = hybridPrompts[language] || hybridPrompts['egyptian'];
     
   } else if (actionType === 'refine') {
@@ -1116,6 +1131,9 @@ ${userInstructions}
 - اكتب بالعامية المصرية
 - حول كل نقطة لجملة فيروسية بنفس الترتيب
 - ابدأ بالـ Hook ثم النقاط ثم CTA
+- الـ CTA: فعل أمر مباشر وقصير + urgency (النهاردة/دلوقتي) + مرتبط بالموضوع
+  ❌ ضعيف: "لو عايز، حاول تعمل كذا.. صحتك أهم"
+  ✅ قوي: "جرب ده من بكرة. متستناش لما يفوت الأوان."
 
 اكتب السكريبت مباشرة (بدون JSON أو markdown):`,
 
@@ -1140,6 +1158,9 @@ ${userInstructions}
 - Hook: "${selectedHook}"
 - الطول: ${durationConfig.words} كلمة تقريباً
 - اكتب باللهجة الخليجية
+- الـ CTA: فعل أمر مباشر وقصير + urgency (اليوم/الحين) + مرتبط بالموضوع
+  ❌ ضعيف: "لو تبي، حاول تسوي كذا.. صحتك أهم"
+  ✅ قوي: "جرب هالشي من بكرة. لا تنتظر لين يفوت الأوان."
 
 اكتب السكريبت مباشرة:`,
 
@@ -1165,6 +1186,9 @@ ${userInstructions}
 - Length: ~${durationConfig.words} words
 - Transform each point into a viral sentence in the same order
 - Start with Hook, then points, then CTA
+- CTA: Direct command + urgency (today/now) + topic-related
+  ❌ Weak: "If you want, try to do this.. your health matters"
+  ✅ Strong: "Try this starting tomorrow. Don't wait until it's too late."
 
 Write the script directly (no JSON or markdown):`,
 
@@ -1188,6 +1212,9 @@ ${userInstructions}
 === REQUIS ===
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
+- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
+  ❌ Faible: "Si tu veux, essaie de faire ça.. ta santé compte"
+  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
 
 Écris le script directement:`,
 
@@ -1211,12 +1238,15 @@ ${userInstructions}
 === REQUIS ===
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
+- CTA: Commande directe + urgence (aujourd'hui/maintenant) + lié au sujet
+  ❌ Faible: "Si tu veux, essaie ça.. ta santé compte"
+  ✅ Fort: "Essaie ça dès demain. N'attends pas qu'il soit trop tard."
 
 Écris le script directement:`
     };
-    
+
     prompt = refinePrompts[language] || refinePrompts['egyptian'];
-    
+
   } else {
     // ============================================
     // 🔍 RESEARCH MODE: Creative Writer (Original)
