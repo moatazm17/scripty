@@ -982,17 +982,21 @@ For EACH scene, the "prompt" field must follow this Structure:
 - STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of...".
 - CULTURAL ACCURACY: Characters/Settings MUST match the target culture.
 
-### RULESET 2: REAL IMAGE SEARCH (Google)
+### RULESET 2: REAL IMAGE SEARCH (Google) - SIMPLE KEYWORDS ONLY
 For the "google_search_term" field:
-- Extract the specific ENTITY mentioned (e.g., "iPhone 15 Pro", "Pyramids of Giza").
-- If no specific entity, use the most descriptive visual concept.
-- Append keywords like "real photo", "official", "high quality" to ensure good results.
+- Use 2-4 simple keywords ONLY. NO sentences, NO descriptions.
+- Extract the main ENTITY or OBJECT from the scene (e.g., "iPhone 15 Pro", "Cairo traffic", "Bitcoin chart").
+- Keep it SHORT and SEARCHABLE like a Google search.
+- Examples: "Egyptian street food", "laptop office desk", "smartphone hand holding"
+- WRONG: "A beautiful image of someone holding a phone" (too long)
+- RIGHT: "smartphone hand" (simple keywords)
 - MUST be in English.
 
 ### RULESET 3: B-ROLL KEYWORDS (Supplementary)
-- Extract 5 to 8 additional visual concepts from the script to act as "Filler" or "B-Roll".
-- Focus on objects, specific places, emotions, or metaphors mentioned in the text.
-- Format them as search-ready strings (e.g., "Cairo traffic chaos", "Bitcoin chart falling").
+- Extract 5 to 8 simple 2-3 word keywords from the script for B-Roll footage.
+- Focus on objects, places, actions mentioned in the text.
+- Keep each keyword SHORT (2-3 words max).
+- Examples: "money stack", "Cairo skyline", "typing keyboard", "coffee shop"
 
 ---
 
@@ -1061,19 +1065,32 @@ Output Schema (JSON Only):
       const parsed = JSON.parse(match[0]);
       if (parsed.hook && parsed.content && parsed.cta) {
         console.log('   ✓ Visual prompts parsed successfully');
+        // Detailed logging for debugging
+        console.log('   📸 VISUAL PROMPTS OUTPUT:');
+        console.log('   ├─ Hook google_search_term:', parsed.hook.google_search_term || '❌ MISSING');
+        console.log('   ├─ Content google_search_term:', parsed.content.google_search_term || '❌ MISSING');
+        console.log('   ├─ CTA google_search_term:', parsed.cta.google_search_term || '❌ MISSING');
+        console.log('   └─ B-Roll Keywords:', parsed.b_roll_keywords ? `[${parsed.b_roll_keywords.length} items] ${parsed.b_roll_keywords.join(', ')}` : '❌ MISSING');
         return parsed;
+      } else {
+        console.log('   ⚠️ Parsed JSON missing required fields (hook/content/cta)');
+        console.log('   📄 Parsed keys:', Object.keys(parsed));
       }
+    } else {
+      console.log('   ⚠️ Could not extract JSON from response');
+      console.log('   📄 Raw response preview:', text.substring(0, 200));
     }
   } catch (e) {
     console.error('   ⚠️ Visual prompt error:', e.message);
+    console.error('   📄 Stack:', e.stack?.substring(0, 300));
   }
   
   // Fallback
   console.log('   ⚠️ Using fallback visual prompts');
-  return {
+  const fallbackResult = {
     hook: { 
       prompt: `A cinematic hyper-realistic wide shot of ${topic} captured in dramatic composition. Volumetric lighting creates depth with golden hour rays streaming through. Shot on professional cinema camera with shallow depth of field creating atmospheric mood.`,
-      google_search_term: `${topic} real photo high quality`,
+      google_search_term: topic,
       description_ar: 'منظر واسع للموضوع',
       description_en: 'Wide shot overview',
       description_fr: 'Vue large du sujet',
@@ -1081,7 +1098,7 @@ Output Schema (JSON Only):
     },
     content: { 
       prompt: `A detailed hyper-realistic medium shot showcasing ${topic} with clear educational focus. Soft cinematic shading highlights key details while maintaining visual clarity. Professional documentary style with balanced composition and natural color grading.`,
-      google_search_term: `${topic} details real photo`,
+      google_search_term: `${topic} closeup`,
       description_ar: 'لقطة متوسطة للتفاصيل',
       description_en: 'Medium shot details',
       description_fr: 'Plan moyen détaillé',
@@ -1089,20 +1106,26 @@ Output Schema (JSON Only):
     },
     cta: { 
       prompt: `A cinematic hyper-realistic close-up of ${topic} with emotional impact and hopeful atmosphere. Dramatic rim lighting creates powerful silhouette effect. Warm color palette with soft bokeh background evoking inspiration and connection.`,
-      google_search_term: `${topic} inspiration real photo`,
+      google_search_term: `${topic} success`,
       description_ar: 'لقطة قريبة للختام',
       description_en: 'Close-up finale',
       description_fr: 'Gros plan final',
       caption: 'CTA Scene'
     },
     b_roll_keywords: [
-      `${topic} background`,
-      `${topic} concept`,
-      `${topic} illustration`,
-      `professional workspace`,
-      `success motivation`
+      topic,
+      'office desk',
+      'typing keyboard',
+      'city street',
+      'success achievement'
     ]
   };
+  console.log('   📸 FALLBACK VISUAL PROMPTS:');
+  console.log('   ├─ Hook google_search_term:', fallbackResult.hook.google_search_term);
+  console.log('   ├─ Content google_search_term:', fallbackResult.content.google_search_term);
+  console.log('   ├─ CTA google_search_term:', fallbackResult.cta.google_search_term);
+  console.log('   └─ B-Roll Keywords:', fallbackResult.b_roll_keywords.join(', '));
+  return fallbackResult;
 }
 
 // ============================================
