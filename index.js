@@ -752,55 +752,45 @@ ${userInstructions}`;
 ${researchData}`;
   }
   
-  // Build preserve section for hybrid mode (user's facts - use info but rewrite style)
+  // Build preserve section for hybrid mode
   const preserveSection = preserveFromUser && preserveFromUser.length > 0
-    ? `\n🔒 USER FACTS (use this information but rewrite in punchy hook style):\n${preserveFromUser.map(fact => `- "${fact}"`).join('\n')}\n`
+    ? `\n--- Reference Facts (pick ONE only, save rest for script) ---\n${preserveFromUser.map(fact => `• ${fact}`).join('\n')}\n`
     : '';
   
-  const prompt = `${hookConfig.instruction}:
+  const prompt = `${hookConfig.instruction}
 
-Topic: ${topic}
-${preserveSection}
-${contentSource}
+=== ⛔ HOOK RULES (READ FIRST) ===
+- MAX 12 WORDS - no exceptions
+- Pick ONLY ONE fact - create mystery around it
+- Hide everything else - that's for the script
+- ❌ NEVER summarize or pack multiple facts
 
-=== Example Hooks from "${niche}" (copy the STYLE exactly!) ===
+=== Example Hooks from "${niche}" ===
 ${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
-=== Universal Hook Patterns (for inspiration) ===
+=== Universal Patterns ===
 ${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
-=== Style Tips ===
-${hookConfig.tips}
+=== Topic: ${topic} ===
+${preserveSection}
+--- Background (context only, DON'T summarize) ---
+${contentSource}
 
+${hookConfig.tips}
 ${hookConfig.thinkFirst}
 
-${actionType === 'refine' ? '⚠️ IMPORTANT: The hooks must relate to the USER\'S CONTENT above, not external information.' : ''}
-${preserveFromUser && preserveFromUser.length > 0 ? '⚠️ IMPORTANT: Use the INFORMATION from user facts (🔒) but REWRITE in hook style - don\'t copy word-for-word!' : ''}
-
-JSON only (include reasoning for each hook):
+JSON only:
 {
   "analysis": {
-    "topic_hook_potential": "The strongest angle for a hook",
-    "target_emotion": "Primary emotion to target (curiosity/shock/fomo/pride/anger)"
+    "one_fact_chosen": "The ONE fact for the hook",
+    "target_emotion": "curiosity|shock|fomo|pride|anger"
   },
   "hooks": [
     {
-      "text": "The actual hook text",
-      "reasoning": "Why this works (1 sentence)",
+      "text": "Hook (MAX 12 WORDS)",
+      "word_count": 0,
       "emotion": "curiosity|shock|fomo|pride|anger",
-      "scroll_stop_factor": "What stops the scroll"
-    },
-    {
-      "text": "...",
-      "reasoning": "...",
-      "emotion": "...",
-      "scroll_stop_factor": "..."
-    },
-    {
-      "text": "...",
-      "reasoning": "...",
-      "emotion": "...",
-      "scroll_stop_factor": "..."
+      "curiosity_gap": "What's hidden"
     }
   ],
   "recommended": 0
