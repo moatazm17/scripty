@@ -446,69 +446,120 @@ ${userInput}
 // ============================================
 
 async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
-  console.log('   🧠 Understanding topic...');
-  
-  // Language-specific prompts for topic extraction (SIMPLE - no mode detection)
+  console.log('   🧠 Understanding topic & extracting user facts...');
+
+  // Language-specific prompts for topic extraction WITH facts extraction
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح بالعامية المصرية.',
-      prompt: `افهم الموضوع ده واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. الزاوية أو الـ angle (إيه اللي المستخدم عايز يركز عليه)
+      system: 'أنت محلل مواضيع ذكي. استخرج الموضوع والحقائق من كلام المستخدم.',
+      prompt: `حلل النص ده واستخرج:
 
-النص:
+1. **topic**: الموضوع الأساسي فقط (بدون كلمات الأوامر زي "عايز سكريبت" أو "اكتبلي")
+2. **angle**: الزاوية أو التركيز المطلوب
+3. **userFacts**: قائمة بكل الأرقام والإحصائيات والمعلومات المحددة اللي المستخدم ذكرها (array فاضي لو مفيش)
+
+=== أمثلة ===
+Input: "عايز سكريبت عن مصنع الرمال السودا، بيوفر 50 مليون دولار وبيشغل 2000 عامل"
+Output: {"topic": "مصنع الرمال السوداء", "angle": "التأثير الاقتصادي", "userFacts": ["بيوفر 50 مليون دولار", "بيشغل 2000 عامل"]}
+
+Input: "اكتبلي عن الذكاء الاصطناعي"
+Output: {"topic": "الذكاء الاصطناعي", "angle": "عام", "userFacts": []}
+
+Input: "سكريبت عن فوائد القهوة، دراسة هارفارد 2023 قالت بتقلل السكر 25%"
+Output: {"topic": "فوائد القهوة", "angle": "الفوائد الصحية", "userFacts": ["دراسة هارفارد 2023 قالت بتقلل السكر 25%"]}
+
+=== النص المطلوب تحليله ===
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+{"topic": "", "angle": "", "userFacts": []}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع. افهم الموضوع وحدده بوضوح باللهجة الخليجية.',
-      prompt: `افهم الموضوع هذا واستخرج:
-1. الموضوع الأساسي (جملة واحدة واضحة بالعربي)
-2. الزاوية أو الـ angle (وش اللي المستخدم يبي يركز عليه)
+      system: 'أنت محلل مواضيع ذكي. استخرج الموضوع والحقائق من كلام المستخدم.',
+      prompt: `حلل النص هذا واستخرج:
 
-النص:
+1. **topic**: الموضوع الأساسي فقط (بدون كلمات الأوامر مثل "أبي سكربت" أو "اكتبلي")
+2. **angle**: الزاوية أو التركيز المطلوب
+3. **userFacts**: قائمة بكل الأرقام والإحصائيات والمعلومات المحددة اللي المستخدم ذكرها (array فاضي لو ما في)
+
+=== أمثلة ===
+Input: "أبي سكربت عن مصنع الرمال السودا، يوفر 50 مليون دولار ويشغل 2000 عامل"
+Output: {"topic": "مصنع الرمال السوداء", "angle": "التأثير الاقتصادي", "userFacts": ["يوفر 50 مليون دولار", "يشغل 2000 عامل"]}
+
+Input: "اكتبلي عن الذكاء الاصطناعي"
+Output: {"topic": "الذكاء الاصطناعي", "angle": "عام", "userFacts": []}
+
+=== النص المطلوب تحليله ===
 "${rawInput}"
 
 JSON فقط:
-{"topic": "الموضوع الواضح", "angle": "الزاوية"}`
+{"topic": "", "angle": "", "userFacts": []}`
     },
     french: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
-      prompt: `Analyse ce sujet et extrais:
-1. Le sujet principal (une phrase claire en Français)
-2. L'angle (sur quoi l'utilisateur veut se concentrer)
+      system: 'Tu es un analyste intelligent. Extrais le sujet et les faits du texte utilisateur.',
+      prompt: `Analyse ce texte et extrais:
 
-Texte:
+1. **topic**: Le sujet principal uniquement (sans mots de commande comme "je veux un script" ou "écris-moi")
+2. **angle**: L'angle ou le focus demandé
+3. **userFacts**: Liste de tous les chiffres, statistiques et informations spécifiques mentionnés (array vide si aucun)
+
+=== Exemples ===
+Input: "Je veux un script sur l'usine de sable noir, économise 50 millions de dollars et emploie 2000 travailleurs"
+Output: {"topic": "L'usine de sable noir", "angle": "Impact économique", "userFacts": ["économise 50 millions de dollars", "emploie 2000 travailleurs"]}
+
+Input: "Écris-moi sur l'intelligence artificielle"
+Output: {"topic": "L'intelligence artificielle", "angle": "général", "userFacts": []}
+
+=== Texte à analyser ===
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "angle": "L'angle"}`
+{"topic": "", "angle": "", "userFacts": []}`
     },
     frensh: {
-      system: 'Tu es un analyste de sujets. Comprends le sujet et définis-le clairement en Français.',
-      prompt: `Analyse ce sujet et extrais:
-1. Le sujet principal (une phrase claire en Français)
-2. L'angle (sur quoi l'utilisateur veut se concentrer)
+      system: 'Tu es un analyste intelligent. Extrais le sujet et les faits du texte utilisateur.',
+      prompt: `Analyse ce texte et extrais:
 
-Texte:
+1. **topic**: Le sujet principal uniquement (sans mots de commande comme "je veux un script" ou "écris-moi")
+2. **angle**: L'angle ou le focus demandé
+3. **userFacts**: Liste de tous les chiffres, statistiques et informations spécifiques mentionnés (array vide si aucun)
+
+=== Exemples ===
+Input: "Je veux un script sur l'usine de sable noir, économise 50 millions de dollars et emploie 2000 travailleurs"
+Output: {"topic": "L'usine de sable noir", "angle": "Impact économique", "userFacts": ["économise 50 millions de dollars", "emploie 2000 travailleurs"]}
+
+Input: "Écris-moi sur l'intelligence artificielle"
+Output: {"topic": "L'intelligence artificielle", "angle": "général", "userFacts": []}
+
+=== Texte à analyser ===
 "${rawInput}"
 
 JSON uniquement:
-{"topic": "Le sujet clair", "angle": "L'angle"}`
+{"topic": "", "angle": "", "userFacts": []}`
     },
     english: {
-      system: 'You are a topic analyst. Understand the topic and define it clearly in English.',
-      prompt: `Understand this topic and extract:
-1. The main topic (one clear sentence in English)
-2. The angle (what the user wants to focus on)
+      system: 'You are a smart topic analyst. Extract the topic and facts from user input.',
+      prompt: `Analyze this text and extract:
 
-Text:
+1. **topic**: The main topic only (without command words like "I want a script" or "write me")
+2. **angle**: The angle or focus requested
+3. **userFacts**: List of all numbers, statistics, and specific information the user mentioned (empty array if none)
+
+=== Examples ===
+Input: "I want a script about the black sand factory, saves 50 million dollars and employs 2000 workers"
+Output: {"topic": "The black sand factory", "angle": "Economic impact", "userFacts": ["saves 50 million dollars", "employs 2000 workers"]}
+
+Input: "Write me about artificial intelligence"
+Output: {"topic": "Artificial intelligence", "angle": "general", "userFacts": []}
+
+Input: "Script about coffee benefits, Harvard 2023 study said it reduces diabetes by 25%"
+Output: {"topic": "Coffee benefits", "angle": "Health benefits", "userFacts": ["Harvard 2023 study said it reduces diabetes by 25%"]}
+
+=== Text to analyze ===
 "${rawInput}"
 
 JSON only:
-{"topic": "The clear topic", "angle": "The angle"}`
+{"topic": "", "angle": "", "userFacts": []}`
     }
   };
   
@@ -543,15 +594,30 @@ JSON only:
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
-      const result = `${parsed.topic} - ${parsed.angle}`;
-      console.log(`   🧠 Understood: "${result}"`);
-      return result;
+      const topicString = `${parsed.topic}${parsed.angle && parsed.angle !== 'عام' && parsed.angle !== 'general' && parsed.angle !== 'général' ? ' - ' + parsed.angle : ''}`;
+      const userFacts = Array.isArray(parsed.userFacts) ? parsed.userFacts : [];
+      
+      console.log(`   🧠 Topic: "${topicString}"`);
+      if (userFacts.length > 0) {
+        console.log(`   📌 User Facts extracted: ${userFacts.length} facts`);
+        userFacts.forEach((fact, i) => console.log(`      ${i + 1}. "${fact}"`));
+      }
+      
+      // Return object with both topic and userFacts
+      return {
+        topic: topicString,
+        userFacts: userFacts
+      };
     }
   } catch (e) {
     console.log('   ⚠️ Parse error, using raw input:', e.message);
   }
   
-  return rawInput;
+  // Fallback: return raw input with empty facts
+  return {
+    topic: rawInput,
+    userFacts: []
+  };
 }
 
 // ============================================
@@ -651,7 +717,8 @@ async function generateHooks(topic, researchData, niche, language = 'egyptian', 
   const nicheHooks = getNicheHooks(niche, language);
   const universalHooks = getUniversalHooks(language);
   
-  console.log(`   📌 Using ${nicheHooks.length} niche hooks + ${universalHooks.length} universal hooks (${language})`);
+  console.log(`   📌 Using ${nicheHooks.length} niche hooks (${language})`);
+  // Universal hooks paused for testing
   console.log(`   🎯 Mode: ${actionType.toUpperCase()}`);
 
   // Language-specific hook generation prompts with Chain of Thought
@@ -767,9 +834,6 @@ ${researchData}`;
 
 === Example Hooks from "${niche}" ===
 ${nicheHooks.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
-
-=== Universal Patterns ===
-${universalHooks.slice(0, 3).map((h, i) => `${i + 1}. "${h}"`).join('\n')}
 
 === Topic: ${topic} ===
 ${preserveSection}
@@ -906,7 +970,20 @@ JSON only:
 
 async function writeScript(topic, researchData, niche, selectedHook, duration, language = 'egyptian', costTracker = null, actionType = 'research', userInstructions = '', preserveFromUser = [], explicitRequests = []) {
   console.log(`   ✍️ Writing script (Gemini 3 Pro) - Mode: ${actionType.toUpperCase()}...`);
-  
+
+  // DEBUG: Log what writeScript receives
+  console.log('');
+  console.log('   ╔══════════════════════════════════════════════╗');
+  console.log('   ║  DEBUG: writeScript received data            ║');
+  console.log('   ╠══════════════════════════════════════════════╣');
+  console.log(`   ║ topic: "${topic?.substring(0, 50)}..."`);
+  console.log(`   ║ userInstructions: "${userInstructions?.substring(0, 80)}..."`);
+  console.log(`   ║ preserveFromUser: ${JSON.stringify(preserveFromUser?.slice(0, 3))}${preserveFromUser?.length > 3 ? '...' : ''}`);
+  console.log(`   ║ actionType: ${actionType}`);
+  console.log(`   ║ researchData length: ${researchData?.length || 0} chars`);
+  console.log('   ╚══════════════════════════════════════════════╝');
+  console.log('');
+
   // Log preserved facts if any
   if (preserveFromUser && preserveFromUser.length > 0) {
     console.log(`   📌 Preserving ${preserveFromUser.length} user facts literally`);
@@ -940,21 +1017,20 @@ ${ex.script}
       : '';
     
     const hybridPrompts = {
-      egyptian: `أنت كاتب سكريبتات فيروسية ذكي. مهمتك دمج محتوى المستخدم مع البحث بشكل سلس.
+      egyptian: `أنت كاتب سكريبتات فيروسية ذكي. مهمتك دمج حقائق المستخدم مع البحث بشكل سلس.
 
 === أمثلة الأسلوب المطلوب (قلد الـ DNA بالظبط) ===
 ${examplesText}
 
+=== الموضوع ===
+${topic}
+
 === قواعد الدمج الذكي ===
-1. ✅ استخدم الحقائق والأرقام من المستخدم حرفياً (لا تغيرها أبداً)
+1. ✅ استخدم حقائق المستخدم حرفياً (لا تغيرها أبداً) - دي أولوية قصوى
 2. ✅ املأ الفجوات بمعلومات من البحث
 3. ✅ أجب على أي أسئلة أو طلبات بحث ذكرها المستخدم
-4. ✅ احتفظ بترتيب نقاط المستخدم
-5. ❌ لا تضيف معلومات عشوائية - اربط كل شيء بالموضوع
+4. ❌ لا تضيف معلومات عشوائية - اربط كل شيء بالموضوع
 ${preserveSection}${requestsSection}
-=== محتوى المستخدم (أولوية عليا) ===
-${userInstructions}
-
 === البحث (استخدمه لملء الفجوات فقط) ===
 ${researchData}
 
@@ -962,7 +1038,7 @@ ${researchData}
 - Hook: "${selectedHook}"
 - الطول: ${durationConfig.words} كلمة تقريباً
 - ابدأ بالـ Hook
-- استخدم حقائق المستخدم حرفياً (خصوصاً اللي فوق 🔒)
+- استخدم حقائق المستخدم حرفياً (اللي فوق 🔒)
 - املأ الفراغات من البحث
 - اكتب بالعامية المصرية
 - الـ CTA: فعل أمر مباشر وقصير + urgency (النهاردة/دلوقتي) + مرتبط بالموضوع
@@ -971,28 +1047,27 @@ ${researchData}
 
 اكتب السكريبت مباشرة:`,
 
-      gulf: `أنت كاتب سكربتات فايرال ذكي. مهمتك دمج محتوى المستخدم مع البحث بشكل سلس.
+      gulf: `أنت كاتب سكربتات فايرال ذكي. مهمتك دمج حقائق المستخدم مع البحث بشكل سلس.
 
 === أمثلة الأسلوب المطلوب ===
 ${examplesText}
 
+=== الموضوع ===
+${topic}
+
 === قواعد الدمج الذكي ===
-1. ✅ استخدم الحقائق والأرقام من المستخدم حرفياً
+1. ✅ استخدم حقائق المستخدم حرفياً (لا تغيرها أبداً) - دي أولوية قصوى
 2. ✅ املأ الفجوات بمعلومات من البحث
 3. ✅ أجب على أي أسئلة ذكرها المستخدم
-4. ✅ احتفظ بترتيب نقاط المستخدم
-5. ❌ لا تضيف معلومات عشوائية
+4. ❌ لا تضيف معلومات عشوائية
 ${preserveSection}${requestsSection}
-=== محتوى المستخدم (أولوية عليا) ===
-${userInstructions}
-
 === البحث (لملء الفجوات) ===
 ${researchData}
 
 === المطلوب ===
 - Hook: "${selectedHook}"
 - الطول: ${durationConfig.words} كلمة تقريباً
-- استخدم حقائق المستخدم حرفياً (خصوصاً اللي فوق 🔒)
+- استخدم حقائق المستخدم حرفياً (اللي فوق 🔒)
 - اكتب باللهجة الخليجية
 - الـ CTA: فعل أمر مباشر وقصير + urgency (اليوم/الحين) + مرتبط بالموضوع
   ❌ ضعيف: "لو تبي، حاول تسوي كذا.. صحتك أهم"
@@ -1000,21 +1075,20 @@ ${researchData}
 
 اكتب السكريبت مباشرة:`,
 
-      english: `You are a Smart Viral Scriptwriter. Your job is to intelligently blend user content with research.
+      english: `You are a Smart Viral Scriptwriter. Your job is to intelligently blend user facts with research.
 
 === STYLE EXAMPLES (copy the DNA exactly) ===
 ${examplesText}
 
+=== TOPIC ===
+${topic}
+
 === SMART BLENDING RULES ===
-1. ✅ Use user's facts and numbers EXACTLY as provided (never change them)
+1. ✅ Use user's facts and numbers EXACTLY as provided (never change them) - TOP PRIORITY
 2. ✅ Fill gaps with information from research
 3. ✅ Answer any questions or research requests the user mentioned
-4. ✅ Keep the user's points in order
-5. ❌ Don't add random information - keep everything relevant
+4. ❌ Don't add random information - keep everything relevant
 ${preserveSection ? preserveSection.replace('🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):', '🔒 MUST preserve these facts LITERALLY (never change):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ User questions (answer from research):') : ''}
-=== USER CONTENT (Top Priority) ===
-${userInstructions}
-
 === RESEARCH (Use to fill gaps only) ===
 ${researchData}
 
@@ -1031,21 +1105,20 @@ ${researchData}
 
 Write the script directly:`,
 
-      french: `Tu es un concepteur de scripts viraux intelligent. Ta mission est de fusionner intelligemment le contenu utilisateur avec la recherche.
+      french: `Tu es un concepteur de scripts viraux intelligent. Ta mission est de fusionner intelligemment les faits utilisateur avec la recherche.
 
 === EXEMPLES DE STYLE (copie le DNA exactement) ===
 ${examplesText}
 
+=== SUJET ===
+${topic}
+
 === RÈGLES DE FUSION INTELLIGENTE ===
-1. ✅ Utilise les faits et chiffres de l'utilisateur EXACTEMENT (ne les change jamais)
+1. ✅ Utilise les faits et chiffres de l'utilisateur EXACTEMENT (ne les change jamais) - PRIORITÉ MAXIMALE
 2. ✅ Remplis les lacunes avec des informations de la recherche
 3. ✅ Réponds aux questions ou demandes de recherche mentionnées par l'utilisateur
-4. ✅ Garde l'ordre des points de l'utilisateur
-5. ❌ N'ajoute pas d'informations aléatoires - reste pertinent
+4. ❌ N'ajoute pas d'informations aléatoires - reste pertinent
 ${preserveSection ? preserveSection.replace('🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):', '🔒 DOIT préserver ces faits LITTÉRALEMENT (ne jamais changer):') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur (répondre depuis recherche):') : ''}
-=== CONTENU UTILISATEUR (Priorité maximale) ===
-${userInstructions}
-
 === RECHERCHE (pour combler les lacunes uniquement) ===
 ${researchData}
 
@@ -1060,21 +1133,20 @@ ${researchData}
 
 Écris le script directement:`,
 
-      frensh: `Tu es un concepteur de scripts viraux intelligent. Ta mission est de fusionner intelligemment le contenu utilisateur avec la recherche.
+      frensh: `Tu es un concepteur de scripts viraux intelligent. Ta mission est de fusionner intelligemment les faits utilisateur avec la recherche.
 
 === EXEMPLES DE STYLE ===
 ${examplesText}
 
+=== SUJET ===
+${topic}
+
 === RÈGLES DE FUSION INTELLIGENTE ===
-1. ✅ Utilise les faits et chiffres de l'utilisateur EXACTEMENT
+1. ✅ Utilise les faits et chiffres de l'utilisateur EXACTEMENT - PRIORITÉ MAXIMALE
 2. ✅ Remplis les lacunes avec des informations de la recherche
 3. ✅ Réponds aux questions mentionnées par l'utilisateur
-4. ✅ Garde l'ordre des points
-5. ❌ N'ajoute pas d'informations aléatoires
+4. ❌ N'ajoute pas d'informations aléatoires
 ${preserveSection ? preserveSection.replace('🔒 حقائق يجب استخدامها حرفياً (لا تغيرها أبداً):', '🔒 DOIT préserver ces faits:') : ''}${requestsSection ? requestsSection.replace('❓ أسئلة المستخدم (لازم تجاوب عليها من البحث):', '❓ Questions utilisateur:') : ''}
-=== CONTENU UTILISATEUR ===
-${userInstructions}
-
 === RECHERCHE ===
 ${researchData}
 
@@ -1097,23 +1169,30 @@ ${researchData}
     // ============================================
     console.log('   🔄 Using REFINE mode (Strict Viral Editor)');
     
+    // Build user content from preserveFromUser (extracted facts) or researchData
+    const userContentSection = preserveFromUser && preserveFromUser.length > 0
+      ? preserveFromUser.map(fact => `• ${fact}`).join('\n')
+      : researchData;
+    
     const refinePrompts = {
-      egyptian: `أنت محرر سكريبتات فيروسية صارم. مهمتك تحويل مسودة المستخدم لسكريبت فيروسي مع الحفاظ على كل المعلومات.
+      egyptian: `أنت محرر سكريبتات فيروسية صارم. مهمتك تحويل حقائق المستخدم لسكريبت فيروسي مع الحفاظ على كل المعلومات.
+
+=== الموضوع ===
+${topic}
 
 === قواعد صارمة ===
-1. ✅ استخدم فقط المعلومات الموجودة في مسودة المستخدم
+1. ✅ استخدم فقط المعلومات الموجودة في حقائق المستخدم
 2. ✅ حافظ على نفس الترتيب والهيكل (النقاط بنفس الترتيب)
 3. ✅ أعد صياغة كل جملة بأسلوب فيروسي زي الأمثلة
 4. ❌ ممنوع إضافة معلومات جديدة أو أرقام من عندك
 5. ❌ ممنوع حذف أي نقطة من نقاط المستخدم
 6. ❌ ممنوع التأليف أو الاختراع
-7. ❌ ممنوع تنسخ جمل المستخدم حرفياً - اكتبها من جديد بأسلوب الأمثلة
 
 === أمثلة الأسلوب المطلوب (قلد الـ tone بالظبط) ===
 ${examplesText}
 
-=== مسودة المستخدم (المصدر الوحيد للمعلومات) ===
-${userInstructions}
+=== حقائق المستخدم (المصدر الوحيد للمعلومات) ===
+${userContentSection}
 
 === المطلوب ===
 - Hook: "${selectedHook}"
@@ -1127,22 +1206,24 @@ ${userInstructions}
 
 اكتب السكريبت مباشرة (بدون JSON أو markdown):`,
 
-      gulf: `أنت محرر سكريبتات فايرال صارم. مهمتك تحويل مسودة المستخدم لسكريبت فايرال مع الحفاظ على كل المعلومات.
+      gulf: `أنت محرر سكريبتات فايرال صارم. مهمتك تحويل حقائق المستخدم لسكريبت فايرال مع الحفاظ على كل المعلومات.
+
+=== الموضوع ===
+${topic}
 
 === قواعد صارمة ===
-1. ✅ استخدم فقط المعلومات الموجودة في مسودة المستخدم
+1. ✅ استخدم فقط المعلومات الموجودة في حقائق المستخدم
 2. ✅ حافظ على نفس الترتيب والهيكل
 3. ✅ أعد صياغة كل جملة بأسلوب فايرال زي الأمثلة
 4. ❌ ممنوع إضافة معلومات جديدة
 5. ❌ ممنوع حذف أي نقطة
 6. ❌ ممنوع التأليف
-7. ❌ ممنوع تنسخ جمل المستخدم حرفياً - اكتبها من جديد بأسلوب الأمثلة
 
 === أمثلة الأسلوب المطلوب ===
 ${examplesText}
 
-=== مسودة المستخدم ===
-${userInstructions}
+=== حقائق المستخدم ===
+${userContentSection}
 
 === المطلوب ===
 - Hook: "${selectedHook}"
@@ -1154,22 +1235,24 @@ ${userInstructions}
 
 اكتب السكريبت مباشرة:`,
 
-      english: `You are a STRICT Viral Script Editor. Your job is to transform the user's draft into a viral script while preserving ALL information.
+      english: `You are a STRICT Viral Script Editor. Your job is to transform the user's facts into a viral script while preserving ALL information.
+
+=== TOPIC ===
+${topic}
 
 === STRICT RULES ===
-1. ✅ Use ONLY information from the user's draft
+1. ✅ Use ONLY information from the user's facts
 2. ✅ Keep the SAME order and structure (points in same sequence)
 3. ✅ Rewrite each sentence in viral style like the examples
 4. ❌ DO NOT add new information or numbers
 5. ❌ DO NOT remove any of the user's points
 6. ❌ DO NOT make up or hallucinate anything
-7. ❌ DO NOT copy user's sentences word-for-word - rewrite them in the examples' style
 
 === STYLE EXAMPLES (copy this tone exactly) ===
 ${examplesText}
 
-=== USER'S DRAFT (your ONLY source of information) ===
-${userInstructions}
+=== USER'S FACTS (your ONLY source of information) ===
+${userContentSection}
 
 === REQUIREMENTS ===
 - Hook: "${selectedHook}"
@@ -1182,22 +1265,24 @@ ${userInstructions}
 
 Write the script directly (no JSON or markdown):`,
 
-      french: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
+      french: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer les faits de l'utilisateur en script viral tout en préservant TOUTES les informations.
+
+=== SUJET ===
+${topic}
 
 === RÈGLES STRICTES ===
-1. ✅ Utilise UNIQUEMENT les informations du brouillon
+1. ✅ Utilise UNIQUEMENT les informations des faits utilisateur
 2. ✅ Garde le MÊME ordre et structure
 3. ✅ Réécris chaque phrase en style viral comme les exemples
 4. ❌ N'ajoute PAS de nouvelles informations
 5. ❌ Ne supprime AUCUN point de l'utilisateur
 6. ❌ N'invente RIEN
-7. ❌ Ne copie PAS les phrases de l'utilisateur mot à mot - réécris-les dans le style des exemples
 
 === EXEMPLES DE STYLE ===
 ${examplesText}
 
-=== BROUILLON DE L'UTILISATEUR ===
-${userInstructions}
+=== FAITS DE L'UTILISATEUR ===
+${userContentSection}
 
 === REQUIS ===
 - Hook: "${selectedHook}"
@@ -1208,22 +1293,24 @@ ${userInstructions}
 
 Écris le script directement:`,
 
-      frensh: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
+      frensh: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer les faits de l'utilisateur en script viral tout en préservant TOUTES les informations.
+
+=== SUJET ===
+${topic}
 
 === RÈGLES STRICTES ===
-1. ✅ Utilise UNIQUEMENT les informations du brouillon
+1. ✅ Utilise UNIQUEMENT les informations des faits utilisateur
 2. ✅ Garde le MÊME ordre et structure
 3. ✅ Réécris chaque phrase en style viral comme les exemples
 4. ❌ N'ajoute PAS de nouvelles informations
 5. ❌ Ne supprime AUCUN point de l'utilisateur
 6. ❌ N'invente RIEN
-7. ❌ Ne copie PAS les phrases de l'utilisateur mot à mot - réécris-les dans le style des exemples
 
 === EXEMPLES DE STYLE ===
 ${examplesText}
 
-=== BROUILLON DE L'UTILISATEUR ===
-${userInstructions}
+=== FAITS DE L'UTILISATEUR ===
+${userContentSection}
 
 === REQUIS ===
 - Hook: "${selectedHook}"
@@ -2394,12 +2481,18 @@ async function generateScript(rawTopic, language, niche, duration) {
   try {
     // Stage 0A: Detect Mode (simple code-based, no AI)
     const action_type = detectMode(rawTopic);
-    const user_instructions = action_type === 'refine' ? rawTopic : '';
-    
-    // Stage 0B: Extract Core Topic (simple - just topic & angle)
-    const topic = await extractTopic(rawTopic, language);
+
+    // Stage 0B: Extract Core Topic + User Facts (NEW: returns {topic, userFacts})
+    const topicResult = await extractTopic(rawTopic, language);
+    const topic = topicResult.topic;
+    const extractedUserFacts = topicResult.userFacts || [];
     console.log(`   ✓ Topic: "${topic}"`);
+    if (extractedUserFacts.length > 0) {
+      console.log(`   ✓ User Facts: ${extractedUserFacts.length} facts extracted`);
+    }
     
+    const user_instructions = action_type === 'refine' ? topic : '';
+
     // Stage 1: Research (SKIP if refine mode)
     let researchData;
     if (action_type === 'refine') {
@@ -2409,17 +2502,17 @@ async function generateScript(rawTopic, language, niche, duration) {
       researchData = await research(rawTopic, topic); // Pass both raw input and extracted topic
       console.log('   ✓ Research done');
     }
-    
+
     // Stage 2: Generate Hooks (with action_type)
-    // Note: This legacy endpoint doesn't have contentAnalysis, so preserveFromUser is empty
-    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions, []);
+    // Use extractedUserFacts as preserveFromUser
+    const hooks = await generateHooks(topic, researchData, niche, language, null, action_type, user_instructions, extractedUserFacts);
     console.log(`   ✓ Hooks: ${hooks.length}`);
-    
+
     // Select first hook as main
     const selectedHook = hooks[0] || topic;
-    
-    // Stage 3: Write Script (with action_type)
-    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions);
+
+    // Stage 3: Write Script (with action_type and user facts)
+    let script = await writeScript(topic, researchData, niche, selectedHook, duration, language, null, action_type, user_instructions, extractedUserFacts);
     console.log(`   ✓ Script: ${script.split(/\s+/).length} words`);
     
     // Stage 4: Style Cleanup
@@ -2542,6 +2635,9 @@ app.post('/api/generate-hooks', async (req, res) => {
   try {
     let extractedTopic, researchData, action_type, user_instructions, contentAnalysis;
     
+    // NEW: Variable to store user facts extracted from topic
+    let extractedUserFacts = [];
+    
     if (isRegenerateOnly) {
       // Use existing data (regenerate hooks only)
       extractedTopic = existingTopic;
@@ -2562,12 +2658,17 @@ app.post('/api/generate-hooks', async (req, res) => {
       perf.endStage();
       console.log(`   ✓ Analysis complete (needs_research: ${contentAnalysis.needs_research})`);
       
-      // Stage 2: Extract Core Topic
-      console.log('   📌 Stage 2: Extracting topic...');
+      // Stage 2: Extract Core Topic + User Facts (NEW: returns {topic, userFacts})
+      console.log('   📌 Stage 2: Extracting topic & user facts...');
       perf.startStage('topic_extraction');
-      extractedTopic = await extractTopic(topic, language, costTracker);
+      const topicResult = await extractTopic(topic, language, costTracker);
+      extractedTopic = topicResult.topic;
+      extractedUserFacts = topicResult.userFacts || [];
       perf.endStage();
       console.log(`   ✓ Topic: "${extractedTopic}"`);
+      if (extractedUserFacts.length > 0) {
+        console.log(`   ✓ User Facts: ${extractedUserFacts.length} facts extracted from user input`);
+      }
       
       // Stage 3: Intelligent Research (ONLY what's needed)
       if (contentAnalysis.needs_research && contentAnalysis.research_queries.length > 0) {
@@ -2581,19 +2682,41 @@ app.post('/api/generate-hooks', async (req, res) => {
       } else {
         perf.skip('research');
         console.log('   ⏭️ Skipping research (content sufficient)');
-        researchData = topic;
+        // FIX: Don't pass raw input as research! Use extracted facts instead
+        // In refine mode, the preserveFromUser (user facts) is the source of truth
+        researchData = extractedUserFacts.length > 0 
+          ? `معلومات من المستخدم:\n${extractedUserFacts.map(f => `• ${f}`).join('\n')}`
+          : extractedTopic;
         action_type = 'refine';
       }
       
-      // Store for script writing phase
-      user_instructions = topic;
+      // Store clean topic for script writing phase (NOT raw input with commands)
+      user_instructions = extractedTopic;
+      
+      // DEBUG: Log what we're sending
+      console.log('');
+      console.log('   ╔══════════════════════════════════════════╗');
+      console.log('   ║  DEBUG: Data being sent to hooks/script  ║');
+      console.log('   ╠══════════════════════════════════════════╣');
+      console.log(`   ║ extractedTopic: "${extractedTopic.substring(0, 50)}..."`);
+      console.log(`   ║ user_instructions: "${user_instructions.substring(0, 50)}..."`);
+      console.log(`   ║ extractedUserFacts: ${JSON.stringify(extractedUserFacts)}`);
+      console.log(`   ║ action_type: ${action_type}`);
+      console.log(`   ║ researchData length: ${researchData?.length || 0} chars`);
+      console.log('   ╚══════════════════════════════════════════╝');
+      console.log('');
     }
     
     // Stage 4: Generate 3 hooks
     console.log('   🎣 Stage 4: Generating hooks...');
     perf.startStage('hook_generation');
-    // Pass preserve_from_user to hooks so they use user's facts (not conflicting research data)
-    const preserveFromUser = contentAnalysis?.preserve_from_user || [];
+    // IMPROVED: Combine contentAnalysis preserve_from_user with extractedUserFacts
+    // This ensures user-provided facts are always preserved
+    const contentAnalysisFacts = contentAnalysis?.preserve_from_user || [];
+    const preserveFromUser = [...new Set([...contentAnalysisFacts, ...extractedUserFacts])]; // Deduplicate
+    if (preserveFromUser.length > 0) {
+      console.log(`   📌 Preserving ${preserveFromUser.length} user facts for hooks`);
+    }
     const hooksResult = await generateHooks(extractedTopic, researchData, niche, language, costTracker, action_type, user_instructions, preserveFromUser);
     perf.endStage();
     console.log(`   ✓ Generated ${hooksResult.hooks.length} hooks`);
@@ -2614,8 +2737,10 @@ app.post('/api/generate-hooks', async (req, res) => {
       research: researchData,
       mode: action_type,
       user_instructions: user_instructions,
+      user_facts: extractedUserFacts, // NEW: Clean extracted facts from user input
+      preserve_from_user: preserveFromUser, // NEW: Combined facts for script writing
       content_analysis: contentAnalysis || null,
-      performance: perf.getReport(), // NEW: Performance tracking
+      performance: perf.getReport(),
       cost: costTracker.total.toFixed(4),
     });
     
