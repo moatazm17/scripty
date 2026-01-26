@@ -802,7 +802,7 @@ JSON only (include reasoning for each hook):
 
   try {
     // Use Gemini 3.0 Flash Preview for hook generation (faster + cheaper)
-    const hookModel = 'gemini-3.0-flash-preview';
+    const hookModel = 'gemini-3-flash-preview';
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/${hookModel}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
