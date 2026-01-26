@@ -827,7 +827,7 @@ ${researchData}`;
   const prompt = `${hookConfig.instruction}
 
 === ⛔ HOOK RULES (READ FIRST) ===
-- MAX 12 WORDS - no exceptions
+- MAX 25 WORDS - no exceptions
 - Pick ONLY ONE fact - create mystery around it
 - Hide everything else - that's for the script
 - ❌ NEVER summarize or pack multiple facts
@@ -851,7 +851,7 @@ JSON only:
   },
   "hooks": [
     {
-      "text": "Hook (MAX 12 WORDS)",
+      "text": "Hook (MAX 25 WORDS)",
       "word_count": 0,
       "emotion": "curiosity|shock|fomo|pride|anger",
       "curiosity_gap": "What's hidden"
