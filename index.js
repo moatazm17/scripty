@@ -616,6 +616,8 @@ ${hookConfig.tips}
 
 ${actionType === 'refine' ? '⚠️ IMPORTANT: The hooks must relate to the USER\'S CONTENT above, not external information.' : ''}
 
+⚠️ CRITICAL: Each hook MUST be 25 words or less! Keep them short and punchy.
+
 JSON only:
 {"hooks": ["hook1", "hook2", "hook3"]}`;
 
