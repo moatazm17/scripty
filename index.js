@@ -1514,7 +1514,9 @@ app.get('/health', (req, res) => {
 });
 
 // ============================================
-// 💡 TRENDING IDEAS (Inspiration)
+// 💡 TRENDING IDEAS (Inspiration) - v2
+// Focus: Easy viral content (talking head OR voiceover)
+// No complex production needed
 // ============================================
 
 app.post('/api/trending-ideas', async (req, res) => {
@@ -1572,82 +1574,132 @@ app.post('/api/trending-ideas', async (req, res) => {
   let prompt, systemPrompt;
   
   if (language === 'egyptian') {
-    prompt = `اقترح ${count} أفكار فيديوهات فيرال في مجال "${nicheName}" للسوشيال ميديا.
+    prompt = `اقترح ${count} أفكار فيديوهات فيرال في مجال "${nicheName}".
 
-المطلوب:
-- أفكار جذابة ومثيرة للجدل
-- مناسبة للجمهور المصري
-- قابلة للتنفيذ في فيديو قصير (60 ثانية)
-- اكتب بالعامية المصرية
+⚠️ شروط مهمة:
+- الفيديو يكون **talking head** (شخص يتكلم للكاميرا) أو **voiceover** (صور/فيديوهات مع صوت)
+- مينفعش يحتاج: تصوير خارجي، ناس تانية، معدات، تجارب في الشارع
+- لازم يتنفذ بسهولة: سكريبت + موبايل + خلاص
+- الفكرة تكون مثيرة للفضول أو الجدل أو فيها معلومة صادمة
+- مناسب للجمهور المصري، بالعامية المصرية
+
+أمثلة على أفكار صح ✅:
+- "ليه 70% من المصريين بيعملوا الغلطة دي في الفلوس"
+- "3 حاجات منعرفهاش عن [الموضوع] هتصدمك"
+- "الفرق بين اللي بينجح واللي بيفشل في [المجال]"
+
+أمثلة على أفكار غلط ❌:
+- "اعمل تجربة اجتماعية في الشارع" (صعب التنفيذ)
+- "صور ردة فعل صاحبك" (محتاج ناس)
+- "راجع المنتج ده" (محتاج منتج)
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
-    systemPrompt = 'أنت خبير محتوى مصري. اقترح أفكار فيرال بالعامية المصرية. JSON فقط.';
+    systemPrompt = 'أنت خبير في المحتوى الفيرال. بتقترح أفكار سهلة التنفيذ (talking head أو voiceover) تتعمل بموبايل بس. بالعامية المصرية. JSON فقط.';
     
   } else if (language === 'gulf') {
-    prompt = `اقترح ${count} أفكار فيديوهات فايرال في مجال "${nicheName}" للسوشيال ميديا.
+    prompt = `اقترح ${count} أفكار فيديوهات فايرال في مجال "${nicheName}".
 
-المطلوب:
-- أفكار جذابة ومثيرة للاهتمام
-- مناسبة للجمهور الخليجي والسعودي
-- قابلة للتنفيذ في فيديو قصير (60 ثانية)
-- اكتب باللهجة الخليجية
+⚠️ شروط مهمة:
+- الفيديو يكون **talking head** (شخص يتكلم للكاميرا) أو **voiceover** (صور/مقاطع مع صوت)
+- ما يحتاج: تصوير برا، ناس ثانيين، معدات، تجارب بالشارع
+- لازم يتنفذ بسهولة: سكريبت + جوال + خلاص
+- الفكرة تكون مثيرة للفضول أو الجدل أو فيها معلومة صادمة
+- مناسب للجمهور الخليجي، باللهجة الخليجية
+
+أمثلة على أفكار صح ✅:
+- "ليش 70% من الناس يغلطون بهالشي في الفلوس"
+- "3 أشياء ما تعرفها عن [الموضوع] بتصدمك"
+- "الفرق بين اللي ينجح واللي يفشل في [المجال]"
+
+أمثلة على أفكار غلط ❌:
+- "سو تجربة اجتماعية بالشارع" (صعب التنفيذ)
+- "صور ردة فعل ربيعك" (يحتاج ناس)
+- "سو ريفيو لهالمنتج" (يحتاج منتج)
 
 JSON فقط:
 {"ideas": ["فكرة 1", "فكرة 2", ...]}`;
-    systemPrompt = 'أنت خبير محتوى خليجي. اقترح أفكار فايرال باللهجة الخليجية. JSON فقط.';
+    systemPrompt = 'أنت خبير في المحتوى الفايرال. تقترح أفكار سهلة التنفيذ (talking head أو voiceover) تنسوى بجوال بس. باللهجة الخليجية. JSON فقط.';
     
   } else if (language === 'french') {
-    prompt = `Suggère ${count} idées de vidéos virales dans le domaine "${nicheName}" pour les réseaux sociaux.
+    prompt = `Suggère ${count} idées de vidéos virales dans le domaine "${nicheName}".
 
-Critères:
-- Idées accrocheuses et engageantes
-- Adaptées au public francophone
-- Réalisables en vidéo courte (60 secondes)
-- Écris en français
+⚠️ Contraintes importantes:
+- La vidéo doit être **talking head** (personne qui parle face caméra) OU **voiceover** (images/clips avec narration)
+- PAS DE: tournage extérieur, autres personnes, équipement, expériences sociales
+- Doit être facile à réaliser: script + téléphone = c'est tout
+- Les idées doivent susciter la curiosité, la controverse, ou avoir un hook surprenant
+- Adapté au public francophone
+
+Bons exemples ✅:
+- "Pourquoi 70% des gens font cette erreur avec l'argent"
+- "3 choses que personne ne te dit sur [sujet] qui vont te choquer"
+- "La différence entre ceux qui réussissent et ceux qui échouent dans [domaine]"
+
+Mauvais exemples ❌:
+- "Fais une expérience sociale dans la rue" (difficile à réaliser)
+- "Filme la réaction de ton ami" (besoin d'autres personnes)
+- "Fais une review de ce produit" (besoin du produit)
 
 JSON uniquement:
 {"ideas": ["idée 1", "idée 2", ...]}`;
-    systemPrompt = 'Tu es un expert en contenu français. Suggère des idées virales en français. JSON uniquement.';
+    systemPrompt = 'Tu es un expert en contenu viral. Tu suggères des idées faciles à réaliser (talking head ou voiceover) faisables avec juste un téléphone. JSON uniquement.';
     
   } else {
-    prompt = `Suggest ${count} viral video ideas in the "${nicheName}" niche for social media.
+    prompt = `Suggest ${count} viral video ideas in the "${nicheName}" niche.
 
-Requirements:
-- Catchy and engaging ideas
+⚠️ Important constraints:
+- Video must be **talking head** (person talking to camera) OR **voiceover** (images/clips with narration)
+- NO: outdoor filming, other people needed, equipment, street experiments, reactions
+- Must be easy to execute: script + phone = done
+- Ideas should spark curiosity, controversy, or have a surprising hook
 - Suitable for English-speaking audience
-- Executable in a short video (60 seconds)
-- Write in English
+
+Good examples ✅:
+- "Why 70% of people make this money mistake"
+- "3 things nobody tells you about [topic] that will shock you"
+- "The difference between people who succeed and fail at [niche]"
+
+Bad examples ❌:
+- "Do a social experiment on the street" (hard to execute)
+- "Film your friend's reaction" (needs other people)
+- "Review this product" (needs product)
 
 JSON only:
 {"ideas": ["idea 1", "idea 2", ...]}`;
-    systemPrompt = 'You are a content expert. Suggest viral ideas in English. JSON only.';
+    systemPrompt = 'You are a viral content expert. You suggest easy-to-execute ideas (talking head or voiceover) that can be made with just a phone. JSON only.';
   }
 
   try {
+    // Using Gemini Flash Lite for cost efficiency
     const response = await axios.post(
-      'https://api.anthropic.com/v1/messages',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
       {
-        model: CONFIG.CLAUDE_MODEL,
-        max_tokens: 500,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: prompt }],
+        contents: [
+          { role: 'user', parts: [{ text: systemPrompt }] },
+          { role: 'model', parts: [{ text: 'Understood. I will suggest easy-to-execute viral ideas in JSON format.' }] },
+          { role: 'user', parts: [{ text: prompt }] }
+        ],
+        generationConfig: {
+          temperature: 0.9,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
       },
       {
-        headers: {
-          'x-api-key': CONFIG.CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 30000
       }
     );
     
-    if (response.data.usage) {
-      trackCost(costTracker, 'claude', response.data.usage.input_tokens, response.data.usage.output_tokens);
+    if (response.data.usageMetadata) {
+      const usage = response.data.usageMetadata;
+      trackCost(costTracker, 'gemini_chat', usage.promptTokenCount || 0, usage.candidatesTokenCount || 0);
       console.log(`   💰 Ideas cost: $${costTracker.total.toFixed(4)}`);
     }
     
-    const text = response.data.content[0].text;
+    const text = response.data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const parsed = JSON.parse(match[0]);
