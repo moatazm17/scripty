@@ -1760,6 +1760,7 @@ app.post('/api/generate-image', async (req, res) => {
           input: {
             prompt: prompt,
             seed: randomSeed,
+            disable_safety_checker: false, // Ensure NSFW filter is ALWAYS enabled
           },
         },
         {
@@ -1781,6 +1782,19 @@ app.post('/api/generate-image', async (req, res) => {
       return;
     } catch (e) {
       lastError = e;
+      
+      // Check if NSFW content was detected
+      const errorMessage = e.response?.data?.detail || e.message || '';
+      if (errorMessage.toLowerCase().includes('nsfw')) {
+        console.log('   🚫 NSFW content blocked by safety filter');
+        res.status(400).json({ 
+          success: false, 
+          error: 'Content blocked by safety filter. Please try a different prompt.',
+          code: 'NSFW_BLOCKED'
+        });
+        return;
+      }
+      
       if (e.response?.status === 429 && attempt < maxRetries) {
         const waitTime = attempt * 2000;
         console.log(`   ⏳ Rate limited, waiting ${waitTime/1000}s before retry ${attempt + 1}/${maxRetries}...`);
