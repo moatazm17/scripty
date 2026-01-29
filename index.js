@@ -1059,15 +1059,73 @@ For EACH scene, the "prompt" field must follow this Structure:
 - STYLE: Start with "A cinematic hyper-realistic shot of..." or "A detailed 3D illustration of...".
 - CULTURAL ACCURACY: Characters/Settings MUST match the target culture.
 
-### RULESET 2: REAL IMAGE SEARCH (Google) - SIMPLE KEYWORDS ONLY
-For the "google_search_term" field:
-- Use 2-4 simple keywords ONLY. NO sentences, NO descriptions.
-- Extract the main ENTITY or OBJECT from the scene (e.g., "iPhone 15 Pro", "Cairo traffic", "Bitcoin chart").
-- Keep it SHORT and SEARCHABLE like a Google search.
-- Examples: "Egyptian street food", "laptop office desk", "smartphone hand holding"
-- WRONG: "A beautiful image of someone holding a phone" (too long)
-- RIGHT: "smartphone hand" (simple keywords)
-- MUST be in English.
+### RULESET 2: SMART IMAGE SEARCH (Google) - ENTITY-FIRST EXTRACTION
+
+For "google_search_term" and "b_roll_keywords" fields, follow this PRIORITY ORDER:
+
+**STEP 1: SCAN FOR NAMED ENTITIES (MANDATORY)**
+Before writing ANY keyword, scan the script section for:
+- Brand/Company names (Apple, Tesla, Google, Samsung, etc.)
+- Initiative/Program names → Add "logo" or "official"
+- Organization names (ministries, funds, institutions, agencies)
+- Person names or titles/roles (CEO, minister, founder) → Add context
+- Specific buildings/landmarks (headquarters, academies, monuments)
+- Official plans/visions/programs (national initiatives, tech programs)
+- Product names (iPhone, Model S, etc.)
+
+**STEP 2: KEYWORD FORMATTING**
+- Use 2-4 words maximum
+- For entities: Include the ORIGINAL language name + English translation in b_roll_keywords
+- For logos/official images: Append "logo" or "official"
+- For events/launches: Append "launch", "announcement", or "event"
+- ALL google_search_term values MUST be in English for best results
+
+**STEP 3: FALLBACK ONLY**
+- Use generic visual terms ONLY if the section contains ZERO named entities
+- Generic terms = last resort, not default
+
+**EXAMPLES BY LANGUAGE:**
+
+🇪🇬 ARABIC (Egyptian/Gulf):
+Script mentions "مبادرة رواد مصر الرقميون":
+✅ RIGHT: "Digital Egypt Pioneers logo", "رواد مصر الرقميون"
+❌ WRONG: "Egyptian students learning"
+
+Script mentions "وزارة الاتصالات":
+✅ RIGHT: "Egypt Minister of Communications", "وزارة الاتصالات مصر"
+❌ WRONG: "Egyptian government official"
+
+🇺🇸 ENGLISH:
+Script mentions "Elon Musk announced Neuralink":
+✅ RIGHT: "Elon Musk Neuralink", "Neuralink logo"
+❌ WRONG: "businessman technology"
+
+Script mentions "Apple's Vision Pro headset":
+✅ RIGHT: "Apple Vision Pro", "Vision Pro headset"
+❌ WRONG: "VR technology device"
+
+Script mentions "Y Combinator accelerator":
+✅ RIGHT: "Y Combinator logo", "YC Demo Day"
+❌ WRONG: "startup incubator office"
+
+🇫🇷 FRENCH:
+Script mentions "Station F à Paris":
+✅ RIGHT: "Station F Paris", "Station F logo"
+❌ WRONG: "French startup hub"
+
+Script mentions "BPI France financement":
+✅ RIGHT: "BPI France logo", "Bpifrance"
+❌ WRONG: "French government funding"
+
+Script mentions "École 42":
+✅ RIGHT: "Ecole 42 Paris", "42 school logo"
+❌ WRONG: "coding school France"
+
+**OUTPUT BEHAVIOR:**
+- google_search_term: Primary entity in English (with "logo" if applicable)
+- b_roll_keywords: Mix of original language + English entity names, logos, and related official terms
+
+**STRICT RULE:** If a proper noun, initiative name, brand, or organization exists in the script text, it MUST appear in the keywords. Never replace specific names with generic descriptions.
 
 ### RULESET 3: B-ROLL KEYWORDS (Supplementary)
 - Extract 5 to 8 simple 2-3 word keywords from the script for B-Roll footage.
