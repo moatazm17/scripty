@@ -24,6 +24,64 @@ const CONFIG = {
 };
 
 // ============================================
+// 🌍 REGION & CONTEXT HELPERS
+// ============================================
+
+const getRegion = (language) => ({
+  'egyptian': 'مصر',
+  'gulf': 'الخليج العربي (السعودية، الإمارات، الكويت، قطر، البحرين، عمان)',
+  'french': 'فرنسا أو المغرب العربي',
+  'frensh': 'فرنسا أو المغرب العربي',
+  'english': 'the relevant region based on context'
+})[language] || 'المنطقة العربية';
+
+const getRegionShort = (language) => ({
+  'egyptian': 'مصر',
+  'gulf': 'الخليج',
+  'french': 'فرنسا/المغرب العربي',
+  'frensh': 'فرنسا/المغرب العربي',
+  'english': 'the region'
+})[language] || 'المنطقة';
+
+const getResearchSystemPrompt = (language, intent) => {
+  const region = getRegionShort(language);
+  const isArabic = ['egyptian', 'gulf'].includes(language);
+  const isFrench = ['french', 'frensh'].includes(language);
+  
+  if (isArabic) {
+    return `أنت باحث متخصص في المحتوى المحلي.
+
+القواعد الأساسية:
+- ركز على المعلومات المحلية في ${region}، وليس العالمية
+- لا تخلط بين الأسماء المتشابهة (مثلاً: "workspace" المحلي ≠ "WeWork" العالمية)
+- إذا كان الموضوع عن مكان/محل/خدمة محلية، لا تذكر علامات تجارية عالمية
+- إذا لم تجد معلومات موثوقة، قل "لا تتوفر معلومات كافية" بدلاً من الاختراع
+- أعطِ أولوية للمصادر المحلية والرسمية
+- أرقام دقيقة وتواريخ محددة فقط`;
+  } else if (isFrench) {
+    return `Tu es un chercheur spécialisé en contenu local.
+
+Règles fondamentales:
+- Concentre-toi sur les informations locales en ${region}, pas mondiales
+- Ne confonds pas les noms similaires (ex: "workspace" local ≠ "WeWork" mondiale)
+- Si le sujet est un lieu/magasin/service local, ne mentionne pas de marques mondiales
+- Si tu ne trouves pas d'informations fiables, dis "informations insuffisantes" au lieu d'inventer
+- Priorité aux sources locales et officielles
+- Chiffres précis et dates spécifiques uniquement`;
+  } else {
+    return `You are a research specialist focused on local content.
+
+Core rules:
+- Focus on local information relevant to ${region}, not global
+- Don't confuse similar names (e.g., local "workspace" ≠ global "WeWork")
+- If the topic is about a local place/shop/service, don't mention global brands
+- If you can't find reliable information, say "insufficient information" instead of making things up
+- Prioritize local and official sources
+- Precise numbers and specific dates only`;
+  }
+};
+
+// ============================================
 // 📚 LOAD HOOKS & SCRIPTS (Per Language & Duration)
 // ============================================
 
@@ -256,11 +314,11 @@ function detectMode(rawInput) {
 async function extractTopic(rawInput, language = 'egyptian', costTracker = null) {
   console.log('   🧠 Understanding topic...');
   
-  // Language-specific prompts for topic extraction + user facts
+  // Language-specific prompts for topic extraction + user facts + intent
   const langPrompts = {
     egyptian: {
-      system: 'أنت محلل مواضيع خبير. شغلتك تفهم كل كلمة اليوزر قالها وتستخرج كل حاجة مهمة.',
-      prompt: `أنت لازم تفهم كل حاجة اليوزر قالها وتحفظها.
+      system: 'أنت محلل مواضيع خبير. شغلتك تفهم نية اليوزر وتستخرج كل حاجة مهمة.',
+      prompt: `أنت لازم تفهم كل حاجة اليوزر قالها وتحفظها + تحدد نيته.
 
 اليوزر كاتب:
 "${rawInput}"
@@ -268,28 +326,32 @@ async function extractTopic(rawInput, language = 'egyptian', costTracker = null)
 استخرج:
 1. topic: الموضوع الأساسي (جملة واحدة)
 2. angle: وجهة نظر اليوزر أو الـ angle
-3. userFacts: ده الأهم! كل حاجة اليوزر قالها لازم تتحفظ:
-   - أي رأي أو وجهة نظر (أفضل، أحسن، أسوأ، غلط، صح، مهم)
-   - أي سبب أو تفسير (عشان، لأن، بسبب، علشان)
-   - أي معلومة أو fact ذكرها
-   - أي رقم أو إحصائية
-   - أي حاجة specific اليوزر عايزها تبقى في الفيديو
-   - أي claim أو argument
-   
-مثال: لو قال "عايز فيديو عن القهوة وإزاي بتأثر على النوم وأنا شخصياً بشرب 5 كوبايات"
-userFacts = ["القهوة بتأثر على النوم", "اليوزر بيشرب 5 كوبايات يومياً"]
+3. intent: نوع المحتوى اللي اليوزر عايزه (اختار واحد بس):
+   - "local_business": لو بيتكلم عن محل/مكان/خدمة محلية (كافيه، مطعم، محل ملابس، workspace، صالون، gym)
+   - "concept": لو عايز يشرح مفهوم أو فكرة (نصائح، tips، معلومات عامة)
+   - "news": لو عايز يغطي خبر أو حدث أو مبادرة حكومية
+   - "global_local": لو موضوع عالمي بزاوية محلية (الذكاء الاصطناعي في مصر)
+   - "general": لو مش واضح أو موضوع عام
+4. isLocalBusiness: true لو الموضوع عن مكان/محل/خدمة محلية، false لو لأ
+5. userFacts: كل حاجة اليوزر قالها (آراء، أسباب، أرقام، claims)
 
-مثال: لو قال "المعتزلة كانت أحسن فترة عشان التفكير العقلاني"
-userFacts = ["المعتزلة كانت أفضل فترة في الإسلام", "السبب: التفكير العقلاني"]
+أمثلة:
+- "workspace" → intent: "local_business", isLocalBusiness: true (غالباً كافيه coworking محلي)
+- "محل ملابس" → intent: "local_business", isLocalBusiness: true
+- "ليه القهوة مفيدة" → intent: "concept", isLocalBusiness: false
+- "مبادرة أشبال مصر الرقمية" → intent: "news", isLocalBusiness: false
+- "الذكاء الاصطناعي" → intent: "global_local", isLocalBusiness: false
 
-⚠️ مهم: لو اليوزر قال حاجة = لازم تبقى في userFacts. Array فاضي بس لو كتب كلمة واحدة زي "قهوة"
+⚠️ مهم: 
+- لو اليوزر كتب اسم مكان أو محل (حتى لو كلمة واحدة) = isLocalBusiness: true
+- لو مش متأكد إذا كان business أو لأ، اختار true (better safe)
 
 JSON فقط:
-{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
+{"topic": "...", "angle": "...", "intent": "...", "isLocalBusiness": true/false, "userFacts": ["..."]}`
     },
     gulf: {
-      system: 'أنت محلل مواضيع خبير. شغلتك تفهم كل كلمة اليوزر قالها وتستخرج كل شي مهم.',
-      prompt: `أنت لازم تفهم كل شي اليوزر قاله وتحفظه.
+      system: 'أنت محلل مواضيع خبير. شغلتك تفهم نية اليوزر وتستخرج كل شي مهم.',
+      prompt: `أنت لازم تفهم كل شي اليوزر قاله وتحفظه + تحدد نيته.
 
 اليوزر كاتب:
 "${rawInput}"
@@ -297,22 +359,28 @@ JSON فقط:
 استخرج:
 1. topic: الموضوع الأساسي (جملة واحدة)
 2. angle: وجهة نظر اليوزر أو الـ angle
-3. userFacts: هذا الأهم! كل شي اليوزر قاله لازم يتحفظ:
-   - أي رأي أو وجهة نظر (أفضل، أحسن، أسوأ، غلط، صح، مهم)
-   - أي سبب أو تفسير (عشان، لأن، بسبب)
-   - أي معلومة أو fact ذكرها
-   - أي رقم أو إحصائية
-   - أي شي specific اليوزر يبيه يكون في الفيديو
-   - أي claim أو argument
+3. intent: نوع المحتوى اللي اليوزر يبيه (اختار واحد بس):
+   - "local_business": لو يتكلم عن محل/مكان/خدمة محلية (كافيه، مطعم، محل ملابس، workspace، صالون، gym)
+   - "concept": لو يبي يشرح مفهوم أو فكرة (نصائح، tips، معلومات عامة)
+   - "news": لو يبي يغطي خبر أو حدث أو مبادرة حكومية
+   - "global_local": لو موضوع عالمي بزاوية محلية
+   - "general": لو مو واضح أو موضوع عام
+4. isLocalBusiness: true لو الموضوع عن مكان/محل/خدمة محلية، false لو لا
+5. userFacts: كل شي اليوزر قاله (آراء، أسباب، أرقام، claims)
 
-⚠️ مهم: لو اليوزر قال شي = لازم يكون في userFacts. Array فاضي بس لو كتب كلمة وحدة مثل "قهوة"
+أمثلة:
+- "workspace" → intent: "local_business", isLocalBusiness: true
+- "محل ملابس" → intent: "local_business", isLocalBusiness: true
+- "ليش القهوة مفيدة" → intent: "concept", isLocalBusiness: false
+
+⚠️ مهم: لو اليوزر كتب اسم مكان أو محل = isLocalBusiness: true
 
 JSON فقط:
-{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
+{"topic": "...", "angle": "...", "intent": "...", "isLocalBusiness": true/false, "userFacts": ["..."]}`
     },
     french: {
-      system: 'Tu es un analyste expert. Ton travail est de comprendre et capturer tout ce que l\'utilisateur a dit.',
-      prompt: `Tu dois comprendre et préserver tout ce que l'utilisateur a écrit.
+      system: 'Tu es un analyste expert. Ton travail est de comprendre l\'intention de l\'utilisateur.',
+      prompt: `Tu dois comprendre tout ce que l'utilisateur a écrit + identifier son intention.
 
 L'utilisateur a écrit:
 "${rawInput}"
@@ -320,22 +388,28 @@ L'utilisateur a écrit:
 Extrais:
 1. topic: Le sujet principal (une phrase)
 2. angle: Le point de vue de l'utilisateur
-3. userFacts: C'est le plus important! Tout ce que l'utilisateur a dit doit être préservé:
-   - Toute opinion (meilleur, pire, important, faux, vrai)
-   - Toute raison (parce que, car, à cause de)
-   - Toute information ou fait mentionné
-   - Tout chiffre ou statistique
-   - Tout ce que l'utilisateur veut spécifiquement dans la vidéo
-   - Tout argument ou claim
+3. intent: Type de contenu souhaité (choisis un seul):
+   - "local_business": s'il parle d'un lieu/magasin/service local (café, restaurant, boutique, workspace, salon, gym)
+   - "concept": s'il veut expliquer un concept ou une idée (conseils, tips, informations générales)
+   - "news": s'il veut couvrir une actualité ou un événement
+   - "global_local": sujet mondial avec angle local
+   - "general": si pas clair ou sujet général
+4. isLocalBusiness: true si le sujet est un lieu/magasin/service local, false sinon
+5. userFacts: Tout ce que l'utilisateur a dit (opinions, raisons, chiffres, arguments)
 
-⚠️ Important: Si l'utilisateur a dit quelque chose = ça doit être dans userFacts. Array vide seulement si un seul mot comme "café"
+Exemples:
+- "workspace" → intent: "local_business", isLocalBusiness: true
+- "boutique de vêtements" → intent: "local_business", isLocalBusiness: true
+- "pourquoi le café est bon" → intent: "concept", isLocalBusiness: false
+
+⚠️ Important: Si l'utilisateur écrit un nom de lieu ou magasin = isLocalBusiness: true
 
 JSON uniquement:
-{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
+{"topic": "...", "angle": "...", "intent": "...", "isLocalBusiness": true/false, "userFacts": ["..."]}`
     },
     frensh: {
-      system: 'Tu es un analyste expert. Ton travail est de comprendre et capturer tout ce que l\'utilisateur a dit.',
-      prompt: `Tu dois comprendre et préserver tout ce que l'utilisateur a écrit.
+      system: 'Tu es un analyste expert. Ton travail est de comprendre l\'intention de l\'utilisateur.',
+      prompt: `Tu dois comprendre tout ce que l'utilisateur a écrit + identifier son intention.
 
 L'utilisateur a écrit:
 "${rawInput}"
@@ -343,22 +417,23 @@ L'utilisateur a écrit:
 Extrais:
 1. topic: Le sujet principal (une phrase)
 2. angle: Le point de vue de l'utilisateur
-3. userFacts: C'est le plus important! Tout ce que l'utilisateur a dit doit être préservé:
-   - Toute opinion (meilleur, pire, important, faux, vrai)
-   - Toute raison (parce que, car, à cause de)
-   - Toute information ou fait mentionné
-   - Tout chiffre ou statistique
-   - Tout ce que l'utilisateur veut spécifiquement dans la vidéo
-   - Tout argument ou claim
+3. intent: Type de contenu souhaité (choisis un seul):
+   - "local_business": s'il parle d'un lieu/magasin/service local
+   - "concept": s'il veut expliquer un concept ou une idée
+   - "news": s'il veut couvrir une actualité
+   - "global_local": sujet mondial avec angle local
+   - "general": si pas clair
+4. isLocalBusiness: true si lieu/magasin/service local, false sinon
+5. userFacts: Tout ce que l'utilisateur a dit
 
-⚠️ Important: Si l'utilisateur a dit quelque chose = ça doit être dans userFacts. Array vide seulement si un seul mot comme "café"
+⚠️ Important: Si l'utilisateur écrit un nom de lieu = isLocalBusiness: true
 
 JSON uniquement:
-{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
+{"topic": "...", "angle": "...", "intent": "...", "isLocalBusiness": true/false, "userFacts": ["..."]}`
     },
     english: {
-      system: 'You are an expert topic analyst. Your job is to understand and capture everything the user said.',
-      prompt: `You must understand and preserve everything the user wrote.
+      system: 'You are an expert topic analyst. Your job is to understand user intent and extract key information.',
+      prompt: `You must understand everything the user wrote + identify their intent.
 
 The user wrote:
 "${rawInput}"
@@ -366,21 +441,27 @@ The user wrote:
 Extract:
 1. topic: The main topic (one sentence)
 2. angle: The user's perspective or angle
-3. userFacts: This is the most important! Everything the user said must be preserved:
-   - Any opinion (best, worst, important, wrong, right)
-   - Any reason (because, since, due to)
-   - Any information or fact mentioned
-   - Any number or statistic
-   - Anything specific the user wants in the video
-   - Any claim or argument
+3. intent: Type of content the user wants (pick one):
+   - "local_business": if talking about a local place/shop/service (cafe, restaurant, clothing store, workspace, salon, gym)
+   - "concept": if they want to explain a concept or idea (tips, general information)
+   - "news": if they want to cover news or an event
+   - "global_local": global topic with local angle
+   - "general": if unclear or general topic
+4. isLocalBusiness: true if the topic is a local place/shop/service, false otherwise
+5. userFacts: Everything the user said (opinions, reasons, numbers, claims)
 
-Example: "I want a video about coffee and how it affects sleep and I personally drink 5 cups"
-userFacts = ["Coffee affects sleep", "User drinks 5 cups daily"]
+Examples:
+- "workspace" → intent: "local_business", isLocalBusiness: true (likely a local coworking cafe)
+- "clothing store" → intent: "local_business", isLocalBusiness: true
+- "why coffee is good" → intent: "concept", isLocalBusiness: false
+- "AI trends" → intent: "global_local", isLocalBusiness: false
 
-⚠️ Important: If the user said something = it must be in userFacts. Empty array ONLY if they wrote a single word like "coffee"
+⚠️ Important: 
+- If user wrote a place or business name (even one word) = isLocalBusiness: true
+- When in doubt, choose true (better safe)
 
 JSON only:
-{"topic": "...", "angle": "...", "userFacts": ["...", "..."]}`
+{"topic": "...", "angle": "...", "intent": "...", "isLocalBusiness": true/false, "userFacts": ["..."]}`
     }
   };
   
@@ -394,7 +475,7 @@ JSON only:
         parts: [{ text: `${langConfig.system}\n\n${langConfig.prompt}` }]
       }],
       generationConfig: {
-        maxOutputTokens: 200,
+        maxOutputTokens: 300,
         temperature: 0.3,
       }
     }
@@ -413,14 +494,18 @@ JSON only:
       const parsed = JSON.parse(match[0]);
       const topicStr = `${parsed.topic} - ${parsed.angle}`;
       const userFacts = Array.isArray(parsed.userFacts) ? parsed.userFacts.filter(f => f && f.trim()) : [];
+      const intent = parsed.intent || 'general';
+      const isLocalBusiness = parsed.isLocalBusiness === true;
+      
       console.log(`   🧠 Understood: "${topicStr}"`);
+      console.log(`   🎯 Intent: ${intent} | isLocalBusiness: ${isLocalBusiness}`);
       console.log(`   📌 EXTRACTED USER FACTS (${userFacts.length}):`);
       if (userFacts.length > 0) {
         userFacts.forEach((fact, i) => console.log(`      ${i + 1}. ${fact}`));
       } else {
         console.log(`      ❌ No facts extracted from input`);
       }
-      return { topic: topicStr, userFacts };
+      return { topic: topicStr, userFacts, intent, isLocalBusiness };
     } else {
       console.log(`   ⚠️ No JSON found in response`);
     }
@@ -428,41 +513,264 @@ JSON only:
     console.log('   ⚠️ Parse error, using raw input:', e.message);
   }
   
-  return { topic: rawInput, userFacts: [] };
+  return { topic: rawInput, userFacts: [], intent: 'general', isLocalBusiness: false };
 }
 
 // ============================================
-// 🔍 STAGE 1: RESEARCH (Fast + Accurate)
+// 🔍 STAGE 1: RESEARCH (Intent-Aware + Context-Based)
 // ============================================
 
-async function research(rawInput, extractedTopic, costTracker = null, retries = 3) {
+async function research(rawInput, extractedTopic, { intent = 'general', isLocalBusiness = false, language = 'egyptian' } = {}, costTracker = null, retries = 3) {
   console.log('   📚 Researching...');
+  console.log(`   🎯 Research mode: intent=${intent}, isLocalBusiness=${isLocalBusiness}, lang=${language}`);
+  
+  const region = getRegion(language);
+  const regionShort = getRegionShort(language);
+  const isArabic = ['egyptian', 'gulf'].includes(language);
+  const isFrench = ['french', 'frensh'].includes(language);
   
   // Check if user provided specific angles/points
   const hasUserAngles = rawInput.length > extractedTopic.length + 20;
   
-  // Build smart research prompt
+  // Build intent-aware research prompt
   let researchPrompt;
-  if (hasUserAngles) {
-    // User provided specific angles - prioritize them
-    researchPrompt = `الموضوع: ${extractedTopic}
+  
+  if (isLocalBusiness || intent === 'local_business') {
+    // === LOCAL BUSINESS INTENT ===
+    // User wants to promote their own local place/service - DON'T give competitor names!
+    console.log('   📍 Using LOCAL BUSINESS research mode');
+    
+    if (isArabic) {
+      researchPrompt = `الموضوع: ${extractedTopic}
+المنطقة: ${region}
+
+⚠️ هام جداً: هذا الموضوع عن مكان/محل/خدمة محلية يريد المستخدم الترويج لها.
+
+المطلوب:
+1. معلومات عامة عن هذا النوع من الأماكن/الخدمات في ${regionShort}
+2. ما الذي يجعل هذا النوع من الأماكن مميزاً أو مطلوباً؟
+3. إحصائيات عن السوق المحلي أو سلوك المستهلكين (إن وجدت)
+4. نصائح أو معلومات مفيدة للجمهور عن هذا النوع من الخدمات
+
+⛔ ممنوع تماماً:
+- لا تذكر أسماء علامات تجارية عالمية (مثل WeWork, Starbucks, Zara)
+- لا تذكر أسماء منافسين محليين
+- لا تخلط بين الاسم المحلي وعلامات تجارية مشابهة عالمياً
+
+✅ بدلاً من ذلك:
+- ركز على الفوائد العامة لهذا النوع من الأماكن
+- أعطِ معلومات تفيد الجمهور وتجعلهم يريدون زيارة هذا النوع من الأماكن`;
+    } else if (isFrench) {
+      researchPrompt = `Sujet: ${extractedTopic}
+Région: ${region}
+
+⚠️ Très important: Ce sujet concerne un lieu/magasin/service local que l'utilisateur veut promouvoir.
+
+Requis:
+1. Informations générales sur ce type de lieu/service en ${regionShort}
+2. Qu'est-ce qui rend ce type de lieu attrayant?
+3. Statistiques sur le marché local ou comportement des consommateurs (si disponible)
+4. Conseils ou informations utiles pour le public
+
+⛔ Strictement interdit:
+- Ne mentionne PAS de marques mondiales (WeWork, Starbucks, Zara)
+- Ne mentionne PAS de concurrents locaux
+- Ne confonds PAS le nom local avec des marques mondiales similaires
+
+✅ Concentre-toi sur:
+- Les avantages généraux de ce type de lieu
+- Des informations qui donnent envie au public de visiter`;
+    } else {
+      researchPrompt = `Topic: ${extractedTopic}
+Region: ${region}
+
+⚠️ Very important: This topic is about a local place/shop/service the user wants to promote.
+
+Required:
+1. General information about this type of place/service in ${regionShort}
+2. What makes this type of place appealing or in-demand?
+3. Local market statistics or consumer behavior (if available)
+4. Useful tips or information for the audience
+
+⛔ Strictly forbidden:
+- Do NOT mention global brand names (WeWork, Starbucks, Zara)
+- Do NOT mention local competitors by name
+- Do NOT confuse the local name with similar global brands
+
+✅ Instead focus on:
+- General benefits of this type of place
+- Information that makes the audience want to visit such places`;
+    }
+    
+  } else if (intent === 'news') {
+    // === NEWS/EVENT INTENT ===
+    console.log('   📰 Using NEWS research mode');
+    
+    if (isArabic) {
+      researchPrompt = `الموضوع: ${extractedTopic}
+المنطقة: ${region}
+
+المطلوب:
+1. آخر الأخبار والتطورات (2024-2026)
+2. أرقام وتواريخ رسمية ومحددة
+3. تصريحات رسمية إن وجدت
+4. مصادر موثوقة ورسمية
+
+${hasUserAngles ? `طلب المستخدم بالتفصيل:\n"${rawInput}"\n\nركز على النقاط التي ذكرها المستخدم.` : ''}
+
+⚠️ إذا لم تجد معلومات موثوقة وحديثة، قل ذلك بوضوح بدلاً من الاختراع.`;
+    } else if (isFrench) {
+      researchPrompt = `Sujet: ${extractedTopic}
+Région: ${region}
+
+Requis:
+1. Dernières actualités et développements (2024-2026)
+2. Chiffres et dates officiels et précis
+3. Déclarations officielles si disponibles
+4. Sources fiables et officielles
+
+${hasUserAngles ? `Demande détaillée de l'utilisateur:\n"${rawInput}"\n\nConcentre-toi sur les points mentionnés.` : ''}
+
+⚠️ Si tu ne trouves pas d'informations fiables et récentes, dis-le clairement au lieu d'inventer.`;
+    } else {
+      researchPrompt = `Topic: ${extractedTopic}
+Region: ${region}
+
+Required:
+1. Latest news and developments (2024-2026)
+2. Official and specific numbers and dates
+3. Official statements if available
+4. Reliable and official sources
+
+${hasUserAngles ? `User's detailed request:\n"${rawInput}"\n\nFocus on the points mentioned.` : ''}
+
+⚠️ If you cannot find reliable and recent information, state this clearly instead of making things up.`;
+    }
+    
+  } else if (intent === 'concept') {
+    // === CONCEPT/EDUCATIONAL INTENT ===
+    console.log('   📚 Using CONCEPT research mode');
+    
+    if (isArabic) {
+      researchPrompt = `الموضوع: ${extractedTopic}
+السياق المحلي: ${region}
+
+المطلوب:
+1. شرح مبسط للمفهوم أو الفكرة
+2. إحصائيات أو أرقام مثيرة للاهتمام
+3. أمثلة أو تطبيقات من ${regionShort} إن وجدت
+4. معلومات مفاجئة أو غير معروفة
+
+${hasUserAngles ? `طلب المستخدم بالتفصيل:\n"${rawInput}"\n\nركز على النقاط التي ذكرها المستخدم.` : ''}`;
+    } else if (isFrench) {
+      researchPrompt = `Sujet: ${extractedTopic}
+Contexte local: ${region}
+
+Requis:
+1. Explication simple du concept ou de l'idée
+2. Statistiques ou chiffres intéressants
+3. Exemples ou applications de ${regionShort} si disponible
+4. Informations surprenantes ou peu connues
+
+${hasUserAngles ? `Demande détaillée de l'utilisateur:\n"${rawInput}"\n\nConcentre-toi sur les points mentionnés.` : ''}`;
+    } else {
+      researchPrompt = `Topic: ${extractedTopic}
+Local context: ${region}
+
+Required:
+1. Simple explanation of the concept or idea
+2. Interesting statistics or numbers
+3. Examples or applications from ${regionShort} if available
+4. Surprising or little-known information
+
+${hasUserAngles ? `User's detailed request:\n"${rawInput}"\n\nFocus on the points mentioned.` : ''}`;
+    }
+    
+  } else if (intent === 'global_local') {
+    // === GLOBAL TOPIC WITH LOCAL ANGLE ===
+    console.log('   🌍 Using GLOBAL+LOCAL research mode');
+    
+    if (isArabic) {
+      researchPrompt = `الموضوع: ${extractedTopic}
+
+المطلوب:
+1. معلومات عالمية عن الموضوع (أرقام، تطورات، اتجاهات)
+2. كيف يؤثر هذا الموضوع على ${region}؟
+3. أمثلة أو تطبيقات محلية في ${regionShort}
+4. إحصائيات محلية إن وجدت
+
+${hasUserAngles ? `طلب المستخدم بالتفصيل:\n"${rawInput}"\n\nركز على النقاط التي ذكرها المستخدم.` : ''}`;
+    } else if (isFrench) {
+      researchPrompt = `Sujet: ${extractedTopic}
+
+Requis:
+1. Informations mondiales sur le sujet (chiffres, développements, tendances)
+2. Comment ce sujet affecte ${region}?
+3. Exemples ou applications locales en ${regionShort}
+4. Statistiques locales si disponibles
+
+${hasUserAngles ? `Demande détaillée de l'utilisateur:\n"${rawInput}"\n\nConcentre-toi sur les points mentionnés.` : ''}`;
+    } else {
+      researchPrompt = `Topic: ${extractedTopic}
+
+Required:
+1. Global information about the topic (numbers, developments, trends)
+2. How does this topic affect ${region}?
+3. Local examples or applications in ${regionShort}
+4. Local statistics if available
+
+${hasUserAngles ? `User's detailed request:\n"${rawInput}"\n\nFocus on the points mentioned.` : ''}`;
+    }
+    
+  } else {
+    // === GENERAL/DEFAULT INTENT ===
+    console.log('   📋 Using GENERAL research mode');
+    
+    if (hasUserAngles) {
+      if (isArabic) {
+        researchPrompt = `الموضوع: ${extractedTopic}
 
 طلب المستخدم بالتفصيل:
 "${rawInput}"
 
-=== المطلوب ===
-🥇 أولوية قصوى: ابحث عن كل النقاط اللي المستخدم ذكرها بالتحديد
-🥈 ثانياً: لو لقيت معلومات مفاجئة أو مثيرة إضافية، ضيفها
-
-لكل نقطة جيب:
-- أرقام وتواريخ محددة
-- تفاصيل مفاجئة أو غير معروفة
-- المصادر
+المطلوب:
+1. ابحث عن كل النقاط التي ذكرها المستخدم
+2. أرقام وتواريخ محددة
+3. تفاصيل مفاجئة أو غير معروفة
+4. المصادر
 
 مختصر ودقيق.`;
-  } else {
-    // Short topic - do general research
-    researchPrompt = `${extractedTopic}
+      } else if (isFrench) {
+        researchPrompt = `Sujet: ${extractedTopic}
+
+Demande détaillée de l'utilisateur:
+"${rawInput}"
+
+Requis:
+1. Recherche tous les points mentionnés par l'utilisateur
+2. Chiffres et dates précis
+3. Détails surprenants ou peu connus
+4. Sources
+
+Concis et précis.`;
+      } else {
+        researchPrompt = `Topic: ${extractedTopic}
+
+User's detailed request:
+"${rawInput}"
+
+Required:
+1. Research all the points mentioned by the user
+2. Specific numbers and dates
+3. Surprising or little-known details
+4. Sources
+
+Concise and accurate.`;
+      }
+    } else {
+      // Short topic - do general research
+      if (isArabic) {
+        researchPrompt = `${extractedTopic}
 
 المطلوب:
 1. أرقام وتواريخ محددة
@@ -470,7 +778,30 @@ async function research(rawInput, extractedTopic, costTracker = null, retries = 
 3. المصادر
 
 مختصر ودقيق.`;
+      } else if (isFrench) {
+        researchPrompt = `${extractedTopic}
+
+Requis:
+1. Chiffres et dates précis
+2. Détails surprenants ou peu connus
+3. Sources
+
+Concis et précis.`;
+      } else {
+        researchPrompt = `${extractedTopic}
+
+Required:
+1. Specific numbers and dates
+2. Surprising or little-known details
+3. Sources
+
+Concise and accurate.`;
+      }
+    }
   }
+  
+  // Get the appropriate system prompt based on language and intent
+  const systemPrompt = getResearchSystemPrompt(language, intent);
   
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -481,7 +812,7 @@ async function research(rawInput, extractedTopic, costTracker = null, retries = 
           messages: [
             {
               role: 'system',
-              content: 'باحث محترف. أرقام دقيقة، تواريخ، تفاصيل. اذكر المصادر. ركّز على النقاط اللي المستخدم طلبها.'
+              content: systemPrompt
             },
             {
               role: 'user',
@@ -1280,11 +1611,14 @@ async function generateScript(rawTopic, language, niche, duration) {
     const action_type = detectMode(rawTopic);
     const user_instructions = action_type === 'refine' ? rawTopic : '';
     
-    // Stage 0B: Extract Core Topic + User Facts
+    // Stage 0B: Extract Core Topic + User Facts + Intent
     const topicResult = await extractTopic(rawTopic, language);
     const topic = topicResult.topic;
     const userFacts = topicResult.userFacts || [];
+    const intent = topicResult.intent || 'general';
+    const isLocalBusiness = topicResult.isLocalBusiness || false;
     console.log(`   ✓ Topic: "${topic}"`);
+    console.log(`   🎯 Intent: ${intent} | isLocalBusiness: ${isLocalBusiness}`);
     console.log(`   📌 User Facts: ${JSON.stringify(userFacts)}`);
     
     // Stage 1: Research (SKIP if refine mode)
@@ -1293,7 +1627,7 @@ async function generateScript(rawTopic, language, niche, duration) {
       console.log('   ⏭️ Skipping research (Refine Mode - using user content)');
       researchData = user_instructions; // Use user's draft as the "research"
     } else {
-      researchData = await research(rawTopic, topic); // Pass both raw input and extracted topic
+      researchData = await research(rawTopic, topic, { intent, isLocalBusiness, language }); // Pass intent context
       console.log('   ✓ Research done');
     }
     
@@ -1413,11 +1747,14 @@ app.post('/api/generate-hooks', async (req, res) => {
       action_type = detectMode(topic);
       user_instructions = action_type === 'refine' ? topic : '';
       
-      // Stage 0B: Extract Core Topic + User Facts
+      // Stage 0B: Extract Core Topic + User Facts + Intent
       const topicResult = await extractTopic(topic, language, costTracker);
       extractedTopic = topicResult.topic;
       userFacts = topicResult.userFacts || [];
+      const intent = topicResult.intent || 'general';
+      const isLocalBusiness = topicResult.isLocalBusiness || false;
       console.log(`   ✓ Topic: "${extractedTopic}"`);
+      console.log(`   🎯 Intent: ${intent} | isLocalBusiness: ${isLocalBusiness}`);
       console.log(`   📌 User Facts: ${JSON.stringify(userFacts)}`);
       
       // Research (SKIP if refine mode)
@@ -1425,7 +1762,7 @@ app.post('/api/generate-hooks', async (req, res) => {
         console.log('   ⏭️ Skipping research (Refine Mode)');
         researchData = user_instructions;
       } else {
-        researchData = await research(topic, extractedTopic, costTracker); // Pass both raw input and extracted topic
+        researchData = await research(topic, extractedTopic, { intent, isLocalBusiness, language }, costTracker); // Pass intent context
         console.log('   ✓ Research done');
       }
     }
