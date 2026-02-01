@@ -82,6 +82,73 @@ Core rules:
 };
 
 // ============================================
+// 📝 CAPTION EXAMPLES (Per Language)
+// ============================================
+
+const CAPTION_EXAMPLES = {
+  egyptian: [
+    "المكان ده كنز حرفياً.. أسعار ومفاجآت مش هتتكرر تاني! 💎",
+    "يا جماعة الاختراع ده وهم.. وفّر عليا وقت ومجهود رهيب ⏳",
+    "نصيحة، بلاش تشتري المنتج ده قبل ما تشوف الفيديو للآخر! ❌💸",
+    "محدش بيتكلم عن الموضوع ده كتير.. بس لازم تعرفوا الحقيقة 🤫",
+    "إلحقوا العرض ده قبل ما يخلص.. فرصة مش هتتعوض بجد! 🏃‍♂️",
+    "دي أحلى طريقة تعمل بيها الوصفة دي في البيت.. الطعم حكاية 😋",
+    "لو بتدور على مكان خروجة رايق ومختلف.. الفيديو ده ليك 👇",
+    "الغلطة دي كلنا بنقع فيها.. شوف الصح إيه عشان متندمش ✅",
+    "جربت التريند الجديد.. ودي كانت النتيجة (بكل صراحة!) 🤔",
+    "أخيراً لقيت حل للمشكلة دي.. النتيجة بجد صدمتني! 🤯"
+  ],
+  gulf: [
+    "يا جماعة هذا المكان خيال.. ضروري تجربونه بأقرب وقت! 😍",
+    "لا يطوفكم هالكوفي.. القهوة عندهم في قلبك ☕️✨",
+    "أقوى شي وصلني هالفترة.. الجودة خرافية والريحة تفتح النفس 📦",
+    "نصيحة من القلب.. لا تستعجلون وتشترونه قبل ما تشوفون هالمقطع ✋",
+    "من صجكم ما جربتوا هالحركة؟ بتغير حياتكم 180 درجة! 🔄",
+    "هذا العطر دمار شامل.. ثبات وفوحان مو طبيعي 🔥",
+    "تجهيزات السفرة.. شوفوا وش أخذت معاي (أشياء ضرورية) ✈️",
+    "اللي يدورون الزين.. هذا المقطع إهداء لكم 🎁",
+    "أخيراً عرفت السر.. الطريقة أسهل مما توقعت بوايد! 💡",
+    "صدمة عمري.. ما توقعت النتيجة تطلع بهالروعة! 🤯"
+  ],
+  english: [
+    "I can't believe I didn't know this sooner.. total game changer! 🤯",
+    "Stop scrolling if you want to save serious money on this 💸🛑",
+    "This spot is genuinely a hidden gem.. vibes are immaculate ✨",
+    "Honest review: Is it actually worth the hype? Let's talk 🗣️",
+    "Don't walk, RUN to get this deal.. it's insane! 🏃‍♂️💨",
+    "I tried the viral hack so you don't have to.. here's the tea ☕️",
+    "You need to add this place to your bucket list ASAP 📝✈️",
+    "Lowkey obsessed with this.. 10/10 would recommend 🌟",
+    "If you watch one video today, make it this one. Trust me 🤝",
+    "This might be the best purchase I made all year.. no regrets 🛍️"
+  ],
+  french: [
+    "C'est une pépite cachée que personne ne connaît.. foncez ! 💎🏃‍♂️",
+    "J'ai testé pour vous et franchement.. je suis choqué ! 🤯",
+    "Arrêtez tout ! J'ai trouvé le meilleur plan de l'année 🔥",
+    "Ne faites surtout pas cette erreur (je l'ai faite pour vous) ❌",
+    "Une dinguerie.. le rapport qualité-prix est imbattable 💸",
+    "Ce truc a changé mon quotidien, c'est indispensable ! 💡",
+    "POV : Tu découvres enfin l'endroit dont tout le monde parle 😍",
+    "C'est validé ou pas ? Dites-moi ce que vous en pensez 👇",
+    "Regardez jusqu'au bout, le résultat est juste incroyable ✨",
+    "Tag un pote qui a besoin de voir ça absolument ! 👥"
+  ],
+  frensh: [
+    "C'est une pépite cachée que personne ne connaît.. foncez ! 💎🏃‍♂️",
+    "J'ai testé pour vous et franchement.. je suis choqué ! 🤯",
+    "Arrêtez tout ! J'ai trouvé le meilleur plan de l'année 🔥",
+    "Ne faites surtout pas cette erreur (je l'ai faite pour vous) ❌",
+    "Une dinguerie.. le rapport qualité-prix est imbattable 💸",
+    "Ce truc a changé mon quotidien, c'est indispensable ! 💡",
+    "POV : Tu découvres enfin l'endroit dont tout le monde parle 😍",
+    "C'est validé ou pas ? Dites-moi ce que vous en pensez 👇",
+    "Regardez jusqu'au bout, le résultat est juste incroyable ✨",
+    "Tag un pote qui a besoin de voir ça absolument ! 👥"
+  ]
+};
+
+// ============================================
 // 📚 LOAD HOOKS & SCRIPTS (Per Language & Duration)
 // ============================================
 
@@ -1225,7 +1292,17 @@ ${userInstructions}
     .replace(/\*\*(.+?)\*\*/g, '$1')
     .trim();
   
-  // Word count validation
+  // Extract caption if AI generated one
+  let caption = '';
+  const captionMatch = script.match(/\[CAPTION\]:\s*(.+)/i);
+  if (captionMatch) {
+    caption = captionMatch[1].trim();
+    // Remove the [CAPTION] line from script
+    script = script.replace(/\[CAPTION\]:\s*.+/i, '').trim();
+    console.log(`   📝 AI generated caption: "${caption.substring(0, 50)}..."`);
+  }
+  
+  // Word count validation (before adding caption)
   let wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
   const targetWords = durationConfig.words;
   
@@ -1236,6 +1313,20 @@ ${userInstructions}
     wordCount = script.split(/\s+/).filter(w => w.length > 0).length;
     console.log(`   ✓ Expanded to ${wordCount} words`);
   }
+  
+  // If no caption was generated, use a random one from examples
+  if (!caption) {
+    const langKey = language === 'frensh' ? 'french' : language;
+    const examples = CAPTION_EXAMPLES[langKey] || CAPTION_EXAMPLES['egyptian'];
+    caption = examples[Math.floor(Math.random() * examples.length)];
+    console.log(`   📝 Using fallback caption: "${caption.substring(0, 50)}..."`);
+  }
+  
+  // Append caption to script
+  script = `${script}
+
+━━━━━━━━━━━━━━━
+📝 ${caption}`;
   
   return script;
 }
