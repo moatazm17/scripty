@@ -1395,6 +1395,15 @@ Requirements:
 
 ${langConfig.instruction}:`;
 
+  // 📤 LOG: What we're sending to Gemini for expansion
+  console.log('   📤 Expand request:', {
+    currentWords,
+    targetWords,
+    scriptPreview: shortScript.substring(0, 100) + '...',
+    actionType,
+    language
+  });
+
   try {
     const response = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
@@ -1408,19 +1417,43 @@ ${langConfig.instruction}:`;
       { headers: { 'Content-Type': 'application/json' } }
     );
     
+    // 📥 LOG: Raw response from Gemini
+    console.log('   📥 Expand raw response:', JSON.stringify(response.data, null, 2).substring(0, 500) + '...');
+    
+    // 🔍 LOG: Check response structure
+    console.log('   🔍 Expand response check:', {
+      hasCandidates: !!response.data?.candidates,
+      candidatesLength: response.data?.candidates?.length,
+      hasContent: !!response.data?.candidates?.[0]?.content,
+      hasParts: !!response.data?.candidates?.[0]?.content?.parts,
+      partsLength: response.data?.candidates?.[0]?.content?.parts?.length
+    });
+    
+    // 🚫 LOG: Check if blocked by safety filter
+    if (response.data?.promptFeedback?.blockReason) {
+      console.log('   🚫 Expand BLOCKED:', response.data.promptFeedback.blockReason);
+    }
+    
     // Track cost
     if (costTracker && response.data?.usageMetadata) {
       const usage = response.data.usageMetadata;
       trackCost(costTracker, 'gemini', usage.promptTokenCount || 0, usage.candidatesTokenCount || usage.totalTokenCount - usage.promptTokenCount || 0);
     }
     
-    let expanded = response.data.candidates[0].content.parts[0].text;
-    expanded = expanded
+    // Safe access with fallback
+    const expanded_text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!expanded_text) {
+      console.log('   ⚠️ Expand: No text in response, returning original script');
+      return shortScript;
+    }
+    
+    let expanded = expanded_text
       .replace(/```[\s\S]*?```/g, '')
       .replace(/#{1,3}\s*/g, '')
       .replace(/\*\*(.+?)\*\*/g, '$1')
       .trim();
     
+    console.log(`   ✅ Expand success: ${expanded.split(/\s+/).length} words`);
     return expanded;
   } catch (e) {
     console.error('   ⚠️ Expand error:', e.message);
