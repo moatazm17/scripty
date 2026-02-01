@@ -803,6 +803,15 @@ Concise and accurate.`;
   // Get the appropriate system prompt based on language and intent
   const systemPrompt = getResearchSystemPrompt(language, intent);
   
+  // 📝 LOG: What we're sending to Perplexity
+  console.log('   ┌─────────────────────────────────────');
+  console.log('   │ 🔍 PERPLEXITY REQUEST');
+  console.log('   ├─────────────────────────────────────');
+  console.log(`   │ System: ${systemPrompt.substring(0, 100)}...`);
+  console.log('   │');
+  console.log(`   │ Query: ${researchPrompt.substring(0, 200)}...`);
+  console.log('   └─────────────────────────────────────');
+  
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const response = await axios.post(
@@ -836,7 +845,16 @@ Concise and accurate.`;
         trackCost(costTracker, 'perplexity', response.data.usage.prompt_tokens, response.data.usage.completion_tokens);
       }
       
-      return response.data.choices[0].message.content;
+      const result = response.data.choices[0].message.content;
+      
+      // 📝 LOG: What Perplexity returned
+      console.log('   ┌─────────────────────────────────────');
+      console.log('   │ 📥 PERPLEXITY RESPONSE');
+      console.log('   ├─────────────────────────────────────');
+      console.log(`   │ ${result.substring(0, 500).replace(/\n/g, '\n   │ ')}...`);
+      console.log('   └─────────────────────────────────────');
+      
+      return result;
     } catch (error) {
       console.log(`   ⚠️ Research attempt ${attempt}/${retries} failed: ${error.message}`);
       if (attempt === retries) {
