@@ -1144,7 +1144,14 @@ ${userInstructions}
 - حول كل نقطة لجملة فيروسية بنفس الترتيب
 - ابدأ بالـ Hook ثم النقاط ثم CTA
 
-اكتب السكريبت مباشرة (بدون JSON أو markdown):`,
+اكتب السكريبت مباشرة (بدون JSON أو markdown).
+
+⚠️ مهم جداً: بعد ما تخلص السكربت، اكتب في سطر جديد:
+[CAPTION]: كابشن قصير وجذاب للفيديو (أقل من 15 كلمة + إيموجي واحد أو اتنين)
+
+أمثلة كابشنات:
+- المكان ده كنز حرفياً.. أسعار ومفاجآت مش هتتكرر تاني! 💎
+- أخيراً لقيت حل للمشكلة دي.. النتيجة بجد صدمتني! 🤯`,
 
       gulf: `أنت محرر سكريبتات فايرال صارم. مهمتك تحويل مسودة المستخدم لسكريبت فايرال مع الحفاظ على كل المعلومات.
 
@@ -1167,7 +1174,14 @@ ${userInstructions}
 - الطول: ${durationConfig.words} كلمة تقريباً
 - اكتب باللهجة الخليجية
 
-اكتب السكريبت مباشرة:`,
+اكتب السكريبت مباشرة.
+
+⚠️ مهم جداً: بعد ما تخلص السكربت، اكتب في سطر جديد:
+[CAPTION]: كابشن قصير وجذاب للفيديو (أقل من 15 كلمة + إيموجي واحد أو اثنين)
+
+أمثلة كابشنات:
+- يا جماعة هذا المكان خيال.. ضروري تجربونه! 😍
+- صدمة عمري.. ما توقعت النتيجة تطلع بهالروعة! 🤯`,
 
       english: `You are a STRICT Viral Script Editor. Your job is to transform the user's draft into a viral script while preserving ALL information.
 
@@ -1191,7 +1205,14 @@ ${userInstructions}
 - Transform each point into a viral sentence in the same order
 - Start with Hook, then points, then CTA
 
-Write the script directly (no JSON or markdown):`,
+Write the script directly (no JSON or markdown).
+
+⚠️ VERY IMPORTANT: After the script, write on a new line:
+[CAPTION]: A short, catchy caption for the video (under 15 words + 1-2 emojis)
+
+Caption examples:
+- I can't believe I didn't know this sooner.. total game changer! 🤯
+- Stop scrolling if you want to save serious money on this 💸`,
 
       french: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
 
@@ -1213,7 +1234,14 @@ ${userInstructions}
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
 
-Écris le script directement:`,
+Écris le script directement.
+
+⚠️ TRÈS IMPORTANT: Après le script, écris sur une nouvelle ligne:
+[CAPTION]: Une légende courte et accrocheuse pour la vidéo (moins de 15 mots + 1-2 emojis)
+
+Exemples de légendes:
+- C'est une pépite cachée que personne ne connaît.. foncez ! 💎
+- J'ai testé pour vous et franchement.. je suis choqué ! 🤯`,
 
       frensh: `Tu es un éditeur de scripts viraux STRICT. Ta mission est de transformer le brouillon de l'utilisateur en script viral tout en préservant TOUTES les informations.
 
@@ -1235,7 +1263,14 @@ ${userInstructions}
 - Hook: "${selectedHook}"
 - Longueur: ~${durationConfig.words} mots
 
-Écris le script directement:`
+Écris le script directement.
+
+⚠️ TRÈS IMPORTANT: Après le script, écris sur une nouvelle ligne:
+[CAPTION]: Une légende courte et accrocheuse pour la vidéo (moins de 15 mots + 1-2 emojis)
+
+Exemples de légendes:
+- C'est une pépite cachée que personne ne connaît.. foncez ! 💎
+- J'ai testé pour vous et franchement.. je suis choqué ! 🤯`
     };
     
     prompt = refinePrompts[language] || refinePrompts['egyptian'];
