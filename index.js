@@ -18,7 +18,7 @@ const CONFIG = {
   CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   REPLICATE_API_TOKEN: process.env.REPLICATE_API_TOKEN,
-  PERPLEXITY_MODEL: 'sonar-pro',
+  PERPLEXITY_MODEL: 'sonar',
   CLAUDE_MODEL: 'claude-sonnet-4-20250514',
   GEMINI_MODEL: 'gemini-3-pro-preview',
 };
@@ -267,7 +267,7 @@ function getDurationConfig(duration) {
 
 const PRICING = {
   claude: { input: 3.00 / 1_000_000, output: 15.00 / 1_000_000 },           // Claude Sonnet 4
-  perplexity: { input: 1.00 / 1_000_000, output: 5.00 / 1_000_000 },        // sonar-pro
+  perplexity: { input: 1.00 / 1_000_000, output: 1.00 / 1_000_000 },        // sonar
   gemini: { input: 1.25 / 1_000_000, output: 10.00 / 1_000_000 },           // Gemini 3 Pro
   gemini_chat: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },      // Gemini 2.5 Flash Lite (chat)
   gemini_flash_lite: { input: 0.075 / 1_000_000, output: 0.30 / 1_000_000 },// Gemini 2.5 Flash Lite (understanding)
