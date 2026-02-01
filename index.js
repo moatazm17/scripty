@@ -1322,11 +1322,22 @@ ${userInstructions}
     console.log(`   📝 Using fallback caption: "${caption.substring(0, 50)}..."`);
   }
   
+  // Language-specific caption label
+  const captionLabels = {
+    egyptian: '📝 كابشن للفيديو:',
+    gulf: '📝 كابشن للفيديو:',
+    english: '📝 Video Caption:',
+    french: '📝 Légende vidéo:',
+    frensh: '📝 Légende vidéo:'
+  };
+  const captionLabel = captionLabels[language] || captionLabels['egyptian'];
+  
   // Append caption to script
   script = `${script}
 
 ━━━━━━━━━━━━━━━
-📝 ${caption}`;
+${captionLabel}
+${caption}`;
   
   return script;
 }
