@@ -1904,6 +1904,21 @@ app.post('/api/generate-hooks', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Topic is required' });
   }
   
+  // Reject short/unclear topics (less than 3 words) - but allow regenerate requests
+  if (!existingResearch && topic.trim().split(/\s+/).length < 3) {
+    const errorMessages = {
+      egyptian: "الموضوع قصير جداً، وضح أكتر عايز سكريبت عن إيه؟",
+      gulf: "الموضوع قصير، وضح أكثر وش تبي السكريبت يكون عنه؟",
+      english: "Topic too short. Please describe what you want the script to be about.",
+      french: "Sujet trop court. Décrivez plus en détail le sujet du script.",
+      frensh: "Sujet trop court. Décrivez plus en détail le sujet du script."
+    };
+    return res.status(400).json({
+      success: false,
+      error: errorMessages[language] || errorMessages.english
+    });
+  }
+  
   // Check if this is a regenerate-only request (has existing research)
   const isRegenerateOnly = existingResearch && existingTopic;
   
@@ -2073,6 +2088,21 @@ app.post('/api/generate', async (req, res) => {
   
   if (!topic) {
     return res.status(400).json({ success: false, error: 'Topic is required' });
+  }
+  
+  // Reject short/unclear topics (less than 3 words)
+  if (topic.trim().split(/\s+/).length < 3) {
+    const errorMessages = {
+      egyptian: "الموضوع قصير جداً، وضح أكتر عايز سكريبت عن إيه؟",
+      gulf: "الموضوع قصير، وضح أكثر وش تبي السكريبت يكون عنه؟",
+      english: "Topic too short. Please describe what you want the script to be about.",
+      french: "Sujet trop court. Décrivez plus en détail le sujet du script.",
+      frensh: "Sujet trop court. Décrivez plus en détail le sujet du script."
+    };
+    return res.status(400).json({
+      success: false,
+      error: errorMessages[language] || errorMessages.english
+    });
   }
   
   try {
